@@ -1,0 +1,19 @@
+{
+  "name": "DailyBrief News",
+  "short_name": "DailyBrief",
+  "description": "Classic newsroom design with mobile card stack experience.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#111827",
+  "scope": "/",
+  "icons": [
+    { "src": "/icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Latest", "short_name": "Latest", "url": "/category/latest" },
+    { "name": "Markets", "short_name": "Markets", "url": "/category/markets" },
+    { "name": "Technology", "short_name": "Tech", "url": "/category/technology" }
+  ]
+}
