@@ -1,5 +1,5 @@
 import AdBanner from '../components/AdBanner'
-import HeroComposite from '../components/HeroComposite'
+import HeroPro from '../components/HeroPro'
 import CategorySection from '../components/CategorySection'
 import Sidebar from '../components/Sidebar'
 import MobileCardStack from '../components/MobileCardStack'
@@ -20,12 +20,12 @@ export default function Home() {
 
       {/* Desktop/Tablet classic layout */}
       <div className="hidden md:block">
-        {/* Horizontal ad banner */}
-        <div className="max-w-[var(--site-max)] mx-auto px-4 mt-3">
+        {/* Horizontal ad banner below header */}
+        <section aria-label="Horizontal Ads" className="mt-3">
           <AdBanner height={120} />
-        </div>
-        {/* Composite hero with left carousel, center latest list, right ads/most read */}
-        <HeroComposite />
+        </section>
+        {/* New 3-column hero layout */}
+        <HeroPro />
         <div className="grid md:grid-cols-3 gap-6 mt-6">
           <div className="md:col-span-2">
             <CategorySection title="Latest in Business" slug="business" items={business} />
