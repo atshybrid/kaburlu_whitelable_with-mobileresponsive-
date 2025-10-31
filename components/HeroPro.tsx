@@ -29,7 +29,7 @@ function SmallTile({ a, className }: { a: Article, className?: string }) {
   return (
     <li className={`flex items-center gap-3 py-2 ${className||''}`}>
       <div className="relative w-20 aspect-[4/3] shrink-0 overflow-hidden rounded-md">
-        <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="96px" />
+        <Image src={a.thumb||a.hero||''} alt={a.title} fill className="object-cover" sizes="96px" />
       </div>
       <div className="min-w-0">
         <Link href={`/article/${a.slug}`} className="block text-[14px] leading-snug clamp-2 hover:text-indigo-600">
@@ -48,7 +48,7 @@ function CenterRow({ a }: { a: Article }){
         <Link href={`/article/${a.slug}`} className="block text-[14px] leading-snug clamp-2 hover:text-indigo-600">{a.title}</Link>
       </div>
       <div className="relative w-20 aspect-[3/2] shrink-0 overflow-hidden rounded-md">
-        <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="96px" />
+        <Image src={a.thumb||a.hero||''} alt={a.title} fill className="object-cover" sizes="96px" />
       </div>
     </li>
   )
@@ -76,7 +76,7 @@ function CenterCard({ a, className }: { a: Article, className?: string }){
     <li className={className||''}>
       <div className="rounded border border-gray-200/60 dark:border-gray-800/60 bg-white/70 dark:bg-gray-800/40 overflow-hidden">
         <div className="relative w-full aspect-[16/10]">
-          <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="(min-width:768px) 18vw, 40vw" />
+          <Image src={a.thumb||a.hero||''} alt={a.title} fill className="object-cover" sizes="(min-width:768px) 18vw, 40vw" />
         </div>
         <div className="p-1.5">
           <Link href={`/category/${a.category.slug}`} className="text-[9px] uppercase tracking-wide text-indigo-700 dark:text-indigo-300">{a.category.name}</Link>
@@ -88,13 +88,15 @@ function CenterCard({ a, className }: { a: Article, className?: string }){
 }
 
 export default function HeroPro(){
-  const latest10 = getAllArticles().slice(0,10)
-  const center8 = getAllArticles().slice(0,8)
+  const all = useMemo(() => getAllArticles(), [])
+  const latest10 = useMemo(() => all.slice(0,10), [all])
+  const center8 = useMemo(() => all.slice(0,8), [all])
 
   // Left big hero auto-rotate
   const [idx, setIdx] = useState(0)
-  const active = useMemo(()=> latest10[idx % latest10.length], [idx, latest10])
+  const active = useMemo(()=> latest10.length ? latest10[idx % latest10.length] : undefined, [idx, latest10])
   useEffect(()=>{
+    if(latest10.length <= 1) return
     const t = setInterval(()=> setIdx(i => (i + 1) % latest10.length), 4500)
     return ()=> clearInterval(t)
   }, [latest10.length])
@@ -106,7 +108,9 @@ export default function HeroPro(){
         <div aria-label="Hero Left" className="flex flex-col gap-3 md:gap-4">
           {/* Top big hero (16:9), capped height for tighter UI */}
           <div className="relative rounded overflow-hidden aspect-[16/9] md:max-h-[360px]">
-            <Image src={active.hero||active.thumb||''} alt={active.title} fill className="object-cover" sizes="(min-width: 768px) 33vw, 100vw" priority />
+            {active && (
+              <Image src={active.hero||active.thumb||''} alt={active.title} fill className="object-cover" sizes="(min-width: 768px) 33vw, 100vw" priority />
+            )}
             <Overlay a={active} />
           </div>
           {/* Bottom compact list (equal height box) */}
