@@ -26,6 +26,10 @@ export default function Home() {
         </section>
         {/* New 3-column hero layout */}
         <HeroPro />
+        {/* Separator divider after hero */}
+        <section aria-hidden="true" className="my-6">
+          <hr className="border-t border-gray-200 dark:border-gray-800" />
+        </section>
         <div className="grid md:grid-cols-3 gap-6 mt-6">
           <div className="md:col-span-2">
             <CategorySection title="Latest in Business" slug="business" items={business} />

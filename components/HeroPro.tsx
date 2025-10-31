@@ -75,7 +75,7 @@ export default function HeroPro(){
         {/* Left column */}
         <div aria-label="Hero Left" className="flex flex-col gap-4 md:h-full">
           {/* Top 70% big hero */}
-          <div className="relative rounded overflow-hidden aspect-[16/10] md:flex-1 md:[flex-basis:70%]">
+          <div className="relative rounded overflow-hidden aspect-[16/9] md:flex-1 md:[flex-basis:70%]">
             <Image src={active.hero||active.thumb||''} alt={active.title} fill className="object-cover" sizes="(min-width: 768px) 33vw, 100vw" priority />
             <Overlay a={active} />
           </div>
