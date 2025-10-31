@@ -7,12 +7,18 @@ import type { Article } from '../lib/types'
 import AdBanner from './AdBanner'
 
 function Overlay({ a }: { a: Article }) {
+  const date = new Date(a.publishedAt)
+  const when = date.toLocaleDateString('te-IN', { month: 'short', day: '2-digit' })
   return (
-    <div className="absolute inset-x-0 bottom-0 p-4 md:p-5 bg-gradient-to-t from-black/75 via-black/40 to-transparent text-white">
-      <div className="text-[11px] uppercase tracking-wide opacity-90">
-        <Link href={`/category/${a.category.slug}`} className="hover:underline">{a.category.name}</Link>
+    <div className="absolute inset-x-0 bottom-0 p-4 md:p-5 bg-gradient-to-t from-black/80 via-black/50 to-transparent text-white">
+      <div className="flex items-center gap-2">
+        <Link href={`/category/${a.category.slug}`} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-600/90 text-white/95 shadow">
+          {a.category.name}
+        </Link>
+        <span className="text-[11px] text-white/80">• {a.reporter.name}</span>
+        <span className="text-[11px] text-white/70">• {when}</span>
       </div>
-      <h2 className="mt-1 text-lg md:text-2xl font-bold clamp-3">
+      <h2 className="mt-2 text-xl md:text-3xl font-extrabold leading-snug clamp-3 drop-shadow">
         <Link href={`/article/${a.slug}`}>{a.title}</Link>
       </h2>
     </div>
@@ -22,8 +28,8 @@ function Overlay({ a }: { a: Article }) {
 function SmallTile({ a }: { a: Article }) {
   return (
     <li className="flex items-center gap-3 py-2">
-      <div className="relative w-16 h-16 shrink-0 overflow-hidden rounded">
-        <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="96px" />
+      <div className="relative w-24 aspect-[4/3] shrink-0 overflow-hidden rounded-md">
+        <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="128px" />
       </div>
       <div className="min-w-0">
         <Link href={`/article/${a.slug}`} className="block text-[15px] leading-snug clamp-2 hover:text-indigo-600">
@@ -41,8 +47,8 @@ function CenterRow({ a }: { a: Article }){
         <Link href={`/category/${a.category.slug}`} className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">{a.category.name}</Link>
         <Link href={`/article/${a.slug}`} className="block text-[16px] leading-snug clamp-2 hover:text-indigo-600">{a.title}</Link>
       </div>
-      <div className="relative w-16 h-16 shrink-0 overflow-hidden rounded">
-        <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="96px" />
+      <div className="relative w-24 aspect-[4/3] shrink-0 overflow-hidden rounded-md">
+        <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="128px" />
       </div>
     </li>
   )
@@ -59,7 +65,7 @@ function RightRow({ a }: { a: Article }){
 
 function SubHeader({title}:{title:string}){
   return (
-    <div className="px-3 py-2 rounded-t bg-gradient-to-r from-gray-900/90 via-gray-800/80 to-gray-700/70 text-white text-xs font-semibold tracking-wide">
+    <div className="px-3 py-2 rounded-t bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white text-xs font-semibold tracking-wide shadow">
       {title}
     </div>
   )

@@ -24,6 +24,45 @@ function html(p: string[]): string { return p.map(x => `<p>${x}</p>`).join('\n')
 
 export const articles: Article[] = [
   {
+    id: 't1', slug: 'ai-summit-hyderabad-te', title: 'హైదరాబాద్ AI సమ్మిట్‌లో ప్రధాన ప్రకటనలు',
+    summary: 'భారత్‌ టెక్ ఎకోసిస్టమ్‌ కోసం సేఫ్టీ, సమర్థతపై దృష్టి సారించిన కొత్త AI మోడళ్లు.',
+    bodyHtml: html([
+      'హైదరాబాద్‌లో జరిగిన AI సమ్మిట్‌లో పలువురు దిగ్గజాలు తమ కొత్త మోడళ్లను ఆవిష్కరించాయి.',
+      'ఎంటర్‌ప్రైజ్ వాడుకకు సులభంగా కలిసేలా టూల్స్‌ను రూపొదించారు.'
+    ]),
+    hero: 'https://images.unsplash.com/photo-1551281044-8b89a212d3b9?q=80&w=1600&auto=format&fit=crop',
+    thumb: 'https://images.unsplash.com/photo-1551281044-8b89a212d3b9?q=80&w=600&auto=format&fit=crop',
+    publishedAt: new Date(Date.now() - 1000*60*8).toISOString(),
+    readTime: 4, category: c('technology'), reporter: r('john-smith'),
+    views: 2100, trendingScore: 74,
+  },
+  {
+    id: 't2', slug: 'sports-thriller-final-te', title: 'ఫైనల్ మ్యాచ్‌లో ఉత్కంఠ భరిత ముగింపు',
+    summary: 'అంతిమ క్షణాల్లో గెలుపు సాధించిన అండర్‌డాగ్స్ వెంటనే హీరోలయ్యారు.',
+    bodyHtml: html([
+      'ఎక్స్‌ట్రా టైమ్‌లో వచ్చిన గోల్‌తో మ్యాచ్ మలుపు తిరిగింది.',
+      'ప్రేక్షకులు అద్భుతం అంటూ సంబరాలు చేసుకున్నారు.'
+    ]),
+    hero: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=1600&auto=format&fit=crop',
+    thumb: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=600&auto=format&fit=crop',
+    publishedAt: new Date(Date.now() - 1000*60*20).toISOString(),
+    readTime: 3, category: c('sports'), reporter: r('sara-lee'),
+    views: 3900, trendingScore: 80,
+  },
+  {
+    id: 't3', slug: 'global-markets-outlook-te', title: 'గ్లోబల్ మార్కెట్లకు స్థిరత్వం సంకేతాలు',
+    summary: 'ద్రవ్యోల్బణం తగ్గుదలతో పెట్టుబడిదారుల్లో నమ్మకం పెరిగింది.',
+    bodyHtml: html([
+      'సప్లై చైన్లు సాధారణ స్థితికి చేరుతున్నాయని విశ్లేషకులు చెబుతున్నారు.',
+      'రేటు కోతలపై అంచనాలు బలపడుతున్నాయి.'
+    ]),
+    hero: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?q=80&w=1600&auto=format&fit=crop',
+    thumb: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?q=80&w=600&auto=format&fit=crop',
+    publishedAt: new Date(Date.now() - 1000*60*35).toISOString(),
+    readTime: 4, category: c('markets'), reporter: r('jane-doe'),
+    views: 3100, trendingScore: 69,
+  },
+  {
     id: 'a1', slug: 'markets-rally-as-inflation-cools', title: 'Markets rally as inflation cools to 2.7%',
     summary: 'Stocks surged globally after new data showed inflation easing faster than expected, boosting hopes of rate cuts.',
     bodyHtml: html([
