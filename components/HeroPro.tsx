@@ -25,9 +25,9 @@ function Overlay({ a }: { a: Article }) {
   )
 }
 
-function SmallTile({ a }: { a: Article }) {
+function SmallTile({ a, className }: { a: Article, className?: string }) {
   return (
-    <li className="flex items-center gap-3 py-2">
+    <li className={`flex items-center gap-3 py-2 ${className||''}`}>
       <div className="relative w-20 aspect-[4/3] shrink-0 overflow-hidden rounded-md">
         <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="96px" />
       </div>
@@ -96,9 +96,10 @@ export default function HeroPro(){
           {/* Bottom compact list (equal height box) */}
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="More Headlines" />
-            <div className="p-3 md:h-[300px] lg:h-[340px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
+            <div className="p-3 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
               <ul className="grid grid-cols-1 gap-2">
-                {latest10.slice(1,4).map(a => <SmallTile key={a.id} a={a} />)}
+                {latest10.slice(1,5).map(a => <SmallTile key={a.id} a={a} />)}
+                {latest10[5] && <SmallTile key={latest10[5].id} a={latest10[5]} className="hidden lg:flex" />}
               </ul>
             </div>
           </div>
@@ -108,7 +109,7 @@ export default function HeroPro(){
         <div aria-label="Hero Center" className="flex flex-col">
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="Featured" />
-            <div className="p-3 md:h-[300px] lg:h-[340px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
+            <div className="p-3 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
               {/* 6 compact rows with 3:2 thumbs */}
               <ul className="grid grid-cols-1 gap-1.5">
                 {center8.slice(0,6).map(a => (
@@ -122,11 +123,11 @@ export default function HeroPro(){
         {/* Right column */}
         <div aria-label="Hero Right" className="flex flex-col gap-4">
           {/* Top ads */}
-          <div><AdBanner height={180} /></div>
+          <div><AdBanner height={220} /></div>
           {/* Bottom article list with title+summary (equal height, no scroll) */}
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="Quick Reads" />
-            <div className="p-3 md:h-[300px] lg:h-[340px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
+            <div className="p-3 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
               <ul className="grid grid-cols-1 gap-2">
                 {latest10.slice(0,4).map((a, i) => (
                   <li key={a.id} className={`rounded border border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-gray-800/40 p-2 ${i===3? 'hidden lg:block' : ''}`}>
