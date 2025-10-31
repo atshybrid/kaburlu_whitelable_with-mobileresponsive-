@@ -14,4 +14,6 @@ const nextConfig = {
   turbopack: {},
 }
 
-module.exports = withPWA(nextConfig)
+// Ensure turbopack key remains on the final exported config even after plugin merges
+const withPluginsApplied = withPWA(nextConfig)
+module.exports = { ...withPluginsApplied, turbopack: withPluginsApplied.turbopack ?? {} }

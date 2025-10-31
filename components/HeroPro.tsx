@@ -112,10 +112,9 @@ export default function HeroPro(){
           {/* Bottom compact list (equal height box) */}
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="More Headlines" />
-            <div className="p-3 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
+            <div className="p-3 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur overflow-hidden">
               <ul className="grid grid-cols-1 gap-2">
                 {latest10.slice(1,5).map(a => <SmallTile key={a.id} a={a} />)}
-                {latest10[5] && <SmallTile key={latest10[5].id} a={latest10[5]} className="hidden lg:flex" />}
               </ul>
             </div>
           </div>
@@ -125,14 +124,11 @@ export default function HeroPro(){
         <div aria-label="Hero Center" className="flex flex-col">
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="Center Highlights" />
-            <div className="p-3 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
-              {/* 2-column compact cards: 4 on md, 6 on lg to neatly fill without scroll */}
+            <div className="p-3 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur overflow-hidden">
+              {/* 2-column compact cards: 6 on md and lg to avoid blank space */}
               <ul className="grid grid-cols-2 gap-3">
-                {center8.slice(0,4).map(a => (
+                {center8.slice(0,6).map(a => (
                   <CenterCard key={a.id} a={a} />
-                ))}
-                {center8.slice(4,6).map(a => (
-                  <CenterCard key={a.id} a={a} className="hidden lg:block" />
                 ))}
               </ul>
             </div>
@@ -146,7 +142,7 @@ export default function HeroPro(){
           {/* Bottom article list with title+summary (equal height, no scroll) */}
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="Quick Reads" />
-            <div className="p-3 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
+            <div className="p-3 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur overflow-hidden">
               <ul className="grid grid-cols-1 gap-2">
                 {latest10.slice(0,4).map((a, i) => (
                   <li key={a.id} className={`rounded border border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-gray-800/40 p-2 ${i===3? 'hidden lg:block' : ''}`}>
