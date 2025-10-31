@@ -1,8 +1,10 @@
+// Enable PWA only when explicitly requested via ENABLE_PWA=true
+const isPWAEnabled = process.env.ENABLE_PWA === 'true'
 const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
+  disable: !isPWAEnabled, // disabled by default to avoid noisy build logs
   fallbacks: { document: '/offline' },
 })
 

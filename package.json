@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3000 --webpack",
     "build": "next build --webpack",
+    "build:pwa": "set ENABLE_PWA=true&& next build --webpack",
     "build:turbopack": "next build",
     "dev:turbopack": "next dev -p 3000",
     "start": "next start -p 3000"
