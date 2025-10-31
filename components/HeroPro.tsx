@@ -71,16 +71,16 @@ export default function HeroPro(){
 
   return (
     <section aria-label="Hero Composite" className="mt-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:h-[540px]">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
         {/* Left column */}
-        <div aria-label="Hero Left" className="flex flex-col gap-4 md:h-full">
-          {/* Top 70% big hero */}
-          <div className="relative rounded overflow-hidden aspect-[16/9] md:flex-1 md:[flex-basis:70%]">
+        <div aria-label="Hero Left" className="flex flex-col gap-3 md:gap-4">
+          {/* Top big hero (16:9), capped height for tighter UI */}
+          <div className="relative rounded overflow-hidden aspect-[16/9] md:max-h-[360px]">
             <Image src={active.hero||active.thumb||''} alt={active.title} fill className="object-cover" sizes="(min-width: 768px) 33vw, 100vw" priority />
             <Overlay a={active} />
           </div>
-          {/* Bottom 30% list (2-3 items) */}
-          <div className="rounded border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/40 backdrop-blur p-3 md:[flex-basis:30%] md:overflow-hidden">
+          {/* Bottom compact list (2–3 items) */}
+          <div className="rounded border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/40 backdrop-blur p-3">
             <h3 className="text-sm font-semibold mb-2">More Headlines</h3>
             <ul className="grid grid-cols-1 gap-2">
               {latest10.slice(1,4).map(a => <SmallTile key={a.id} a={a} />)}
@@ -89,20 +89,20 @@ export default function HeroPro(){
         </div>
 
         {/* Center column */}
-        <div aria-label="Hero Center" className="flex flex-col md:h-full">
-          <ul className="flex-1 overflow-hidden">
+        <div aria-label="Hero Center" className="flex flex-col">
+          <ul className="md:max-h-[360px] overflow-auto pr-1">
             {center8.map(a => <CenterRow key={a.id} a={a} />)}
           </ul>
         </div>
 
         {/* Right column */}
-        <div aria-label="Hero Right" className="flex flex-col gap-4 md:h-full">
-          {/* Top 30% ads */}
-          <div className="md:[flex-basis:30%]"><AdBanner height={160} /></div>
-          {/* Bottom 70% article list with title+summary */}
-          <div className="md:[flex-basis:70%] overflow-hidden">
+        <div aria-label="Hero Right" className="flex flex-col gap-4">
+          {/* Top ads */}
+          <div><AdBanner height={140} /></div>
+          {/* Bottom article list with title+summary */}
+          <div className="md:max-h-[360px] overflow-auto pr-1">
             <h4 className="text-sm font-bold mb-2">In Case You Missed</h4>
-            <ul className="max-h-full overflow-auto pr-1">
+            <ul className="flex flex-col">
               {latest10.slice(0,8).map(a => <RightRow key={a.id} a={a} />)}
             </ul>
           </div>
