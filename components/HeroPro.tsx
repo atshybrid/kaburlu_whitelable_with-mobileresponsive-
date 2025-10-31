@@ -125,9 +125,9 @@ export default function HeroPro(){
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="Center Highlights" />
             <div className="p-3 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur overflow-hidden">
-              {/* 2-column compact cards: 6 on md and lg to avoid blank space */}
-              <ul className="grid grid-cols-2 gap-3">
-                {center8.slice(0,6).map(a => (
+              {/* 2 columns on md, 3 columns on lg; render 8 cards total */}
+              <ul className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                {center8.slice(0,8).map(a => (
                   <CenterCard key={a.id} a={a} />
                 ))}
               </ul>
