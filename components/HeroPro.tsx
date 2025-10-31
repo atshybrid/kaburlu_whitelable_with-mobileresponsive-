@@ -71,6 +71,22 @@ function SubHeader({title}:{title:string}){
   )
 }
 
+function CenterCard({ a, className }: { a: Article, className?: string }){
+  return (
+    <li className={className||''}>
+      <div className="rounded border border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-gray-800/40 overflow-hidden">
+        <div className="relative w-full aspect-[4/3]">
+          <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="(min-width:768px) 20vw, 50vw" />
+        </div>
+        <div className="p-2">
+          <Link href={`/category/${a.category.slug}`} className="text-[10px] uppercase tracking-wide text-indigo-700 dark:text-indigo-300">{a.category.name}</Link>
+          <Link href={`/article/${a.slug}`} className="block text-[14px] leading-snug clamp-2 hover:text-indigo-600 mt-0.5">{a.title}</Link>
+        </div>
+      </div>
+    </li>
+  )
+}
+
 export default function HeroPro(){
   const latest10 = getAllArticles().slice(0,10)
   const center8 = getAllArticles().slice(0,8)
@@ -108,12 +124,15 @@ export default function HeroPro(){
         {/* Center column */}
         <div aria-label="Hero Center" className="flex flex-col">
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
-            <SubHeader title="Featured" />
+            <SubHeader title="Center Highlights" />
             <div className="p-3 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
-              {/* 6 compact rows with 3:2 thumbs */}
-              <ul className="grid grid-cols-1 gap-1.5">
-                {center8.slice(0,6).map(a => (
-                  <CenterRow key={a.id} a={a} />
+              {/* 2-column compact cards: 4 on md, 6 on lg to neatly fill without scroll */}
+              <ul className="grid grid-cols-2 gap-3">
+                {center8.slice(0,4).map(a => (
+                  <CenterCard key={a.id} a={a} />
+                ))}
+                {center8.slice(4,6).map(a => (
+                  <CenterCard key={a.id} a={a} className="hidden lg:block" />
                 ))}
               </ul>
             </div>
