@@ -3,6 +3,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
 import { getAllArticles } from '../lib/data'
+import { heroConfig } from '../lib/uiConfig'
+import { HERO_BOTTOM_HEIGHT, centerGridCols } from '../lib/ui'
 import type { Article } from '../lib/types'
 import AdBanner from './AdBanner'
 
@@ -116,9 +118,9 @@ export default function HeroPro(){
           {/* Bottom compact list (equal height box) */}
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="More Headlines" />
-            <div className="p-3 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur overflow-hidden">
+            <div className={`p-3 ${HERO_BOTTOM_HEIGHT} bg-white/60 dark:bg-gray-900/40 backdrop-blur overflow-hidden`}>
               <ul className="grid grid-cols-1 gap-2">
-                {latest10.slice(1,5).map(a => <SmallTile key={a.id} a={a} />)}
+                {latest10.slice(1, 1 + heroConfig.leftListCount).map(a => <SmallTile key={a.id} a={a} />)}
               </ul>
             </div>
           </div>
@@ -128,10 +130,10 @@ export default function HeroPro(){
         <div aria-label="Hero Center" className="flex flex-col">
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="Center Highlights" />
-            <div className="p-2 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur overflow-hidden">
-              {/* 3 columns on md+; render 8 cards total; compact cards to fit within fixed height */}
-              <ul className="grid grid-cols-3 gap-2">
-                {center8.slice(0,8).map(a => (
+            <div className={`p-2 ${HERO_BOTTOM_HEIGHT} bg-white/60 dark:bg-gray-900/40 backdrop-blur overflow-hidden`}>
+              {/* Configurable columns and count via uiConfig */}
+              <ul className={`grid ${centerGridCols(heroConfig.centerCols.md, heroConfig.centerCols.lg)} gap-2`}>
+                {center8.slice(0, heroConfig.centerCount).map(a => (
                   <CenterCard key={a.id} a={a} />
                 ))}
               </ul>
@@ -146,10 +148,10 @@ export default function HeroPro(){
           {/* Bottom article list with title+summary (equal height, no scroll) */}
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="Quick Reads" />
-            <div className="p-3 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur overflow-hidden">
+            <div className={`p-3 ${HERO_BOTTOM_HEIGHT} bg-white/60 dark:bg-gray-900/40 backdrop-blur overflow-hidden`}>
               <ul className="grid grid-cols-1 gap-2">
-                {latest10.slice(0,4).map((a, i) => (
-                  <li key={a.id} className={`rounded border border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-gray-800/40 p-2 ${i===3? 'hidden lg:block' : ''}`}>
+                {latest10.slice(0, heroConfig.quickReadsCount).map((a) => (
+                  <li key={a.id} className="rounded border border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-gray-800/40 p-2">
                     <Link href={`/article/${a.slug}`} className="block text-[14px] font-semibold clamp-2 leading-snug hover:text-indigo-600">{a.title}</Link>
                     <p className="mt-1 text-[12px] text-gray-600 dark:text-gray-300 leading-snug line-clamp-2">{a.summary}</p>
                   </li>
