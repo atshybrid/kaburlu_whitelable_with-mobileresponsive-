@@ -57,6 +57,14 @@ function RightRow({ a }: { a: Article }){
   )
 }
 
+function SubHeader({title}:{title:string}){
+  return (
+    <div className="px-3 py-2 rounded-t bg-gradient-to-r from-gray-900/90 via-gray-800/80 to-gray-700/70 text-white text-xs font-semibold tracking-wide">
+      {title}
+    </div>
+  )
+}
+
 export default function HeroPro(){
   const latest10 = getAllArticles().slice(0,10)
   const center8 = getAllArticles().slice(0,8)
@@ -79,32 +87,57 @@ export default function HeroPro(){
             <Image src={active.hero||active.thumb||''} alt={active.title} fill className="object-cover" sizes="(min-width: 768px) 33vw, 100vw" priority />
             <Overlay a={active} />
           </div>
-          {/* Bottom compact list (2–3 items) */}
-          <div className="rounded border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-900/40 backdrop-blur p-3">
-            <h3 className="text-sm font-semibold mb-2">More Headlines</h3>
-            <ul className="grid grid-cols-1 gap-2">
-              {latest10.slice(1,4).map(a => <SmallTile key={a.id} a={a} />)}
-            </ul>
+          {/* Bottom compact list (equal height box) */}
+          <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
+            <SubHeader title="More Headlines" />
+            <div className="p-3 h-[240px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
+              <ul className="grid grid-cols-1 gap-2">
+                {latest10.slice(1,4).map(a => <SmallTile key={a.id} a={a} />)}
+              </ul>
+            </div>
           </div>
         </div>
 
         {/* Center column */}
         <div aria-label="Hero Center" className="flex flex-col">
-          <ul className="md:max-h-[360px] overflow-auto pr-1">
-            {center8.map(a => <CenterRow key={a.id} a={a} />)}
-          </ul>
+          <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
+            <SubHeader title="Featured" />
+            <div className="p-3 h-[240px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
+              {/* Card-style compact items (no scroll) */}
+              <ul className="grid grid-cols-1 gap-2">
+                {center8.slice(0,3).map(a => (
+                  <li key={a.id} className="rounded border border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-gray-800/40 p-2 flex items-center gap-3">
+                    <div className="relative w-14 h-14 shrink-0 overflow-hidden rounded">
+                      <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="72px" />
+                    </div>
+                    <div className="min-w-0">
+                      <Link href={`/category/${a.category.slug}`} className="text-[11px] uppercase tracking-wide text-indigo-700 dark:text-indigo-300">{a.category.name}</Link>
+                      <Link href={`/article/${a.slug}`} className="block text-[15px] leading-snug clamp-2 hover:text-indigo-600">{a.title}</Link>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
 
         {/* Right column */}
         <div aria-label="Hero Right" className="flex flex-col gap-4">
           {/* Top ads */}
           <div><AdBanner height={140} /></div>
-          {/* Bottom article list with title+summary */}
-          <div className="md:max-h-[360px] overflow-auto pr-1">
-            <h4 className="text-sm font-bold mb-2">In Case You Missed</h4>
-            <ul className="flex flex-col">
-              {latest10.slice(0,8).map(a => <RightRow key={a.id} a={a} />)}
-            </ul>
+          {/* Bottom article list with title+summary (equal height, no scroll) */}
+          <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
+            <SubHeader title="Quick Reads" />
+            <div className="p-3 h-[240px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
+              <ul className="grid grid-cols-1 gap-2">
+                {latest10.slice(0,2).map(a => (
+                  <li key={a.id} className="rounded border border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-gray-800/40 p-3">
+                    <Link href={`/article/${a.slug}`} className="block text-[15px] font-semibold clamp-2 leading-snug hover:text-indigo-600">{a.title}</Link>
+                    <p className="mt-1 text-[13px] text-gray-600 dark:text-gray-300 leading-snug line-clamp-2">{a.summary}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </div>
