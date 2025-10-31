@@ -28,11 +28,11 @@ function Overlay({ a }: { a: Article }) {
 function SmallTile({ a }: { a: Article }) {
   return (
     <li className="flex items-center gap-3 py-2">
-      <div className="relative w-24 aspect-[4/3] shrink-0 overflow-hidden rounded-md">
-        <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="128px" />
+      <div className="relative w-20 aspect-[4/3] shrink-0 overflow-hidden rounded-md">
+        <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="96px" />
       </div>
       <div className="min-w-0">
-        <Link href={`/article/${a.slug}`} className="block text-[15px] leading-snug clamp-2 hover:text-indigo-600">
+        <Link href={`/article/${a.slug}`} className="block text-[14px] leading-snug clamp-2 hover:text-indigo-600">
           {a.title}
         </Link>
       </div>
@@ -42,13 +42,13 @@ function SmallTile({ a }: { a: Article }) {
 
 function CenterRow({ a }: { a: Article }){
   return (
-    <li className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+    <li className="flex items-center gap-3 py-1.5 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
       <div className="min-w-0 flex-1">
         <Link href={`/category/${a.category.slug}`} className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">{a.category.name}</Link>
-        <Link href={`/article/${a.slug}`} className="block text-[16px] leading-snug clamp-2 hover:text-indigo-600">{a.title}</Link>
+        <Link href={`/article/${a.slug}`} className="block text-[14px] leading-snug clamp-2 hover:text-indigo-600">{a.title}</Link>
       </div>
-      <div className="relative w-24 aspect-[4/3] shrink-0 overflow-hidden rounded-md">
-        <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="128px" />
+      <div className="relative w-20 aspect-[3/2] shrink-0 overflow-hidden rounded-md">
+        <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="96px" />
       </div>
     </li>
   )
@@ -96,7 +96,7 @@ export default function HeroPro(){
           {/* Bottom compact list (equal height box) */}
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="More Headlines" />
-            <div className="p-3 h-[240px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
+            <div className="p-3 md:h-[300px] lg:h-[340px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
               <ul className="grid grid-cols-1 gap-2">
                 {latest10.slice(1,4).map(a => <SmallTile key={a.id} a={a} />)}
               </ul>
@@ -108,19 +108,11 @@ export default function HeroPro(){
         <div aria-label="Hero Center" className="flex flex-col">
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="Featured" />
-            <div className="p-3 h-[240px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
-              {/* Card-style compact items (no scroll) */}
-              <ul className="grid grid-cols-1 gap-2">
-                {center8.slice(0,3).map(a => (
-                  <li key={a.id} className="rounded border border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-gray-800/40 p-2 flex items-center gap-3">
-                    <div className="relative w-14 h-14 shrink-0 overflow-hidden rounded">
-                      <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="72px" />
-                    </div>
-                    <div className="min-w-0">
-                      <Link href={`/category/${a.category.slug}`} className="text-[11px] uppercase tracking-wide text-indigo-700 dark:text-indigo-300">{a.category.name}</Link>
-                      <Link href={`/article/${a.slug}`} className="block text-[15px] leading-snug clamp-2 hover:text-indigo-600">{a.title}</Link>
-                    </div>
-                  </li>
+            <div className="p-3 md:h-[300px] lg:h-[340px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
+              {/* 6 compact rows with 3:2 thumbs */}
+              <ul className="grid grid-cols-1 gap-1.5">
+                {center8.slice(0,6).map(a => (
+                  <CenterRow key={a.id} a={a} />
                 ))}
               </ul>
             </div>
@@ -134,12 +126,12 @@ export default function HeroPro(){
           {/* Bottom article list with title+summary (equal height, no scroll) */}
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="Quick Reads" />
-            <div className="p-3 h-[240px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
+            <div className="p-3 md:h-[300px] lg:h-[340px] bg-white/60 dark:bg-gray-900/40 backdrop-blur">
               <ul className="grid grid-cols-1 gap-2">
-                {latest10.slice(0,2).map(a => (
-                  <li key={a.id} className="rounded border border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-gray-800/40 p-3">
-                    <Link href={`/article/${a.slug}`} className="block text-[15px] font-semibold clamp-2 leading-snug hover:text-indigo-600">{a.title}</Link>
-                    <p className="mt-1 text-[13px] text-gray-600 dark:text-gray-300 leading-snug line-clamp-2">{a.summary}</p>
+                {latest10.slice(0,4).map((a, i) => (
+                  <li key={a.id} className={`rounded border border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-gray-800/40 p-2 ${i===3? 'hidden lg:block' : ''}`}>
+                    <Link href={`/article/${a.slug}`} className="block text-[14px] font-semibold clamp-2 leading-snug hover:text-indigo-600">{a.title}</Link>
+                    <p className="mt-1 text-[12px] text-gray-600 dark:text-gray-300 leading-snug line-clamp-2">{a.summary}</p>
                   </li>
                 ))}
               </ul>
