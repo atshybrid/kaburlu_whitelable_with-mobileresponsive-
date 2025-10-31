@@ -74,13 +74,13 @@ function SubHeader({title}:{title:string}){
 function CenterCard({ a, className }: { a: Article, className?: string }){
   return (
     <li className={className||''}>
-      <div className="rounded border border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-gray-800/40 overflow-hidden">
-        <div className="relative w-full aspect-[4/3]">
-          <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="(min-width:768px) 20vw, 50vw" />
+      <div className="rounded border border-gray-200/60 dark:border-gray-800/60 bg-white/70 dark:bg-gray-800/40 overflow-hidden">
+        <div className="relative w-full aspect-[16/10]">
+          <Image src={a.thumb||a.hero||''} alt="" fill className="object-cover" sizes="(min-width:768px) 18vw, 40vw" />
         </div>
-        <div className="p-2">
-          <Link href={`/category/${a.category.slug}`} className="text-[10px] uppercase tracking-wide text-indigo-700 dark:text-indigo-300">{a.category.name}</Link>
-          <Link href={`/article/${a.slug}`} className="block text-[14px] leading-snug clamp-2 hover:text-indigo-600 mt-0.5">{a.title}</Link>
+        <div className="p-1.5">
+          <Link href={`/category/${a.category.slug}`} className="text-[9px] uppercase tracking-wide text-indigo-700 dark:text-indigo-300">{a.category.name}</Link>
+          <Link href={`/article/${a.slug}`} className="block text-[12.5px] leading-snug clamp-2 hover:text-indigo-600 mt-0.5">{a.title}</Link>
         </div>
       </div>
     </li>
@@ -124,9 +124,9 @@ export default function HeroPro(){
         <div aria-label="Hero Center" className="flex flex-col">
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="Center Highlights" />
-            <div className="p-3 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur overflow-hidden">
-              {/* 2 columns on md, 3 columns on lg; render 8 cards total */}
-              <ul className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="p-2 md:h-[360px] lg:h-[380px] bg-white/60 dark:bg-gray-900/40 backdrop-blur overflow-hidden">
+              {/* 3 columns on md+; render 8 cards total; compact cards to fit within fixed height */}
+              <ul className="grid grid-cols-3 gap-2">
                 {center8.slice(0,8).map(a => (
                   <CenterCard key={a.id} a={a} />
                 ))}
