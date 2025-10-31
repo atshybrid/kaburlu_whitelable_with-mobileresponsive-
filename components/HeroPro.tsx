@@ -122,7 +122,7 @@ export default function HeroPro(){
         {/* Right column */}
         <div aria-label="Hero Right" className="flex flex-col gap-4">
           {/* Top ads */}
-          <div><AdBanner height={140} /></div>
+          <div><AdBanner height={180} /></div>
           {/* Bottom article list with title+summary (equal height, no scroll) */}
           <div className="rounded border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SubHeader title="Quick Reads" />

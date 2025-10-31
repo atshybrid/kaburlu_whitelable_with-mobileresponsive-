@@ -5,8 +5,9 @@ export async function generateStaticParams() {
   return getReporters().map(r => ({ slug: r.slug }))
 }
 
-export default function ReporterPage({ params }: { params: { slug: string } }) {
-  const reporter = getReporterBySlug(params.slug)
+export default async function ReporterPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const reporter = getReporterBySlug(slug)
   if (!reporter) return <div className="p-4">Not found</div>
   const items = getArticlesByReporter(reporter.slug)
   return (

@@ -6,9 +6,10 @@ export async function generateStaticParams() {
   return getCategories().filter(c=> c.slug!=='top' && c.slug!=='latest').map(c => ({ slug: c.slug }))
 }
 
-export default function CategoryPage({ params }: { params: { slug: string } }) {
+export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const cats = getCategories()
-  const cat = cats.find(c=>c.slug===params.slug)
+  const cat = cats.find(c=>c.slug===slug)
   if (!cat) return <div className="p-4">Not found</div>
   const items = getArticlesByCategory(cat.slug)
   return (
