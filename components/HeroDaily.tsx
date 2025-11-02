@@ -46,6 +46,24 @@ function BulletList({items}:{items:Article[]}){
   )
 }
 
+function RichList({items}:{items:Article[]}){
+  return (
+    <ul className="divide-y divide-gray-200">
+      {items.map(a=> (
+        <li key={a.id} className="py-2">
+          <div className="flex items-start gap-2">
+            <span className="mt-2 block h-1.5 w-1.5 rounded-full bg-gray-700 shrink-0" />
+            <div className="min-w-0">
+              <Link href={`/article/${a.slug}`} className="block text-[15px] font-semibold leading-snug hover:text-indigo-700 line-clamp-2">{a.title}</Link>
+              <p className="mt-1 text-[13px] text-gray-600 leading-snug line-clamp-3">{a.summary}</p>
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 function ThumbRow({a}:{a:Article}){
   return (
     <li className="py-2 border-b last:border-b-0">
@@ -90,7 +108,8 @@ export default function HeroDaily(){
         <div className="md:col-span-4">
           <SectionTitle>తాజా వార్తలు</SectionTitle>
           <div className={`mt-2 rounded border bg-white/70 dark:bg-gray-900/40 overflow-hidden ${HERO_BOTTOM_HEIGHT}`}>
-            <BulletList items={center.slice(0,8)} />
+            {/* Show rich items: 2-line title + 3-line summary */}
+            <RichList items={center.slice(0,5)} />
             <div className="p-3 flex justify-center">
               <Link href="#" className="inline-flex items-center gap-1 text-sm font-semibold text-[#255db1] border border-[#255db1]/40 rounded-full px-4 py-1.5">More »</Link>
             </div>
@@ -110,7 +129,7 @@ export default function HeroDaily(){
           </div>
           <div className={`mt-2 rounded border bg-white/70 dark:bg-gray-900/40 overflow-hidden ${HERO_BOTTOM_HEIGHT}`}>
             <ul>
-              {right.slice(0,4).map(a => <ThumbRow key={a.id} a={a} />)}
+              {right.slice(0,5).map(a => <ThumbRow key={a.id} a={a} />)}
             </ul>
             <div className="p-3 flex justify-center">
               <Link href="#" className="inline-flex items-center gap-1 text-sm font-semibold text-[#255db1] border border-[#255db1]/40 rounded-full px-4 py-1.5">More »</Link>
