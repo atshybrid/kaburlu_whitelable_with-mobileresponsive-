@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { getArticlesByCategory, getCategories } from '../lib/data'
-import { belowHeroConfig } from '../lib/uiConfig'
+import { getBelowHeroConfig } from '../lib/uiConfig'
 import { chunk } from '../lib/ui'
 
 function SectionTitle({children}:{children:React.ReactNode}){
@@ -11,11 +11,11 @@ function SectionTitle({children}:{children:React.ReactNode}){
   )
 }
 
-function Column({ slug, title }: { slug: string, title: string }){
+function Column({ slug, title, listCount }: { slug: string, title: string, listCount: number }){
   const items = getArticlesByCategory(slug)
   if (!items.length) return null
   const [top, ...rest] = items
-  const list = rest.slice(0, belowHeroConfig.listCount)
+  const list = rest.slice(0, listCount)
   return (
     <div>
       <SectionTitle>{title}</SectionTitle>
@@ -49,8 +49,9 @@ function Column({ slug, title }: { slug: string, title: string }){
 export default function ThreeColNews(){
   // Build list of categories to cover rows*3; cycle over config.categories or derive from data.
   const allCats = getCategories().filter(c=> c.slug !== 'top' && c.slug !== 'latest')
-  const order = belowHeroConfig.categories.length ? belowHeroConfig.categories : (allCats.map(c=>c.slug) as any)
-  const needed = belowHeroConfig.rows * 3
+  const cfg = getBelowHeroConfig()
+  const order = cfg.categories.length ? cfg.categories : (allCats.map(c=>c.slug) as any)
+  const needed = cfg.rows * 3
   const slugs: string[] = Array.from({length: needed}, (_,i)=> order[i % order.length] as string)
   const rows = chunk(slugs, 3)
 
@@ -60,7 +61,7 @@ export default function ThreeColNews(){
         <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {row.map((slug, i) => {
             const cat = allCats.find(c=> c.slug===slug)
-            return <Column key={slug+"-"+i} slug={slug} title={cat?.name || slug} />
+            return <Column key={slug+"-"+i} slug={slug} title={cat?.name || slug} listCount={cfg.listCount} />
           })}
         </div>
       ))}
