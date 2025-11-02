@@ -1,5 +1,6 @@
 import AdBanner from '../components/AdBanner'
 import HeroDaily from '../components/HeroDaily'
+import ThreeColNews from '../components/ThreeColNews'
 import CategorySection from '../components/CategorySection'
 import Sidebar from '../components/Sidebar'
 import MobileCardStack from '../components/MobileCardStack'
@@ -30,6 +31,8 @@ export default function Home() {
         <section aria-hidden="true" className="my-6">
           <hr className="border-t border-gray-200 dark:border-gray-800" />
         </section>
+        {/* 2nd section: configurable 3-column rows */}
+        <ThreeColNews />
         <div className="grid md:grid-cols-3 gap-6 mt-6">
           <div className="md:col-span-2">
             <CategorySection title="Latest in Business" slug="business" items={business} />
