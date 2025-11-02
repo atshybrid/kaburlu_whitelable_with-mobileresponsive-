@@ -60,19 +60,28 @@ function ThumbRow({a}:{a:Article}){
 
 export default function HeroDaily(){
   const all = useMemo(()=> getAllArticles(), [])
-  const left = all.slice(0,5)
+  const leftTop = all.slice(0,5)
+  const leftBottom = all.slice(5,10)
   const center = all.slice(0,7)
-  const rightTop = all.slice(0,4)
-  const rightBottom = all.slice(4,8)
+  const right = all.slice(0,6)
 
   return (
     <section className="mt-4">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* left slider */}
+        {/* left column with two rows: slider + bullet list */}
         <div className="md:col-span-5">
           <SectionTitle>టాప్ స్టోరీస్</SectionTitle>
           <div className="mt-2">
-            <LeftSlider items={left} />
+            <LeftSlider items={leftTop} />
+          </div>
+          <div className="mt-5">
+            <SectionTitle>సినిమా</SectionTitle>
+            <div className="mt-2 rounded border bg-white/70 dark:bg-gray-900/40">
+              <BulletList items={leftBottom.slice(0,5)} />
+              <div className="p-3 flex justify-center">
+                <Link href="#" className="inline-flex items-center gap-1 text-sm font-semibold text-[#255db1] border border-[#255db1]/40 rounded-full px-4 py-1.5">More »</Link>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -87,7 +96,7 @@ export default function HeroDaily(){
           </div>
         </div>
 
-        {/* right thumbnails + filter (two stacked rows) */}
+        {/* right thumbnails + filter (single section) */}
         <div className="md:col-span-3">
           <div className="flex items-center justify-between">
             <SectionTitle>జిల్లా వార్తలు</SectionTitle>
@@ -100,21 +109,10 @@ export default function HeroDaily(){
           </div>
           <div className="mt-2 rounded border bg-white/70 dark:bg-gray-900/40">
             <ul>
-              {rightTop.map(a => <ThumbRow key={a.id} a={a} />)}
+              {right.map(a => <ThumbRow key={a.id} a={a} />)}
             </ul>
             <div className="p-3 flex justify-center">
               <Link href="#" className="inline-flex items-center gap-1 text-sm font-semibold text-[#255db1] border border-[#255db1]/40 rounded-full px-4 py-1.5">More »</Link>
-            </div>
-          </div>
-          <div className="mt-4">
-            <SectionTitle>ట్రెండింగ్</SectionTitle>
-            <div className="mt-2 rounded border bg-white/70 dark:bg-gray-900/40">
-              <ul>
-                {rightBottom.map(a => <ThumbRow key={a.id} a={a} />)}
-              </ul>
-              <div className="p-3 flex justify-center">
-                <Link href="#" className="inline-flex items-center gap-1 text-sm font-semibold text-[#255db1] border border-[#255db1]/40 rounded-full px-4 py-1.5">More »</Link>
-              </div>
             </div>
           </div>
         </div>
