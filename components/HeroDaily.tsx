@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { getAllArticles } from '../lib/data'
 import type { Article } from '../lib/types'
+import { HERO_BOTTOM_HEIGHT } from '../lib/ui'
 
 function SectionTitle({children}:{children:React.ReactNode}){
   return (
@@ -61,9 +62,9 @@ function ThumbRow({a}:{a:Article}){
 export default function HeroDaily(){
   const all = useMemo(()=> getAllArticles(), [])
   const leftTop = all.slice(0,5)
-  const leftBottom = all.slice(5,10)
-  const center = all.slice(0,7)
-  const right = all.slice(0,6)
+  const leftBottom = all.slice(5,11) // give a few extra; we slice to count when rendering
+  const center = all.slice(0,8)
+  const right = all.slice(0,5)
 
   return (
     <section className="mt-4">
@@ -76,8 +77,8 @@ export default function HeroDaily(){
           </div>
           <div className="mt-5">
             <SectionTitle>సినిమా</SectionTitle>
-            <div className="mt-2 rounded border bg-white/70 dark:bg-gray-900/40">
-              <BulletList items={leftBottom.slice(0,5)} />
+            <div className={`mt-2 rounded border bg-white/70 dark:bg-gray-900/40 overflow-hidden ${HERO_BOTTOM_HEIGHT}`}>
+              <BulletList items={leftBottom.slice(0,6)} />
               <div className="p-3 flex justify-center">
                 <Link href="#" className="inline-flex items-center gap-1 text-sm font-semibold text-[#255db1] border border-[#255db1]/40 rounded-full px-4 py-1.5">More »</Link>
               </div>
@@ -88,8 +89,8 @@ export default function HeroDaily(){
         {/* center bullet list */}
         <div className="md:col-span-4">
           <SectionTitle>తాజా వార్తలు</SectionTitle>
-          <div className="mt-2 rounded border bg-white/70 dark:bg-gray-900/40">
-            <BulletList items={center} />
+          <div className={`mt-2 rounded border bg-white/70 dark:bg-gray-900/40 overflow-hidden ${HERO_BOTTOM_HEIGHT}`}>
+            <BulletList items={center.slice(0,8)} />
             <div className="p-3 flex justify-center">
               <Link href="#" className="inline-flex items-center gap-1 text-sm font-semibold text-[#255db1] border border-[#255db1]/40 rounded-full px-4 py-1.5">More »</Link>
             </div>
@@ -107,9 +108,9 @@ export default function HeroDaily(){
               <option>Visakhapatnam</option>
             </select>
           </div>
-          <div className="mt-2 rounded border bg-white/70 dark:bg-gray-900/40">
+          <div className={`mt-2 rounded border bg-white/70 dark:bg-gray-900/40 overflow-hidden ${HERO_BOTTOM_HEIGHT}`}>
             <ul>
-              {right.map(a => <ThumbRow key={a.id} a={a} />)}
+              {right.slice(0,4).map(a => <ThumbRow key={a.id} a={a} />)}
             </ul>
             <div className="p-3 flex justify-center">
               <Link href="#" className="inline-flex items-center gap-1 text-sm font-semibold text-[#255db1] border border-[#255db1]/40 rounded-full px-4 py-1.5">More »</Link>
