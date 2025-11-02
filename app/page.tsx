@@ -1,5 +1,6 @@
 import AdBanner from '../components/AdBanner'
-import HeroPro from '../components/HeroPro'
+import TopCategoryBar from '../components/TopCategoryBar'
+import HeroDaily from '../components/HeroDaily'
 import CategorySection from '../components/CategorySection'
 import Sidebar from '../components/Sidebar'
 import MobileCardStack from '../components/MobileCardStack'
@@ -20,12 +21,14 @@ export default function Home() {
 
       {/* Desktop/Tablet classic layout */}
       <div className="hidden md:block">
+        {/* Yellow categories bar like reference */}
+        <TopCategoryBar />
         {/* Horizontal ad banner below header */}
         <section aria-label="Horizontal Ads" className="mt-3">
           <AdBanner height={120} />
         </section>
-        {/* New 3-column hero layout */}
-        <HeroPro />
+        {/* Disha-style 3-column layout */}
+        <HeroDaily />
         {/* Separator divider after hero */}
         <section aria-hidden="true" className="my-6">
           <hr className="border-t border-gray-200 dark:border-gray-800" />
