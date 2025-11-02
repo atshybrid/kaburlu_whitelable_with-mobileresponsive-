@@ -62,7 +62,8 @@ export default function HeroDaily(){
   const all = useMemo(()=> getAllArticles(), [])
   const left = all.slice(0,5)
   const center = all.slice(0,7)
-  const right = all.slice(0,6)
+  const rightTop = all.slice(0,4)
+  const rightBottom = all.slice(4,8)
 
   return (
     <section className="mt-4">
@@ -86,7 +87,7 @@ export default function HeroDaily(){
           </div>
         </div>
 
-        {/* right thumbnails + filter */}
+        {/* right thumbnails + filter (two stacked rows) */}
         <div className="md:col-span-3">
           <div className="flex items-center justify-between">
             <SectionTitle>జిల్లా వార్తలు</SectionTitle>
@@ -99,10 +100,21 @@ export default function HeroDaily(){
           </div>
           <div className="mt-2 rounded border bg-white/70 dark:bg-gray-900/40">
             <ul>
-              {right.map(a => <ThumbRow key={a.id} a={a} />)}
+              {rightTop.map(a => <ThumbRow key={a.id} a={a} />)}
             </ul>
             <div className="p-3 flex justify-center">
               <Link href="#" className="inline-flex items-center gap-1 text-sm font-semibold text-[#255db1] border border-[#255db1]/40 rounded-full px-4 py-1.5">More »</Link>
+            </div>
+          </div>
+          <div className="mt-4">
+            <SectionTitle>ట్రెండింగ్</SectionTitle>
+            <div className="mt-2 rounded border bg-white/70 dark:bg-gray-900/40">
+              <ul>
+                {rightBottom.map(a => <ThumbRow key={a.id} a={a} />)}
+              </ul>
+              <div className="p-3 flex justify-center">
+                <Link href="#" className="inline-flex items-center gap-1 text-sm font-semibold text-[#255db1] border border-[#255db1]/40 rounded-full px-4 py-1.5">More »</Link>
+              </div>
             </div>
           </div>
         </div>

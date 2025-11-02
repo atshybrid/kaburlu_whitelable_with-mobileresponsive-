@@ -38,6 +38,11 @@ export default function SiteHeader() {
               <span>Choose City</span>
               <Caret />
             </button>
+            <div className="hidden md:flex items-center gap-2">
+              <a href="#" className="inline-flex items-center px-2.5 py-1 rounded bg-[#255db1] text-white text-[12px] font-semibold">E Paper</a>
+              <a href="#" className="inline-flex items-center px-2.5 py-1 rounded bg-[#0ea5e9] text-white text-[12px] font-semibold">TG-Dynamic</a>
+              <a href="#" className="inline-flex items-center px-2.5 py-1 rounded bg-[#22c55e] text-white text-[12px] font-semibold">AP-Dynamic</a>
+            </div>
             <div className="hidden lg:flex items-center">
               <input
                 type="search"
@@ -89,6 +94,17 @@ export default function SiteHeader() {
                 </Link>
               </li>
             ))}
+          </ul>
+        </div>
+      </div>
+      {/* Sticky category bar (yellow) */}
+      <div className="sticky top-0 z-30 bg-[#ffd400] border-y border-yellow-300">
+        <div className="max-w-[var(--site-max)] mx-auto px-3">
+          <ul className="flex items-center gap-4 overflow-x-auto py-2 text-[15px] font-semibold text-black">
+            {cats.slice(0,14).map(c => (
+              <li key={c.slug} className="min-w-fit"><Link href={`/category/${c.slug}`} className="hover:underline">{c.name}</Link></li>
+            ))}
+            <li className="ml-auto min-w-fit"><button className="hover:underline">More</button></li>
           </ul>
         </div>
       </div>
