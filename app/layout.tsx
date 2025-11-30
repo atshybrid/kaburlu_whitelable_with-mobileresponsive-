@@ -8,6 +8,7 @@ import { getSiteName, getSiteUrl } from '../lib/site'
 import { getDomainSettings } from '../lib/tenantApi'
 import { headers } from 'next/headers'
 import { Analytics } from '@vercel/analytics/react'
+import PWARegister from '../components/PWARegister'
 
 export async function generateMetadata() {
   // Fetch domain settings server-side to apply SEO and icons
@@ -66,6 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </div>
         <SeoFooter />
         <Analytics />
+        <PWARegister />
         <PWAInstallPrompt />
         <BottomNav />
       </body>
