@@ -131,6 +131,12 @@ async function apiFetch<T = any>(path: string, opts: ApiOptions = {}): Promise<T
   if (controller && timeoutMs) {
     timeoutId = setTimeout(() => controller.abort(), timeoutMs)
   }
+  const isServer = typeof window === 'undefined'
+  const start = isServer ? Date.now() : 0
+  if (isServer) {
+    const backendOrigin = process.env.BACKEND_ORIGIN || '(unknown BACKEND_ORIGIN)'
+    console.log('[tenantApi] ->', backendOrigin, path, 'tenantDomain=', previewTenantDomain || '(none)')
+  }
   let res: Response
   try {
     res = await fetch(`/api${path.startsWith('/') ? '' : '/'}${path}`, init)
@@ -141,6 +147,9 @@ async function apiFetch<T = any>(path: string, opts: ApiOptions = {}): Promise<T
     throw err
   } finally {
     if (timeoutId) clearTimeout(timeoutId)
+  }
+  if (isServer) {
+    console.log('[tenantApi] <-', path, 'status=', res.status, 'ms=', Date.now() - start)
   }
   if (!res.ok) {
     let msg = `API ${res.status} ${res.statusText}`

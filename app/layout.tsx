@@ -11,12 +11,12 @@ import { Analytics } from '@vercel/analytics/react'
 import PWARegister from '../components/PWARegister'
 
 export async function generateMetadata() {
-  // Fetch domain settings server-side to apply SEO and icons
-  // Extract request host to inform tenant resolution
   const hdrs = await headers()
+  const overrideTenant = hdrs.get('x-tenant-domain') || hdrs.get('tenant-domain') || undefined
   const reqHost = hdrs.get('x-forwarded-host') || hdrs.get('host') || undefined
-  // Fetch domain settings server-side to apply SEO and icons (host-aware)
-  const settings = await getDomainSettings({ cache: 'no-store', timeoutMs: 4000, previewTenantDomain: reqHost }).catch(() => null)
+  const effectiveTenantDomain = overrideTenant || reqHost
+  const normalizedTenantDomain = effectiveTenantDomain?.replace(/:\d+$/, '')
+  const settings = await getDomainSettings({ cache: 'no-store', timeoutMs: 4000, previewTenantDomain: normalizedTenantDomain }).catch(() => null)
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   const seo = settings?.effective?.seo || settings?.effective?.settings?.seo || {}
   const branding = settings?.effective?.branding || settings?.effective?.settings?.branding || {}
@@ -38,8 +38,11 @@ export const viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const hdrs = await headers()
+  const overrideTenant = hdrs.get('x-tenant-domain') || hdrs.get('tenant-domain') || undefined
   const reqHost = hdrs.get('x-forwarded-host') || hdrs.get('host') || undefined
-  const settings = await getDomainSettings({ cache: 'no-store', timeoutMs: 4000, previewTenantDomain: reqHost }).catch(() => null)
+  const effectiveTenantDomain = overrideTenant || reqHost
+  const normalizedTenantDomain = effectiveTenantDomain?.replace(/:\d+$/, '')
+  const settings = await getDomainSettings({ cache: 'no-store', timeoutMs: 4000, previewTenantDomain: normalizedTenantDomain }).catch(() => null)
   const layoutFlags = settings?.effective?.theme?.layout || settings?.effective?.settings?.theme?.layout || {}
   const branding = settings?.effective?.branding || settings?.effective?.settings?.branding || {}
   const siteUrl = getSiteUrl()

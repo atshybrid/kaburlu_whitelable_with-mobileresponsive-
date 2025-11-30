@@ -10,11 +10,14 @@ function Pre({data}:{data:any}){
 export default async function DomainSettingsDebugPage(){
   const hdrs = await headers()
   const host = hdrs.get('x-forwarded-host') || hdrs.get('host') || 'UNKNOWN_HOST'
+  const overrideTenant = hdrs.get('x-tenant-domain') || hdrs.get('tenant-domain') || null
+  const effectiveTenantDomain = (overrideTenant || host)
+  const normalizedTenantDomain = effectiveTenantDomain.replace(/:\d+$/, '')
   let settings: any = null
   let error: string | null = null
   const startedAt = Date.now()
   try {
-    settings = await getDomainSettings({ cache: 'no-store', previewTenantDomain: host, timeoutMs: 4000 })
+    settings = await getDomainSettings({ cache: 'no-store', previewTenantDomain: normalizedTenantDomain, timeoutMs: 4000 })
   } catch (e: any) {
     error = e?.message || String(e)
   }
@@ -22,19 +25,21 @@ export default async function DomainSettingsDebugPage(){
   return (
     <main className="py-6 space-y-6 max-w-5xl mx-auto px-4">
       <h1 className="text-2xl font-bold">Domain Settings Debug</h1>
-      <p className="text-sm text-gray-600">Host detected: <code className="font-mono">{host}</code>. Duration: {(finishedAt-startedAt)}ms</p>
+      <p className="text-sm text-gray-600">Host detected: <code className="font-mono">{host}</code>{overrideTenant && <> | Override header: <code className="font-mono">{overrideTenant}</code></>} | Effective: <code className="font-mono">{effectiveTenantDomain}</code> | Normalized: <code className="font-mono">{normalizedTenantDomain}</code>. Duration: {(finishedAt-startedAt)}ms</p>
       {error && <p className="text-sm text-red-600">Error: {error}</p>}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Raw Settings Response</h2>
         <Pre data={settings} />
       </section>
-      <ClientRefetch host={host} />
+      <ClientRefetch tenantDomain={normalizedTenantDomain} />
       <section className="space-y-2">
         <h2 className="text-lg font-semibold">Curl Examples</h2>
         <Pre data={{
-          directBackend: `curl -H 'accept: application/json' -H 'X-Tenant-Domain: ${host}' https://app.kaburlumedia.com/api/v1/public/domain/settings`,
-          viaRewrite: `curl -H 'accept: application/json' -H 'Host: ${host}' https://${host}/api/public/domain/settings`,
-          note: 'Rewrite /api/* -> BACKEND_ORIGIN. The Host header ensures multi-tenant match.'
+          directBackend: `curl -H 'accept: application/json' -H 'X-Tenant-Domain: kaburlu.sathuva.in' https://app.kaburlumedia.com/api/v1/public/domain/settings`,
+          viaLocalRewrite: `curl -H 'accept: application/json' -H 'X-Tenant-Domain: kaburlu.sathuva.in' http://localhost:3000/api/public/domain/settings`,
+          viaLocalPage: `curl -H 'X-Tenant-Domain: kaburlu.sathuva.in' http://localhost:3000/debug/domain-settings`,
+          altHeader: `curl -H 'Tenant-Domain: kaburlu.sathuva.in' http://localhost:3000/debug/domain-settings`,
+          note: 'X-Tenant-Domain preferred. Tenant-Domain (without X-) accepted for convenience.'
         }} />
       </section>
     </main>
@@ -44,14 +49,14 @@ export default async function DomainSettingsDebugPage(){
 'use client'
 import { useState } from 'react'
 
-function ClientRefetch({ host }: { host: string }) {
+function ClientRefetch({ tenantDomain }: { tenantDomain: string }) {
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string|null>(null)
   const refetch = async () => {
     setLoading(true); setError(null)
     try {
-      const res = await fetch('/api/public/domain/settings', { headers: { 'X-Tenant-Domain': host } })
+      const res = await fetch('/api/public/domain/settings', { headers: { 'X-Tenant-Domain': tenantDomain } })
       if(!res.ok) throw new Error(`Status ${res.status}`)
       const json = await res.json()
       setResult(json)
