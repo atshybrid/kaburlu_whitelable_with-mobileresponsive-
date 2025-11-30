@@ -8,7 +8,7 @@ function formatNow(){
   return now.toLocaleString('en-IN', {weekday:'short', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'})
 }
 
-export default function HeaderDisha(){
+export default function HeaderDisha({ showTopBar = true, showTicker = true, brandingLogoUrl }: { showTopBar?: boolean; showTicker?: boolean; brandingLogoUrl?: string }){
   const navConfig = getNavigationConfig()
   // Avoid hydration mismatch by rendering time only on the client after mount
   const [nowText, setNowText] = useState<string>('')
@@ -22,6 +22,7 @@ export default function HeaderDisha(){
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
       {/* Utility strip */}
+      {showTopBar && (
       <div className="hidden md:block border-b border-gray-100 dark:border-gray-800/80">
         <div className="max-w-[var(--site-max)] mx-auto px-4 h-9 flex items-center justify-between text-xs text-gray-700 dark:text-gray-300">
           <div suppressHydrationWarning>{nowText || '\u00A0'}</div>
@@ -32,11 +33,16 @@ export default function HeaderDisha(){
           </div>
         </div>
       </div>
+      )}
 
       {/* Logo row */}
       <div className="max-w-[var(--site-max)] mx-auto px-4 py-4 hidden md:flex items-center">
         <Link href="/" className="inline-flex items-center">
-          <span className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#255db1]">{navConfig.brand.logoText}</span>
+          {brandingLogoUrl ? (
+            <img src={brandingLogoUrl} alt={navConfig.brand.logoText} className="h-10 md:h-12 w-auto" />
+          ) : (
+            <span className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#255db1]">{navConfig.brand.logoText}</span>
+          )}
           {navConfig.brand.tagline && <span className="ml-2 text-xs text-gray-500">{navConfig.brand.tagline}</span>}
         </Link>
         {navConfig.cta && (
@@ -76,6 +82,7 @@ export default function HeaderDisha(){
       </div>
 
       {/* Yellow category bar (sticky) */}
+      {showTicker && (
       <div className="hidden md:block">
         <div className={`bg-[#ffd400] border-t border-yellow-300 ${navConfig.sticky.enabled ? 'sticky z-40 shadow-sm' : ''}`} style={navConfig.sticky.enabled ? { top: navConfig.sticky.offsetPx ?? 0 } : undefined}>
           <div className="max-w-[var(--site-max)] mx-auto px-3">
@@ -94,6 +101,7 @@ export default function HeaderDisha(){
           </div>
         </div>
       </div>
+      )}
 
       <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 hidden md:block">
         <div className="max-w-[var(--site-max)] mx-auto px-4 py-2 flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
