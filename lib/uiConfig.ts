@@ -23,7 +23,7 @@ export interface BelowHeroConfig {
 
 export const belowHeroConfig: BelowHeroConfig = {
   rows: 1,               // how many repeated rows to render
-  listCount: 5,          // bullets per column
+  listCount: 4,          // bullets per column
   categories: [          // order to render; cycles if rows*3 exceeds length
     'business', 'politics', 'technology',
     'sports', 'markets', 'world',

@@ -1,142 +1,28 @@
-"use client"
-import Image from 'next/image'
-import Link from 'next/link'
-import { useMemo, useState } from 'react'
-import { getAllArticles } from '../lib/data'
-import type { Article } from '../lib/types'
-import { HERO_BOTTOM_HEIGHT } from '../lib/ui'
+import { fetchShortNews, normalizeShortNews, groupByCategory } from '../lib/api'
+import HeroDailyClient from './HeroDailyClient'
 
-function SectionTitle({children}:{children:React.ReactNode}){
-  return (
-    <div className="inline-block bg-[#255db1] text-white text-sm font-bold px-3 py-1 rounded">{children}</div>
-  )
-}
+export default async function HeroDaily() {
+  const res = await fetchShortNews({ limit: 60 })
+  const items = normalizeShortNews(res.data)
+  const grouped = groupByCategory(items)
+  const forced = process.env.NEXT_PUBLIC_SECTION2_FORCE_CATEGORY_NAME?.trim()
+  const catName = (forced && grouped[forced]?.length)
+    ? forced
+    : Object.keys(grouped).sort((a, b) => (grouped[b]?.length || 0) - (grouped[a]?.length || 0))[0]
+  const src = grouped[catName] || []
 
-function LeftSlider({items}:{items:Article[]}){
-  const [i,setI] = useState(0)
-  const a = items[i % items.length]
-  return (
-    <div className="relative rounded overflow-hidden">
-      <div className="relative aspect-[16/9]">
-        <Image src={a.hero||a.thumb||''} alt={a.title} fill className="object-cover" sizes="(min-width:768px) 50vw, 100vw" />
-      </div>
-      <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-white">
-        <p className="text-xs opacity-90">{a.category.name}</p>
-        <h2 className="text-2xl font-extrabold leading-tight"><Link href={`/article/${a.slug}`}>{a.title}</Link></h2>
-      </div>
-      {/* arrows */}
-      <button aria-label="Prev" onClick={()=>setI(n=> (n-1+items.length)%items.length)} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 text-white grid place-items-center">‹</button>
-      <button aria-label="Next" onClick={()=>setI(n=> (n+1)%items.length)} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 text-white grid place-items-center">›</button>
-    </div>
-  )
-}
-
-function BulletList({items}:{items:Article[]}){
-  return (
-    <ul className="divide-y divide-gray-200">
-      {items.map(a=> (
-        <li key={a.id} className="py-2">
-          <Link href={`/article/${a.slug}`} className="flex items-start gap-2">
-            <span className="mt-2 block h-1.5 w-1.5 rounded-full bg-gray-700" />
-            <span className="text-[15px] leading-snug hover:text-indigo-700">{a.title}</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-function RichList({items}:{items:Article[]}){
-  return (
-    <ul className="divide-y divide-gray-200">
-      {items.map(a=> (
-        <li key={a.id} className="py-2">
-          <div className="flex items-start gap-2">
-            <span className="mt-2 block h-1.5 w-1.5 rounded-full bg-gray-700 shrink-0" />
-            <div className="min-w-0">
-              <Link href={`/article/${a.slug}`} className="block text-[15px] font-semibold leading-snug hover:text-indigo-700 line-clamp-2">{a.title}</Link>
-              <p className="mt-1 text-[13px] text-gray-600 leading-snug line-clamp-3">{a.summary}</p>
-            </div>
-          </div>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-function ThumbRow({a}:{a:Article}){
-  return (
-    <li className="py-2 border-b last:border-b-0">
-      <Link href={`/article/${a.slug}`} className="flex items-center gap-3">
-        <div className="relative w-28 aspect-[4/3] rounded overflow-hidden shrink-0">
-          <Image src={a.thumb||a.hero||''} alt={a.title} fill sizes="112px" className="object-cover" />
-        </div>
-        <span className="text-[14px] leading-snug hover:text-indigo-700">{a.title}</span>
-      </Link>
-    </li>
-  )
-}
-
-export default function HeroDaily(){
-  const all = useMemo(()=> getAllArticles(), [])
-  const leftTop = all.slice(0,5)
-  const leftBottom = all.slice(5,11) // give a few extra; we slice to count when rendering
-  const center = all.slice(0,8)
-  const right = all.slice(0,5)
+  const leftTop = src.slice(0, 1)
+  const leftBottom = src.slice(1, 3)
+  const center = src.slice(0, 12)
+  const right = src.slice(0, 10)
 
   return (
-    <section className="mt-4">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* left column with two rows: slider + bullet list */}
-        <div className="md:col-span-5">
-          <SectionTitle>టాప్ స్టోరీస్</SectionTitle>
-          <div className="mt-2">
-            <LeftSlider items={leftTop} />
-          </div>
-          <div className="mt-5">
-            <SectionTitle>సినిమా</SectionTitle>
-            <div className={`mt-2 rounded border bg-white/70 dark:bg-gray-900/40 overflow-hidden ${HERO_BOTTOM_HEIGHT}`}>
-              <BulletList items={leftBottom.slice(0,6)} />
-              <div className="p-3 flex justify-center">
-                <Link href="#" className="inline-flex items-center gap-1 text-sm font-semibold text-[#255db1] border border-[#255db1]/40 rounded-full px-4 py-1.5">More »</Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* center bullet list */}
-        <div className="md:col-span-4">
-          <SectionTitle>తాజా వార్తలు</SectionTitle>
-          <div className={`mt-2 rounded border bg-white/70 dark:bg-gray-900/40 overflow-hidden ${HERO_BOTTOM_HEIGHT}`}>
-            {/* Show rich items: 2-line title + 3-line summary */}
-            <RichList items={center.slice(0,5)} />
-            <div className="p-3 flex justify-center">
-              <Link href="#" className="inline-flex items-center gap-1 text-sm font-semibold text-[#255db1] border border-[#255db1]/40 rounded-full px-4 py-1.5">More »</Link>
-            </div>
-          </div>
-        </div>
-
-        {/* right thumbnails + filter (single section) */}
-        <div className="md:col-span-3">
-          <div className="flex items-center justify-between">
-            <SectionTitle>జిల్లా వార్తలు</SectionTitle>
-            <select className="ml-3 border rounded text-sm px-2 py-1">
-              <option>Select District</option>
-              <option>Hyderabad</option>
-              <option>Vijayawada</option>
-              <option>Visakhapatnam</option>
-            </select>
-          </div>
-          <div className={`mt-2 rounded border bg-white/70 dark:bg-gray-900/40 overflow-hidden ${HERO_BOTTOM_HEIGHT}`}>
-            <ul>
-              {right.slice(0,5).map(a => <ThumbRow key={a.id} a={a} />)}
-            </ul>
-            <div className="p-3 flex justify-center">
-              <Link href="#" className="inline-flex items-center gap-1 text-sm font-semibold text-[#255db1] border border-[#255db1]/40 rounded-full px-4 py-1.5">More »</Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <HeroDailyClient
+      catName={catName || 'News'}
+      leftTop={leftTop}
+      leftBottom={leftBottom}
+      center={center}
+      right={right}
+    />
   )
 }

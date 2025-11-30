@@ -4,3 +4,11 @@ export function getSiteUrl() {
   }
   return (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '')
 }
+
+export function getSiteName() {
+  return (process.env.NEXT_PUBLIC_SITE_NAME || 'News').trim()
+}
+
+export function isMobileAppViewEnabled() {
+  return (process.env.NEXT_PUBLIC_ENABLE_MOBILE_APP_VIEW || 'true').toLowerCase() !== 'false'
+}

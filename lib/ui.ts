@@ -1,5 +1,6 @@
 // Shared UI helpers and constants
-export const HERO_BOTTOM_HEIGHT = `md:h-[360px] lg:h-[380px]`
+// Increased to ensure no cropping for center (12 items) and right (5 thumbs)
+export const HERO_BOTTOM_HEIGHT = `md:h-[480px] lg:h-[520px]`
 
 export function centerGridCols(md: number, lg: number) {
   const clamp = (n: number) => Math.max(1, Math.min(6, Math.round(n)))

@@ -25,3 +25,14 @@ export type Article = {
   views?: number
   trendingScore?: number
 }
+
+// Minimal normalized short news shape used by UI lists
+export type ShortTeaser = {
+  id: string
+  title: string
+  href: string
+  image?: string | null
+  category?: string | null
+  publishedAt?: string | null
+  summary?: string | null
+}

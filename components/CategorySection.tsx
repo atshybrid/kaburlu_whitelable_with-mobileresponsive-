@@ -5,7 +5,7 @@ import ArticleCard from './ArticleCard'
 export default function CategorySection({ title, slug, items }: { title: string, slug: string, items: Article[] }) {
   if (!items.length) return null
   return (
-    <section className="mt-6">
+    <section id={slug} className="mt-6 scroll-mt-16">
       <div className="flex items-baseline justify-between mb-2">
         <h3 className="text-lg font-bold">{title}</h3>
         <Link href={`/category/${slug}`} className="text-sm text-indigo-600 hover:underline">View all</Link>

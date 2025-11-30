@@ -7,6 +7,7 @@ type Props = {
   image?: string
   text?: string
   className?: string
+  path?: string // optional absolute path starting with '/'
 }
 
 function getAbsoluteUrl(path: string) {
@@ -18,13 +19,13 @@ function getAbsoluteUrl(path: string) {
   return origin.replace(/\/$/, '') + path
 }
 
-export default function ShareButton({ title, slug, image, text, className }: Props) {
+export default function ShareButton({ title, slug, image, text, className, path }: Props) {
   const [busy, setBusy] = useState(false)
   const [ok, setOk] = useState(false)
 
   async function onShare() {
     setBusy(true); setOk(false)
-    const url = getAbsoluteUrl(`/article/${slug}`)
+    const url = getAbsoluteUrl(path || `/article/${slug}`)
     try {
       const canFiles = typeof navigator !== 'undefined' && 'canShare' in navigator
       let files: File[] | undefined = undefined
