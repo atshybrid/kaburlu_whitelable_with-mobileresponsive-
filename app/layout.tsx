@@ -16,7 +16,8 @@ export async function generateMetadata() {
   const reqHost = hdrs.get('x-forwarded-host') || hdrs.get('host') || undefined
   const effectiveTenantDomain = overrideTenant || reqHost
   const normalizedTenantDomain = effectiveTenantDomain?.replace(/:\d+$/, '')
-  const settings = await getDomainSettings({ cache: 'no-store', timeoutMs: 4000, previewTenantDomain: normalizedTenantDomain }).catch(() => null)
+  const authHeader = process.env.TENANT_SETTINGS_AUTH_TOKEN ? { Authorization: `Bearer ${process.env.TENANT_SETTINGS_AUTH_TOKEN}` } : undefined
+  const settings = await getDomainSettings({ cache: 'no-store', timeoutMs: 4000, previewTenantDomain: normalizedTenantDomain, headers: authHeader }).catch(() => null)
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   const seo = settings?.effective?.seo || settings?.effective?.settings?.seo || {}
   const branding = settings?.effective?.branding || settings?.effective?.settings?.branding || {}
@@ -42,7 +43,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const reqHost = hdrs.get('x-forwarded-host') || hdrs.get('host') || undefined
   const effectiveTenantDomain = overrideTenant || reqHost
   const normalizedTenantDomain = effectiveTenantDomain?.replace(/:\d+$/, '')
-  const settings = await getDomainSettings({ cache: 'no-store', timeoutMs: 4000, previewTenantDomain: normalizedTenantDomain }).catch(() => null)
+  const authHeader = process.env.TENANT_SETTINGS_AUTH_TOKEN ? { Authorization: `Bearer ${process.env.TENANT_SETTINGS_AUTH_TOKEN}` } : undefined
+  const settings = await getDomainSettings({ cache: 'no-store', timeoutMs: 4000, previewTenantDomain: normalizedTenantDomain, headers: authHeader }).catch(() => null)
   const layoutFlags = settings?.effective?.theme?.layout || settings?.effective?.settings?.theme?.layout || {}
   const branding = settings?.effective?.branding || settings?.effective?.settings?.branding || {}
   const siteUrl = getSiteUrl()

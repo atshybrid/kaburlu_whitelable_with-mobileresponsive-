@@ -16,8 +16,9 @@ export default async function DomainSettingsDebugPage(){
   let settings: any = null
   let error: string | null = null
   const startedAt = Date.now()
+  const authHeader = process.env.TENANT_SETTINGS_AUTH_TOKEN ? { Authorization: `Bearer ${process.env.TENANT_SETTINGS_AUTH_TOKEN}` } : undefined
   try {
-    settings = await getDomainSettings({ cache: 'no-store', previewTenantDomain: normalizedTenantDomain, timeoutMs: 4000 })
+    settings = await getDomainSettings({ cache: 'no-store', previewTenantDomain: normalizedTenantDomain, timeoutMs: 4000, headers: authHeader })
   } catch (e: any) {
     error = e?.message || String(e)
   }
@@ -39,6 +40,7 @@ export default async function DomainSettingsDebugPage(){
           viaLocalRewrite: `curl -H 'accept: application/json' -H 'X-Tenant-Domain: kaburlu.sathuva.in' http://localhost:3000/api/public/domain/settings`,
           viaLocalPage: `curl -H 'X-Tenant-Domain: kaburlu.sathuva.in' http://localhost:3000/debug/domain-settings`,
           altHeader: `curl -H 'Tenant-Domain: kaburlu.sathuva.in' http://localhost:3000/debug/domain-settings`,
+          withAuthEnv: process.env.TENANT_SETTINGS_AUTH_TOKEN ? 'Auth header injected from TENANT_SETTINGS_AUTH_TOKEN env.' : 'Set TENANT_SETTINGS_AUTH_TOKEN in .env.local to include Authorization header',
           note: 'X-Tenant-Domain preferred. Tenant-Domain (without X-) accepted for convenience.'
         }} />
       </section>
