@@ -16,7 +16,7 @@ export async function generateMetadata() {
   const hdrs = await headers()
   const reqHost = hdrs.get('x-forwarded-host') || hdrs.get('host') || undefined
   // Fetch domain settings server-side to apply SEO and icons (host-aware)
-  const settings = await getDomainSettings({ revalidate: 60, timeoutMs: 4000, previewTenantDomain: reqHost }).catch(() => null)
+  const settings = await getDomainSettings({ cache: 'no-store', timeoutMs: 4000, previewTenantDomain: reqHost }).catch(() => null)
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   const seo = settings?.effective?.seo || settings?.effective?.settings?.seo || {}
   const branding = settings?.effective?.branding || settings?.effective?.settings?.branding || {}
@@ -39,7 +39,7 @@ export const viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const hdrs = await headers()
   const reqHost = hdrs.get('x-forwarded-host') || hdrs.get('host') || undefined
-  const settings = await getDomainSettings({ revalidate: 60, timeoutMs: 4000, previewTenantDomain: reqHost }).catch(() => null)
+  const settings = await getDomainSettings({ cache: 'no-store', timeoutMs: 4000, previewTenantDomain: reqHost }).catch(() => null)
   const layoutFlags = settings?.effective?.theme?.layout || settings?.effective?.settings?.theme?.layout || {}
   const branding = settings?.effective?.branding || settings?.effective?.settings?.branding || {}
   const siteUrl = getSiteUrl()
@@ -60,7 +60,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className="scroll-smooth">
       <body className="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
-  <HeaderDisha showTopBar={!!layoutFlags.showTopBar} showTicker={!!layoutFlags.showTicker} brandingLogoUrl={branding.logoUrl || undefined} />
+        <HeaderDisha
+          showTopBar={!!layoutFlags.showTopBar}
+          showTicker={!!layoutFlags.showTicker}
+          brandingLogoUrl={branding.logoUrl || undefined}
+          siteNameOverride={settings?.effective?.seo?.defaultMetaTitle}
+        />
         <JsonLd data={[websiteLd, orgLd]} />
         <div className="max-w-[var(--site-max)] mx-auto px-4">
           {children}

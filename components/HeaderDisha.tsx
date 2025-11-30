@@ -8,7 +8,7 @@ function formatNow(){
   return now.toLocaleString('en-IN', {weekday:'short', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'})
 }
 
-export default function HeaderDisha({ showTopBar = true, showTicker = true, brandingLogoUrl }: { showTopBar?: boolean; showTicker?: boolean; brandingLogoUrl?: string }){
+export default function HeaderDisha({ showTopBar = true, showTicker = true, brandingLogoUrl, siteNameOverride }: { showTopBar?: boolean; showTicker?: boolean; brandingLogoUrl?: string; siteNameOverride?: string }){
   const navConfig = getNavigationConfig()
   // Avoid hydration mismatch by rendering time only on the client after mount
   const [nowText, setNowText] = useState<string>('')
@@ -39,9 +39,9 @@ export default function HeaderDisha({ showTopBar = true, showTicker = true, bran
       <div className="max-w-[var(--site-max)] mx-auto px-4 py-4 hidden md:flex items-center">
         <Link href="/" className="inline-flex items-center">
           {brandingLogoUrl ? (
-            <img src={brandingLogoUrl} alt={navConfig.brand.logoText} className="h-10 md:h-12 w-auto" />
+            <img src={brandingLogoUrl} alt={siteNameOverride || navConfig.brand.logoText} className="h-10 md:h-12 w-auto" />
           ) : (
-            <span className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#255db1]">{navConfig.brand.logoText}</span>
+            <span className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#255db1]">{siteNameOverride || navConfig.brand.logoText}</span>
           )}
           {navConfig.brand.tagline && <span className="ml-2 text-xs text-gray-500">{navConfig.brand.tagline}</span>}
         </Link>
@@ -57,7 +57,7 @@ export default function HeaderDisha({ showTopBar = true, showTicker = true, bran
             <Icon name={mobileMenuOpen ? 'close' : 'menu'} />
           </button>
           <Link href="/" className="flex-1">
-            <span className="text-3xl font-extrabold tracking-tight text-[#255db1]">{navConfig.brand.logoText}</span>
+            <span className="text-3xl font-extrabold tracking-tight text-[#255db1]">{siteNameOverride || navConfig.brand.logoText}</span>
             {navConfig.brand.tagline && <span className="block text-[11px] text-gray-500">{navConfig.brand.tagline}</span>}
           </Link>
           <div className="flex items-center gap-2">
