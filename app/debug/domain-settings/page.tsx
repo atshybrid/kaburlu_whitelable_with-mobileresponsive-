@@ -48,4 +48,4 @@ export default async function DomainSettingsDebugPage(){
   )
 }
 
-import ClientRefetch from './ClientRefetch'
+import ClientRefetch from './ClientRefetch.tsx'
