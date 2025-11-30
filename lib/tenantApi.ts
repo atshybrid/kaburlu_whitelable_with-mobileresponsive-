@@ -94,6 +94,8 @@ export type ApiOptions = {
   // Networking
   signal?: AbortSignal
   headers?: Record<string, string>
+  // Abort request if it exceeds this duration (ms)
+  timeoutMs?: number
   // Preview-only header to emulate a tenant on non-mapped domains
   previewTenantDomain?: string
 }
@@ -110,8 +112,10 @@ function qs(params: Record<string, any> | undefined) {
 }
 
 async function apiFetch<T = any>(path: string, opts: ApiOptions = {}): Promise<T> {
-  const { cache, revalidate, signal, headers, previewTenantDomain } = opts
-  const init: RequestInit = { headers: { ...(headers || {}) }, signal }
+  const { cache, revalidate, signal, headers, previewTenantDomain, timeoutMs } = opts
+  const controller = !signal && timeoutMs ? new AbortController() : null
+  const mergedSignal = signal || controller?.signal
+  const init: RequestInit = { headers: { ...(headers || {}) }, signal: mergedSignal }
   if (previewTenantDomain) {
     (init.headers as Record<string, string>)['X-Tenant-Domain'] = previewTenantDomain
   }
@@ -123,7 +127,21 @@ async function apiFetch<T = any>(path: string, opts: ApiOptions = {}): Promise<T
   } else {
     init.cache = 'no-store'
   }
-  const res = await fetch(`/api${path.startsWith('/') ? '' : '/'}${path}`, init)
+  let timeoutId: any
+  if (controller && timeoutMs) {
+    timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+  }
+  let res: Response
+  try {
+    res = await fetch(`/api${path.startsWith('/') ? '' : '/'}${path}`, init)
+  } catch (err: any) {
+    if (err?.name === 'AbortError') {
+      throw new Error(`API request timed out after ${timeoutMs}ms: ${path}`)
+    }
+    throw err
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId)
+  }
   if (!res.ok) {
     let msg = `API ${res.status} ${res.statusText}`
     try { const j = await res.json(); msg += `: ${j?.message || j?.error || ''}` } catch {}

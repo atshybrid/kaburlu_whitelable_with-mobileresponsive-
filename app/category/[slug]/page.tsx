@@ -2,12 +2,11 @@ import { getCategories, getArticlesByCategory } from '../../../lib/data'
 import Sidebar from '../../../components/Sidebar'
 import ArticleCard from '../../../components/ArticleCard'
 
-export async function generateStaticParams() {
-  return getCategories().filter(c=> c.slug!=='top' && c.slug!=='latest').map(c => ({ slug: c.slug }))
-}
+// Force dynamic rendering to avoid build-time pre-render timeouts when upstream layout fetches stall
+export const dynamic = 'force-dynamic'
 
-export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
+export default async function CategoryPage({ params }: { params: { slug: string } }) {
+  const { slug } = params
   const cats = getCategories()
   const cat = cats.find(c=>c.slug===slug)
   if (!cat) return <div className="p-4">Not found</div>

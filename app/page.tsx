@@ -6,6 +6,8 @@ import MobileCardStack from '../components/MobileCardStack'
 import { getAllArticles, getArticlesByCategory, getTopHeadlines } from '../lib/data'
 import { isMobileAppViewEnabled } from '../lib/site'
 
+export const dynamic = 'force-dynamic'
+
 export default function Home() {
   const showMobileStack = isMobileAppViewEnabled()
   const business = getArticlesByCategory('business', 3)

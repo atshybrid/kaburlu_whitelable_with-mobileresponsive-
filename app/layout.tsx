@@ -9,7 +9,7 @@ import { getDomainSettings } from '../lib/tenantApi'
 
 export async function generateMetadata() {
   // Fetch domain settings server-side to apply SEO and icons
-  const settings = await getDomainSettings({ revalidate: 60 }).catch(() => null)
+  const settings = await getDomainSettings({ revalidate: 60, timeoutMs: 4000 }).catch(() => null)
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   const seo = settings?.effective?.seo || settings?.effective?.settings?.seo || {}
   const branding = settings?.effective?.branding || settings?.effective?.settings?.branding || {}
@@ -30,7 +30,7 @@ export const viewport = {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const settings = await getDomainSettings({ revalidate: 60 }).catch(() => null)
+  const settings = await getDomainSettings({ revalidate: 60, timeoutMs: 4000 }).catch(() => null)
   const layoutFlags = settings?.effective?.theme?.layout || settings?.effective?.settings?.theme?.layout || {}
   const branding = settings?.effective?.branding || settings?.effective?.settings?.branding || {}
   const siteUrl = getSiteUrl()

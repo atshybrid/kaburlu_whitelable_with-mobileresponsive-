@@ -82,10 +82,16 @@ function takeCycled<T>(arr: T[], start: number, count: number): T[] {
 
 export default async function ThreeColNews(){
   const cfg = getBelowHeroConfig()
-  // fetch short news and group by category
-  const res = await fetchShortNews({ limit: Math.max(40, cfg.rows * 3 * (cfg.listCount + 2)), revalidate: 120 })
-  const items = normalizeShortNews(res.data)
-  const grouped = groupByCategory(items)
+  // fetch short news and group by category, tolerant to auth/timeout errors
+  let items: NormalizedShortArticle[] = []
+  let grouped: Record<string, NormalizedShortArticle[]> = {}
+  try {
+    const res = await fetchShortNews({ limit: Math.max(40, cfg.rows * 3 * (cfg.listCount + 2)), revalidate: 120 })
+    items = normalizeShortNews(res.data)
+    grouped = groupByCategory(items)
+  } catch (e) {
+    console.error('[ThreeColNews] short news fetch failed, rendering empty columns', e)
+  }
   // sort categories by number of items desc
   const categories = Object.keys(grouped).sort((a,b)=> (grouped[b]?.length||0)-(grouped[a]?.length||0))
   const needed = cfg.rows * 3
