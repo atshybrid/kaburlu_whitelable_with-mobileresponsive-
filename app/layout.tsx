@@ -7,6 +7,7 @@ import SeoFooter from '../components/SeoFooter'
 import { getSiteName, getSiteUrl } from '../lib/site'
 import { getDomainSettings } from '../lib/tenantApi'
 import { headers } from 'next/headers'
+import { Analytics } from '@vercel/analytics/next'
 
 export async function generateMetadata() {
   // Fetch domain settings server-side to apply SEO and icons
@@ -64,6 +65,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {children}
         </div>
         <SeoFooter />
+        <Analytics />
         <PWAInstallPrompt />
         <BottomNav />
       </body>
