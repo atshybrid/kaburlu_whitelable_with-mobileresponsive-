@@ -1,4 +1,5 @@
 import Image from 'next/image'
+export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { getBelowHeroConfig } from '../lib/uiConfig'
 import { chunk } from '../lib/ui'
@@ -82,7 +83,7 @@ function takeCycled<T>(arr: T[], start: number, count: number): T[] {
 export default async function ThreeColNews(){
   const cfg = getBelowHeroConfig()
   // fetch short news and group by category
-  const res = await fetchShortNews({ limit: Math.max(40, cfg.rows * 3 * (cfg.listCount + 2)) })
+  const res = await fetchShortNews({ limit: Math.max(40, cfg.rows * 3 * (cfg.listCount + 2)), revalidate: 120 })
   const items = normalizeShortNews(res.data)
   const grouped = groupByCategory(items)
   // sort categories by number of items desc

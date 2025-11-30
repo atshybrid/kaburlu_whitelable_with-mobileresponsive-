@@ -36,9 +36,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-export async function generateStaticParams() {
-  return getAllArticles().map(a => ({ slug: a.slug }))
-}
+// Reduce build-time work: render dynamically on demand
+export const dynamic = 'force-dynamic'
+// If you want a small static set, uncomment below and list a couple slugs
+// export async function generateStaticParams() {
+//   return [{ slug: 'ai-summit-hyderabad-te' }]
+// }
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
