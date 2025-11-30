@@ -158,7 +158,18 @@ async function apiFetch<T = any>(path: string, opts: ApiOptions = {}): Promise<T
     err.status = res.status
     throw err
   }
-  return res.json() as Promise<T>
+  let data: any
+  try {
+    data = await res.json()
+  } catch (e) {
+    throw new Error(`Failed to parse JSON for ${path}: ${(e as Error).message}`)
+  }
+  if (isServer && process.env.TENANT_SETTINGS_DEBUG === 'true' && path === '/public/domain/settings') {
+    try {
+      console.log('[tenantApi] full /public/domain/settings response:\n' + JSON.stringify(data, null, 2))
+    } catch {}
+  }
+  return data as T
 }
 
 // Public Website APIs
