@@ -7,7 +7,11 @@ export async function fetchJSON(url:string, opts:RequestInit={}) {
 }
 
 // Short News API (public)
-export const SHORT_NEWS_API = process.env.NEXT_PUBLIC_SHORT_NEWS_API || 'https://app.humanrightscouncilforindia.org/api/v1/shortnews/public'
+// Ensure SHORT_NEWS_API always ends with /shortnews/public so callers can just set base API origin
+const RAW_SHORT_NEWS = process.env.NEXT_PUBLIC_SHORT_NEWS_API || 'https://app.humanrightscouncilforindia.org/api/v1/shortnews/public'
+export const SHORT_NEWS_API = /\/shortnews\/public\/?$/.test(RAW_SHORT_NEWS)
+  ? RAW_SHORT_NEWS.replace(/\/$/, '')
+  : RAW_SHORT_NEWS.replace(/\/$/, '') + '/shortnews/public'
 
 export type ShortNewsItem = {
   kind: 'news'
@@ -46,6 +50,14 @@ export async function fetchShortNews(params: { limit?: number; cursor?: string; 
     signal,
     next: { revalidate, tags },
   })
+  if (res.status === 401) {
+    // Treat auth failure as empty public feed; do not throw to avoid build/dev overlays
+    return {
+      success: false,
+      pageInfo: { limit, hasMore: false },
+      data: [],
+    }
+  }
   if (!res.ok) throw new Error(`ShortNews fetch failed: ${res.status}`)
   return res.json() as Promise<ShortNewsResponse>
 }

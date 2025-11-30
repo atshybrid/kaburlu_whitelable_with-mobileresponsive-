@@ -2,9 +2,15 @@ import { fetchShortNews, normalizeShortNews, groupByCategory } from '../lib/api'
 import HeroDailyClient from './HeroDailyClient'
 
 export default async function HeroDaily() {
-  const res = await fetchShortNews({ limit: 60 })
-  const items = normalizeShortNews(res.data)
-  const grouped = groupByCategory(items)
+  let items = []
+  let grouped: Record<string, ReturnType<typeof normalizeShortNews>[number][]> = {}
+  try {
+    const res = await fetchShortNews({ limit: 60 })
+    items = normalizeShortNews(res.data)
+    grouped = groupByCategory(items)
+  } catch (e) {
+    console.error('[HeroDaily] short news fetch failed, rendering skeleton', e)
+  }
   const forced = process.env.NEXT_PUBLIC_SECTION2_FORCE_CATEGORY_NAME?.trim()
   const catName = (forced && grouped[forced]?.length)
     ? forced
