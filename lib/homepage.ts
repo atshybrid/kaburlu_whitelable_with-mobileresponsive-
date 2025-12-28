@@ -48,11 +48,6 @@ const _getPublicHomepage = reactCache(async (params: {
   const themeKey = String(params.themeKey || 'style1')
   const shape = String(params.shape || themeKey)
 
-  // Best-practice: keep tokens server-only (never NEXT_PUBLIC_*).
-  // Prefer a dedicated bearer token env var name, but keep backward compat.
-  const token = (process.env.REMOTE_PUBLIC_TOKEN || process.env.REMOTE_API_BEARER_TOKEN || '').trim()
-  const authHeader = token ? { Authorization: `Bearer ${token}` } : undefined
-
   const qs = new URLSearchParams({
     domain,
     v: String(params.v ?? '1'),
@@ -63,7 +58,6 @@ const _getPublicHomepage = reactCache(async (params: {
 
   return fetchJSON<PublicHomepageResponse>(`/public/homepage?${qs.toString()}`, {
     tenantDomain: domain,
-    headers: authHeader,
     // Cache with revalidation; avoids repeated backend hits.
     revalidateSeconds: Number(process.env.REMOTE_HOMEPAGE_REVALIDATE_SECONDS || '30'),
     tags: [`homepage:${domain}:${lang}:${themeKey}:${shape}`],

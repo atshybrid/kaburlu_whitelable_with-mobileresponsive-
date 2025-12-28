@@ -90,7 +90,8 @@ function normalizeItem(u: unknown): Article {
   const excerpt = typeof o.excerpt === 'string' ? o.excerpt : (typeof o.summary === 'string' ? o.summary : undefined)
   const content = typeof o.content === 'string' ? o.content : undefined
   let coverUrl: string | undefined
-  if (o.coverImage && typeof o.coverImage === 'object') {
+  if (typeof o.coverImage === 'string') coverUrl = o.coverImage
+  if (!coverUrl && o.coverImage && typeof o.coverImage === 'object') {
     const ci = o.coverImage as Record<string, unknown>
     if (typeof ci.url === 'string') coverUrl = ci.url
   }

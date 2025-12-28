@@ -44,8 +44,6 @@ export async function getCategoriesForNav(): Promise<Category[]> {
 
   // Prefer translations endpoint when a domain language is configured.
   // Backend may still return English if translation is missing; we fall back gracefully.
-  const token = (process.env.REMOTE_PUBLIC_TOKEN || process.env.REMOTE_API_BEARER_TOKEN || '').trim()
-  const authHeader = token ? { Authorization: `Bearer ${token}` } : undefined
 
   // Avoid extra requests when English is used.
   if (languageCode.toLowerCase() !== 'en') {
@@ -53,7 +51,6 @@ export async function getCategoriesForNav(): Promise<Category[]> {
     try {
       const translated = await fetchJSON<CategoryTranslationRow[]>(`/public/category-translations?${translationsQs.toString()}`, {
         tenantDomain: domain,
-        headers: authHeader,
         revalidateSeconds: Number(process.env.REMOTE_CATEGORY_TRANSLATIONS_REVALIDATE_SECONDS || '300'),
         tags: [`category-translations:${domain}:${languageCode}`],
       })

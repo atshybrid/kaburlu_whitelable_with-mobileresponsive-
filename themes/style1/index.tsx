@@ -221,16 +221,62 @@ export async function ThemeHome({
     const sec = sectionByType(type)
     if (!sec) return []
     const items = (homepageData as Record<string, unknown>)[sec.id]
-    return Array.isArray(items) ? (items as Article[]) : []
+    if (!Array.isArray(items)) return []
+    // Normalize common backend shapes into our `Article` shape.
+    return (items as any[]).map((u) => {
+      const o = (u ?? {}) as Record<string, unknown>
+      const id = String(o.id ?? o._id ?? o.slug ?? Math.random().toString(36).slice(2))
+      const slug = typeof o.slug === 'string' ? o.slug : undefined
+      const title = String(o.title ?? o.headline ?? 'Untitled')
+      const excerpt = typeof o.excerpt === 'string' ? o.excerpt : (typeof o.summary === 'string' ? o.summary : undefined)
+      const content = typeof o.content === 'string' ? o.content : undefined
+      let coverUrl: string | undefined
+      if (typeof o.coverImage === 'string') coverUrl = o.coverImage
+      if (o.coverImage && typeof o.coverImage === 'object') {
+        const ci = o.coverImage as Record<string, unknown>
+        if (typeof ci.url === 'string') coverUrl = ci.url
+      }
+      if (!coverUrl && typeof (o as any).coverImageUrl === 'string') coverUrl = String((o as any).coverImageUrl)
+      if (!coverUrl && typeof (o as any).imageUrl === 'string') coverUrl = String((o as any).imageUrl)
+      if (!coverUrl && typeof (o as any).featuredImage === 'string') coverUrl = String((o as any).featuredImage)
+      return { id, slug, title, excerpt: excerpt ?? null, content: content ?? null, coverImage: coverUrl ? { url: coverUrl } : undefined } as Article
+    })
   }
 
-  const tickerItems = itemsForSectionType('ticker')
-  const heroStackItems = itemsForSectionType('heroStack')
+  async function resolveSectionItems(type: string): Promise<Article[]> {
+    const sec = sectionByType(type)
+    if (!sec) return []
+    const direct = itemsForSectionType(type)
+    if (direct.length > 0) return direct
+
+    // Best-effort fallback: if API returns empty `data`, use its query to fetch.
+    const q = (sec.query || {}) as any
+    const kind = String(q.kind || '')
+    const limit = Number(q.limit || 0)
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(50, Math.max(1, Math.floor(limit))) : undefined
+
+    try {
+      if (kind === 'category' && typeof q.categorySlug === 'string' && q.categorySlug.trim()) {
+        const list = await getArticlesByCategory('na', q.categorySlug.trim())
+        return safeLimit ? list.slice(0, safeLimit) : list
+      }
+      if (kind === 'latest') {
+        const list = await getHomeFeed('na')
+        return safeLimit ? list.slice(0, safeLimit) : list
+      }
+    } catch {
+      // ignore
+    }
+    return []
+  }
+
+  const tickerItems = await resolveSectionItems('ticker')
+  const heroStackItems = await resolveSectionItems('heroStack')
   const lastNewsSection = sectionByType('listWithThumb')
-  const lastNewsItems = itemsForSectionType('listWithThumb')
+  const lastNewsItems = await resolveSectionItems('listWithThumb')
   const trendingCategorySection = sectionByType('twoColRows')
-  const trendingCategoryItems = itemsForSectionType('twoColRows')
-  const titlesOnlyItems = itemsForSectionType('titlesOnly')
+  const trendingCategoryItems = await resolveSectionItems('twoColRows')
+  const titlesOnlyItems = await resolveSectionItems('titlesOnly')
 
   const layout = await readHomeLayout(tenantSlug, 'style1')
 
