@@ -1,0 +1,5 @@
+.theme-tv9 { --accent: 0 85% 55%; }
+.theme-tv9 .prose :where(h1,h2,h3){color:#111827}
+.theme-tv9 a:hover { color: hsl(var(--accent)); }
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes ticker-in{0%{transform:translateX(100%);opacity:.2}100%{transform:translateX(0);opacity:1}}

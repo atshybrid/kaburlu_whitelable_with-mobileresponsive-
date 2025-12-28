@@ -1,0 +1,3 @@
+.theme-style1 { --accent: 220 70% 55%; }
+.theme-style1 a:hover { color: hsl(var(--accent)); }
+.theme-style1 .gradient-title { background: linear-gradient(90deg,#dc2626,#ef4444); -webkit-background-clip:text; color:transparent; }

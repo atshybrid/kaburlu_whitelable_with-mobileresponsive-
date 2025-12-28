@@ -1,0 +1,2 @@
+.theme-style2 { --accent: 340 80% 50%; }
+.theme-style2 a { color: hsl(var(--accent)); }

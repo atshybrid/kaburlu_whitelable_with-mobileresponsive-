@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Kaburlu News — Multi-tenant Next.js news platform with 3 themes and REST APIs.
 
-## Getting Started
+## Prerequisites
 
-First, run the development server:
+- Node.js 18+ and npm
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Quick Start (Windows PowerShell)
+
+1) Configure environment variables:
+
+```powershell
+Copy-Item .env.example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2) Install dependencies:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+npm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3) Generate Prisma client and create DB (SQLite by default):
 
-## Learn More
+```powershell
+npx prisma migrate dev -n init
+npm run db:seed
+```
 
-To learn more about Next.js, take a look at the following resources:
+4) Start the dev server:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```powershell
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open http://localhost:3000/t/demo to view the demo tenant.
 
-## Deploy on Vercel
+### Use Remote Domain Settings (your API)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Set the base URL and run:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```powershell
+echo API_BASE_URL="https://app.kaburlumedia.com/api/v1" >> .env
+```
+
+On each request, the server calls `GET /public/domain/settings` with header `X-Tenant-Domain: {host}` to fetch:
+- branding.logoUrl, branding.faviconUrl
+- seo.defaultMetaTitle/defaultMetaDescription/ogImageUrl
+- theme.layout.showTicker/showTopBar
+
+These values drive metadata, logo, and UI toggles in style1. Provide article/category endpoints to fully switch feeds to the remote API.
+
+## Multitenancy
+
+- Path mode (default): routes are under `/t/{tenant}`. Change `MULTITENANT_MODE` to `subdomain` to support `{tenant}.yourdomain.com` and the middleware rewrites to the internal path.
+
+## REST APIs (examples)
+
+- Backend (remote) expected endpoints used by the frontend:
+	- `GET {API_BASE_URL}/public/domain/settings` with header `X-Tenant-Domain: {host}` — branding/seo/theme
+	- `GET {API_BASE_URL}/public/articles?page=1&pageSize=12` — home feed list (frontend reads `items`)
+	- `GET {API_BASE_URL}/public/articles?slug={slug}&pageSize=1` — article by slug (first item)
+	- `GET {API_BASE_URL}/public/articles?category={slug}&page=1&pageSize=12` — category listing
+	- The frontend will also accept alternative shapes such as `{ item }`, `{ data }`, `{ articles }`.
+
+- Local (dev) API in this app (Prisma):
+	- `GET /api/tenants` — list tenants
+	- `GET /t/{tenant}/api/articles` — list articles for tenant
+	- `POST /t/{tenant}/api/articles` — create article (JSON body: `slug`, `title`, `content`, ...)
+
+## Themes
+
+Three themes live under `themes/style1|style2|style3`. Tenant theme is chosen via the `themeKey` field.
+
+## Scripts
+
+- `npm run prisma:migrate` — create dev migration
+- `npm run prisma:reset` — reset database
+- `npm run db:seed` — seed demo data
+- `npm run sitemap` — generate static sitemap/robots to `public/`
+
+### Data source switch
+- Set `DATA_SOURCE=remote` to read content from your Node API (default).
+- Set `DATA_SOURCE=local` to use the local SQLite database via Prisma.

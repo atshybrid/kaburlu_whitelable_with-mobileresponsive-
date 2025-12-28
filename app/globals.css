@@ -24,3 +24,23 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* FlashTicker animations */
+@keyframes ticker-in {
+  0% { transform: translateY(40%); opacity: 0; }
+  50% { opacity: 0.6; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes ticker-out {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-40%); opacity: 0; }
+}
+
+.ticker-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  white-space: nowrap;
+}
