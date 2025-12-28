@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const url = req.nextUrl
   const pathname = url.pathname
   const mode = process.env.MULTITENANT_MODE || 'path'

@@ -50,7 +50,7 @@ These values drive metadata, logo, and UI toggles in style1. Provide article/cat
 
 ## Multitenancy
 
-- Path mode (default): routes are under `/t/{tenant}`. Change `MULTITENANT_MODE` to `subdomain` to support `{tenant}.yourdomain.com` and the middleware rewrites to the internal path.
+- Path mode (default): routes are under `/t/{tenant}`. Change `MULTITENANT_MODE` to `subdomain` to support `{tenant}.yourdomain.com` and the proxy rewrites to the internal path.
 
 ## REST APIs (examples)
 
