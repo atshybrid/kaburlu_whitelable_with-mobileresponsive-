@@ -204,11 +204,15 @@ export async function ThemeHome({
 }) {
   let homepage: PublicHomepageResponse | null = null
   try {
-    const lang = settings?.content?.defaultLanguage || 'en'
-    homepage = await getPublicHomepage({ themeKey: 'style1', shape: 'style1', lang })
+    const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'en'
+    homepage = await getPublicHomepage({ v: 1, themeKey: 'style1', lang })
   } catch {
     homepage = null
   }
+
+  // Best-practice: for root-domain home, use the tenant slug returned by backend homepage config
+  // so links go to the correct tenant path.
+  const tenantSlugForLinks = homepage?.tenant?.slug || tenantSlug
 
   const homepageSections = homepage?.sections || []
   const homepageData = homepage?.data || {}
@@ -243,11 +247,13 @@ export async function ThemeHome({
     })
   }
 
-  async function resolveSectionItems(type: string): Promise<Article[]> {
+  const navCats = await getCategoriesForNav()
+
+  async function resolveSectionItems(type: string): Promise<{ items: Article[]; categorySlugUsed?: string }> {
     const sec = sectionByType(type)
-    if (!sec) return []
+    if (!sec) return { items: [] }
     const direct = itemsForSectionType(type)
-    if (direct.length > 0) return direct
+    if (direct.length > 0) return { items: direct }
 
     // Best-effort fallback: if API returns empty `data`, use its query to fetch.
     const q = (sec.query || {}) as any
@@ -257,26 +263,46 @@ export async function ThemeHome({
 
     try {
       if (kind === 'category' && typeof q.categorySlug === 'string' && q.categorySlug.trim()) {
-        const list = await getArticlesByCategory('na', q.categorySlug.trim())
-        return safeLimit ? list.slice(0, safeLimit) : list
+        const wanted = q.categorySlug.trim()
+        const list = await getArticlesByCategory('na', wanted)
+        const sliced = safeLimit ? list.slice(0, safeLimit) : list
+        if (sliced.length > 0) return { items: sliced, categorySlugUsed: wanted }
+
+        // If homepage config points to a category slug with no articles for this tenant,
+        // fall back to a reasonable nav category so UI doesn't duplicate the same first category.
+        const fallbackIndex = type === 'listWithThumb' ? 0 : type === 'twoColRows' ? 1 : 0
+        const fallbackSlug = navCats[fallbackIndex]?.slug || navCats[0]?.slug
+        if (fallbackSlug && fallbackSlug !== wanted) {
+          const alt = await getArticlesByCategory('na', fallbackSlug)
+          const altSliced = safeLimit ? alt.slice(0, safeLimit) : alt
+          if (altSliced.length > 0) return { items: altSliced, categorySlugUsed: fallbackSlug }
+        }
+        return { items: [] }
       }
       if (kind === 'latest') {
         const list = await getHomeFeed('na')
-        return safeLimit ? list.slice(0, safeLimit) : list
+        const sliced = safeLimit ? list.slice(0, safeLimit) : list
+        return { items: sliced }
       }
     } catch {
       // ignore
     }
-    return []
+    return { items: [] }
   }
 
-  const tickerItems = await resolveSectionItems('ticker')
-  const heroStackItems = await resolveSectionItems('heroStack')
+  const tickerRes = await resolveSectionItems('ticker')
+  const heroStackRes = await resolveSectionItems('heroStack')
   const lastNewsSection = sectionByType('listWithThumb')
-  const lastNewsItems = await resolveSectionItems('listWithThumb')
+  const lastNewsRes = await resolveSectionItems('listWithThumb')
   const trendingCategorySection = sectionByType('twoColRows')
-  const trendingCategoryItems = await resolveSectionItems('twoColRows')
-  const titlesOnlyItems = await resolveSectionItems('titlesOnly')
+  const trendingCategoryRes = await resolveSectionItems('twoColRows')
+  const titlesOnlyRes = await resolveSectionItems('titlesOnly')
+
+  const tickerItems = tickerRes.items
+  const heroStackItems = heroStackRes.items
+  const lastNewsItems = lastNewsRes.items
+  const trendingCategoryItems = trendingCategoryRes.items
+  const titlesOnlyItems = titlesOnlyRes.items
 
   const layout = await readHomeLayout(tenantSlug, 'style1')
 
@@ -298,7 +324,7 @@ export async function ThemeHome({
     if (!block.isActive) return null
     switch (block.type) {
       case 'heroLead':
-        return lead ? <HeroLead key={block.id} tenantSlug={tenantSlug} a={lead} /> : null
+        return lead ? <HeroLead key={block.id} tenantSlug={tenantSlugForLinks} a={lead} /> : null
       case 'mediumCards':
         return (
           <div key={block.id} className="grid grid-cols-2 gap-4">
@@ -311,14 +337,14 @@ export async function ThemeHome({
         return (
           <div key={block.id} className="grid grid-cols-1 gap-3">
             {small.slice(0, 3).map((a) => (
-              <ListRow key={a.id} tenantSlug={tenantSlug} a={a} />
+              <ListRow key={a.id} tenantSlug={tenantSlugForLinks} a={a} />
             ))}
           </div>
         )
       case 'categoryBlock':
         if (lastNewsItems.length > 0) {
-          const slug = String((lastNewsSection?.query as any)?.categorySlug || '')
-          const href = slug ? (categoryHref(tenantSlug, slug) as any) : undefined
+          const slug = String(lastNewsRes.categorySlugUsed || (lastNewsSection?.query as any)?.categorySlug || '')
+          const href = slug ? (categoryHref(tenantSlugForLinks, slug) as any) : undefined
           const label = String(lastNewsSection?.label || 'Last News')
           return (
             <section key={block.id} className="mb-8 rounded-xl bg-white">
@@ -345,7 +371,7 @@ export async function ThemeHome({
                     key={a.id}
                     className="grid grid-cols-[1fr_auto] items-center gap-[0.725rem] px-[0.725rem] py-[0.725rem] border-b border-dashed border-zinc-200 last:border-b-0"
                   >
-                    <a href={articleHref(tenantSlug, a.slug || a.id)} className="line-clamp-2 text-sm font-semibold leading-tight hover:text-red-600">
+                    <a href={articleHref(tenantSlugForLinks, a.slug || a.id)} className="line-clamp-2 text-sm font-semibold leading-tight hover:text-red-600">
                       {a.title}
                     </a>
                     <div className="h-[4.25rem] w-[6.25rem] overflow-hidden rounded">
@@ -362,11 +388,11 @@ export async function ThemeHome({
             </section>
           )
         }
-        return <CategoryBlock key={block.id} tenantSlug={tenantSlug} />
+        return <CategoryBlock key={block.id} tenantSlug={tenantSlugForLinks} />
       case 'trendingCategoryBlock':
         if (trendingCategoryItems.length > 0) {
-          const slug = String((trendingCategorySection?.query as any)?.categorySlug || '')
-          const href = slug ? categoryHref(tenantSlug, slug) : undefined
+          const slug = String(trendingCategoryRes.categorySlugUsed || (trendingCategorySection?.query as any)?.categorySlug || '')
+          const href = slug ? categoryHref(tenantSlugForLinks, slug) : undefined
           const label = String(trendingCategorySection?.label || 'Trending News')
           const items = trendingCategoryItems.slice(0, 6)
           return (
@@ -399,7 +425,7 @@ export async function ThemeHome({
                         <PlaceholderImg className="h-full w-full object-cover" />
                       )}
                     </div>
-                    <a href={articleHref(tenantSlug, a.slug || a.id)} className="line-clamp-2 text-sm font-semibold leading-snug hover:text-red-600">
+                    <a href={articleHref(tenantSlugForLinks, a.slug || a.id)} className="line-clamp-2 text-sm font-semibold leading-snug hover:text-red-600">
                       {a.title}
                     </a>
                   </div>
@@ -408,7 +434,7 @@ export async function ThemeHome({
             </section>
           )
         }
-        return <TrendingCategoryBlock key={block.id} tenantSlug={tenantSlug} />
+        return <TrendingCategoryBlock key={block.id} tenantSlug={tenantSlugForLinks} />
       case 'trendingList':
         return (
           <Section key={block.id} title="Trending News" noShadow>
@@ -416,7 +442,7 @@ export async function ThemeHome({
               {(titlesOnlyItems.length > 0 ? titlesOnlyItems : articles).slice(0, 8).map((a) => (
                 <a
                   key={a.id}
-                  href={articleHref(tenantSlug, a.slug || a.id)}
+                  href={articleHref(tenantSlugForLinks, a.slug || a.id)}
                   className="block px-3 py-2 border-b border-zinc-100 last:border-b-0 text-sm font-medium leading-snug hover:text-red-600 line-clamp-2"
                 >
                   {a.title}
@@ -454,14 +480,14 @@ export async function ThemeHome({
         return (
           <div key={block.id} className="mt-8">
             <Section title="" noShadow bodyClassName="grid grid-cols-1 gap-6 lg:grid-cols-4">
-              <CategoryColumns tenantSlug={tenantSlug} />
+              <CategoryColumns tenantSlug={tenantSlugForLinks} />
             </Section>
           </div>
         )
       case 'webStoriesArea':
         return (
           <div key={block.id} className="mt-8">
-            <WebStoriesArea tenantSlug={tenantSlug} />
+            <WebStoriesArea tenantSlug={tenantSlugForLinks} />
           </div>
         )
       default:
@@ -508,7 +534,7 @@ export async function ThemeHome({
           node: (
             <div key={section.id} className="bg-white">
               <div className="mx-auto max-w-7xl px-4">
-                <FlashTicker tenantSlug={tenantSlug} items={(tickerItems.length > 0 ? tickerItems : articles).slice(0, 12)} />
+                <FlashTicker tenantSlug={tenantSlugForLinks} items={(tickerItems.length > 0 ? tickerItems : articles).slice(0, 12)} />
               </div>
             </div>
           ),
@@ -565,9 +591,9 @@ export async function ThemeHome({
 
   return (
     <div className="theme-style1">
-      <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} />
+      <Navbar tenantSlug={tenantSlugForLinks} title={title} logoUrl={settings?.branding?.logoUrl} />
       {rendered}
-      <MobileBottomNav tenantSlug={tenantSlug} />
+      <MobileBottomNav tenantSlug={tenantSlugForLinks} />
       <Footer />
     </div>
   )

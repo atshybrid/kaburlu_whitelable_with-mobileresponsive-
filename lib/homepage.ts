@@ -26,40 +26,33 @@ function domainFromHost(host: string | null) {
 }
 
 export async function getPublicHomepage(params: {
-  domain?: string
   v?: string | number
-  shape?: string
-  themeKey: string
-  lang: string
+  themeKey?: string
+  lang?: string
 }): Promise<PublicHomepageResponse> {
   return _getPublicHomepage(params)
 }
 
 const _getPublicHomepage = reactCache(async (params: {
-  domain?: string
   v?: string | number
-  shape?: string
-  themeKey: string
-  lang: string
+  themeKey?: string
+  lang?: string
 }): Promise<PublicHomepageResponse> => {
   const h = await headers()
-  const domain = params.domain || domainFromHost(h.get('host'))
+  const domain = domainFromHost(h.get('host'))
   const lang = String(params.lang || 'en')
   const themeKey = String(params.themeKey || 'style1')
-  const shape = String(params.shape || themeKey)
 
-  const qs = new URLSearchParams({
-    domain,
-    v: String(params.v ?? '1'),
-    shape,
-    themeKey,
-    lang,
-  })
+  // Backend contract: GET /public/homepage?v=1 (optional lang/themeKey).
+  // Domain is inferred via X-Tenant-Domain header.
+  const qs = new URLSearchParams({ v: String(params.v ?? '1') })
+  if (lang) qs.set('lang', lang)
+  if (themeKey) qs.set('themeKey', themeKey)
 
   return fetchJSON<PublicHomepageResponse>(`/public/homepage?${qs.toString()}`, {
     tenantDomain: domain,
     // Cache with revalidation; avoids repeated backend hits.
     revalidateSeconds: Number(process.env.REMOTE_HOMEPAGE_REVALIDATE_SECONDS || '30'),
-    tags: [`homepage:${domain}:${lang}:${themeKey}:${shape}`],
+    tags: [`homepage:${domain}:${lang}:${themeKey}`],
   })
 })

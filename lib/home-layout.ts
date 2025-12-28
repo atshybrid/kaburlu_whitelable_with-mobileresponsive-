@@ -61,7 +61,9 @@ const slugSchema = z
   .string()
   .trim()
   .min(1)
-  .regex(/^[a-z0-9-]+$/i, 'Invalid tenant slug')
+  // Allow dot as well because some deployments may pass a domain-like value.
+  // We still coerce/sanitize below for file path safety.
+  .regex(/^[a-z0-9.-]+$/i, 'Invalid tenant slug')
 
 const homeBlockSchema: z.ZodType<HomeBlock> = z.object({
   id: z.string().min(1),
@@ -107,7 +109,30 @@ export const homeLayoutSchema: z.ZodType<HomeLayout> = z.object({
 })
 
 function safeTenantSlug(input: string) {
-  return slugSchema.parse(input.toLowerCase())
+  const raw = String(input ?? '').trim().toLowerCase()
+  if (!raw) return 'demo'
+
+  // 1) accept as-is if valid
+  const direct = slugSchema.safeParse(raw)
+  if (direct.success) return direct.data
+
+  // 2) if it looks like a domain, take first label
+  if (raw.includes('.')) {
+    const first = raw.split('.')[0].trim()
+    const parsedFirst = slugSchema.safeParse(first)
+    if (parsedFirst.success) return parsedFirst.data
+  }
+
+  // 3) sanitize: replace invalid chars with '-', collapse repeats
+  const sanitized = raw
+    .replace(/[^a-z0-9.-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^[-.]+|[-.]+$/g, '')
+
+  const parsedSanitized = slugSchema.safeParse(sanitized)
+  if (parsedSanitized.success) return parsedSanitized.data
+
+  return 'demo'
 }
 
 function layoutPathForTenant(tenantSlug: string) {

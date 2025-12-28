@@ -34,7 +34,7 @@ export async function getCategoriesForNav(): Promise<Category[]> {
   const h = await headers()
   const domain = getDomain(h)
   const settings = await getEffectiveSettings()
-  const lang = settings?.content?.defaultLanguage || 'en'
+  const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'en'
   const key = `categories:${domain}:${lang}`
   const now = Date.now()
   const hit = cache.get(key)
