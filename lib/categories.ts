@@ -11,6 +11,16 @@ export interface Category {
   children?: Category[]
 }
 
+type CategoryTranslationRow = {
+  id: string
+  baseName: string
+  slug: string
+  translated?: string | null
+  hasTranslation?: boolean
+  domainLanguageEnabled?: boolean
+  tenantDefaultLanguage?: string | null
+}
+
 type CacheEntry = { value: Category[]; expires: number }
 const cache = new Map<string, CacheEntry>()
 const TTL_MS = 60 * 1000
@@ -30,22 +40,58 @@ export async function getCategoriesForNav(): Promise<Category[]> {
   const hit = cache.get(key)
   if (hit && hit.expires > now) return hit.value
 
-  const qs = new URLSearchParams({ includeChildren: 'true', languageCode: String(lang) })
+  const languageCode = String(lang || 'en')
+
+  // Prefer translations endpoint when a domain language is configured.
+  // Backend may still return English if translation is missing; we fall back gracefully.
+  const token = (process.env.REMOTE_PUBLIC_TOKEN || process.env.REMOTE_API_BEARER_TOKEN || '').trim()
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : undefined
+
+  // Avoid extra requests when English is used.
+  if (languageCode.toLowerCase() !== 'en') {
+    const translationsQs = new URLSearchParams({ languageCode })
+    try {
+      const translated = await fetchJSON<CategoryTranslationRow[]>(`/public/category-translations?${translationsQs.toString()}`, {
+        tenantDomain: domain,
+        headers: authHeader,
+        revalidateSeconds: Number(process.env.REMOTE_CATEGORY_TRANSLATIONS_REVALIDATE_SECONDS || '300'),
+        tags: [`category-translations:${domain}:${languageCode}`],
+      })
+      const rows = Array.isArray(translated) ? translated : []
+      const enabled = rows.filter((r) => r && r.domainLanguageEnabled !== false)
+      if (enabled.length > 0) {
+        const mapped: Category[] = enabled.map((r) => ({
+          id: String(r.id),
+          slug: String(r.slug),
+          name: r.hasTranslation && r.translated ? String(r.translated) : String(r.baseName || r.slug),
+        }))
+        cache.set(key, { value: mapped, expires: now + TTL_MS })
+        return mapped
+      }
+    } catch {
+      // ignore; fall back
+    }
+  }
+
+  const qs = new URLSearchParams({ includeChildren: 'true', languageCode })
   try {
-    const res = await fetchJSON<Category[]>(`/public/categories?${qs.toString()}`, { tenantDomain: domain })
+    const res = await fetchJSON<Category[]>(`/public/categories?${qs.toString()}`, {
+      tenantDomain: domain,
+      revalidateSeconds: Number(process.env.REMOTE_CATEGORIES_REVALIDATE_SECONDS || '300'),
+      tags: [`categories:${domain}:${languageCode}`],
+    })
     const flat = Array.isArray(res) ? res : []
     if (flat.length > 0) {
       cache.set(key, { value: flat, expires: now + TTL_MS })
       return flat
     }
-    const mock = makeMockCategories()
-    cache.set(key, { value: mock, expires: now + TTL_MS })
-    return mock
   } catch {
-    const mock = makeMockCategories()
-    cache.set(key, { value: mock, expires: now + TTL_MS })
-    return mock
+    // ignore
   }
+
+  const mock = makeMockCategories()
+  cache.set(key, { value: mock, expires: now + TTL_MS })
+  return mock
 }
 
 function makeMockCategories(): Category[] {

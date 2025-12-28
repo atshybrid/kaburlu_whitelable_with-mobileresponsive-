@@ -15,6 +15,8 @@ import { getEffectiveSettings } from '@/lib/settings'
 import { WebStoriesPlayer } from '@/components/shared/WebStoriesPlayer'
 import { WebStoriesGrid } from '@/components/shared/WebStoriesGrid'
 import MobileBottomNav from '@/components/shared/MobileBottomNav'
+import { readHomeLayout, type HomeSection, type HomeBlock } from '@/lib/home-layout'
+import { getPublicHomepage, type PublicHomepageResponse, type PublicHomepageSection } from '@/lib/homepage'
 
 function HorizontalAd({ className, label = 'Horizontal Ad' }: { className?: string; label?: string }) {
   return (
@@ -189,97 +191,336 @@ function ListRow({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
   )
 }
 
-export function ThemeHome({ tenantSlug, title, articles, settings }: { tenantSlug: string; title: string; articles: Article[]; settings?: EffectiveSettings }) {
-  const lead = articles[0]
-  const medium = articles.slice(1, 3)
-  const small = articles.slice(3, 9)
-  const more = articles.slice(9, 30)
-  return (
-    <div className="theme-style1">
-      <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} />
-      {/* Flash News strip */}
-      <div className="bg-white">
-        <div className="mx-auto max-w-7xl px-4">
-          <FlashTicker tenantSlug={tenantSlug} items={articles.slice(0, 12)} />
-        </div>
-      </div>
-      <main className="mx-auto max-w-7xl px-4 py-6">
-        {/* Exactly four columns (no spanning) to match positions */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-          {/* Column 1: Hero stack */}
-          <div id="left-col" className="space-y-6">
-            {lead && <HeroLead tenantSlug={tenantSlug} a={lead} />}
-            <div className="grid grid-cols-2 gap-4">
-              {medium.map((a) => (
-                <CardMedium key={a.id} tenantSlug={tenantSlug} a={a} />
+export async function ThemeHome({
+  tenantSlug,
+  title,
+  articles,
+  settings,
+}: {
+  tenantSlug: string
+  title: string
+  articles: Article[]
+  settings?: EffectiveSettings
+}) {
+  let homepage: PublicHomepageResponse | null = null
+  try {
+    const lang = settings?.content?.defaultLanguage || 'en'
+    homepage = await getPublicHomepage({ themeKey: 'style1', shape: 'style1', lang })
+  } catch {
+    homepage = null
+  }
+
+  const homepageSections = homepage?.sections || []
+  const homepageData = homepage?.data || {}
+
+  function sectionByType(type: string): PublicHomepageSection | undefined {
+    return homepageSections.find((s) => s && s.type === type)
+  }
+
+  function itemsForSectionType(type: string): Article[] {
+    const sec = sectionByType(type)
+    if (!sec) return []
+    const items = (homepageData as Record<string, unknown>)[sec.id]
+    return Array.isArray(items) ? (items as Article[]) : []
+  }
+
+  const tickerItems = itemsForSectionType('ticker')
+  const heroStackItems = itemsForSectionType('heroStack')
+  const lastNewsSection = sectionByType('listWithThumb')
+  const lastNewsItems = itemsForSectionType('listWithThumb')
+  const trendingCategorySection = sectionByType('twoColRows')
+  const trendingCategoryItems = itemsForSectionType('twoColRows')
+  const titlesOnlyItems = itemsForSectionType('titlesOnly')
+
+  const layout = await readHomeLayout(tenantSlug, 'style1')
+
+  const heroSource = heroStackItems.length > 0 ? heroStackItems : articles
+  const lead = heroSource[0]
+  const medium = heroSource.slice(1, 3)
+  const small = heroSource.slice(3, 9)
+
+  const activeSections = (layout.sections || [])
+    .filter((s) => s && s.isActive)
+    .slice()
+    .sort((a, b) => a.position - b.position)
+
+  function activeBlocksForSection(section: HomeSection) {
+    return (section.blocks || []).filter((b) => b.isActive).slice().sort((a, b) => a.position - b.position)
+  }
+
+  function renderBlock(block: HomeBlock) {
+    if (!block.isActive) return null
+    switch (block.type) {
+      case 'heroLead':
+        return lead ? <HeroLead key={block.id} tenantSlug={tenantSlug} a={lead} /> : null
+      case 'mediumCards':
+        return (
+          <div key={block.id} className="grid grid-cols-2 gap-4">
+            {medium.map((a) => (
+              <CardMedium key={a.id} tenantSlug={tenantSlug} a={a} />
+            ))}
+          </div>
+        )
+      case 'smallList':
+        return (
+          <div key={block.id} className="grid grid-cols-1 gap-3">
+            {small.slice(0, 3).map((a) => (
+              <ListRow key={a.id} tenantSlug={tenantSlug} a={a} />
+            ))}
+          </div>
+        )
+      case 'categoryBlock':
+        if (lastNewsItems.length > 0) {
+          const slug = String((lastNewsSection?.query as any)?.categorySlug || '')
+          const href = slug ? (categoryHref(tenantSlug, slug) as any) : undefined
+          const label = String(lastNewsSection?.label || 'Last News')
+          return (
+            <section key={block.id} className="mb-8 rounded-xl bg-white">
+              <div className="flex items-center justify-between border-b px-4 py-2">
+                <div className="inline-flex items-center gap-2">
+                  <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
+                  {href ? (
+                    <a href={href} className="text-sm font-bold uppercase tracking-wide hover:text-red-600">
+                      {label}
+                    </a>
+                  ) : (
+                    <span className="text-sm font-bold uppercase tracking-wide">{label}</span>
+                  )}
+                </div>
+                {href ? (
+                  <a href={href} className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-50">
+                    View More →
+                  </a>
+                ) : null}
+              </div>
+              <div>
+                {lastNewsItems.slice(0, 7).map((a) => (
+                  <div
+                    key={a.id}
+                    className="grid grid-cols-[1fr_auto] items-center gap-[0.725rem] px-[0.725rem] py-[0.725rem] border-b border-dashed border-zinc-200 last:border-b-0"
+                  >
+                    <a href={articleHref(tenantSlug, a.slug || a.id)} className="line-clamp-2 text-sm font-semibold leading-tight hover:text-red-600">
+                      {a.title}
+                    </a>
+                    <div className="h-[4.25rem] w-[6.25rem] overflow-hidden rounded">
+                      {a.coverImage?.url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={a.coverImage.url} alt={a.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <PlaceholderImg className="h-full w-full object-cover" />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )
+        }
+        return <CategoryBlock key={block.id} tenantSlug={tenantSlug} />
+      case 'trendingCategoryBlock':
+        if (trendingCategoryItems.length > 0) {
+          const slug = String((trendingCategorySection?.query as any)?.categorySlug || '')
+          const href = slug ? categoryHref(tenantSlug, slug) : undefined
+          const label = String(trendingCategorySection?.label || 'Trending News')
+          const items = trendingCategoryItems.slice(0, 6)
+          return (
+            <section key={block.id} className="mb-8 rounded-xl bg-white">
+              <div className="flex items-center justify-between border-b px-4 py-2">
+                <div className="inline-flex items-center gap-2">
+                  <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
+                  {href ? (
+                    <a href={href as any} className="text-sm font-bold uppercase tracking-wide hover:text-red-600">
+                      {label}
+                    </a>
+                  ) : (
+                    <span className="text-sm font-bold uppercase tracking-wide">{label}</span>
+                  )}
+                </div>
+                {href ? (
+                  <a href={href as any} className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-50">
+                    View More →
+                  </a>
+                ) : null}
+              </div>
+              <div className="space-y-3">
+                {items.map((a) => (
+                  <div key={a.id} className="grid grid-cols-[160px_1fr] items-center gap-3">
+                    <div className="relative h-24 w-40 overflow-hidden rounded">
+                      {a.coverImage?.url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={a.coverImage.url} alt={a.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <PlaceholderImg className="h-full w-full object-cover" />
+                      )}
+                    </div>
+                    <a href={articleHref(tenantSlug, a.slug || a.id)} className="line-clamp-2 text-sm font-semibold leading-snug hover:text-red-600">
+                      {a.title}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )
+        }
+        return <TrendingCategoryBlock key={block.id} tenantSlug={tenantSlug} />
+      case 'trendingList':
+        return (
+          <Section key={block.id} title="Trending News" noShadow>
+            <div>
+              {(titlesOnlyItems.length > 0 ? titlesOnlyItems : articles).slice(0, 8).map((a) => (
+                <a
+                  key={a.id}
+                  href={articleHref(tenantSlug, a.slug || a.id)}
+                  className="block px-3 py-2 border-b border-zinc-100 last:border-b-0 text-sm font-medium leading-snug hover:text-red-600 line-clamp-2"
+                >
+                  {a.title}
+                </a>
               ))}
             </div>
-            <div className="grid grid-cols-1 gap-3">
-              {small.slice(0, 3).map((a) => (
-                <ListRow key={a.id} tenantSlug={tenantSlug} a={a} />
-              ))}
-            </div>
-          </div>
-
-          {/* Column 2: Category-driven Last News section */}
-          <div>
-            <CategoryBlock tenantSlug={tenantSlug} />
-          </div>
-
-          {/* Column 3: Tranding News category-driven list */}
-          <div>
-            <TrendingCategoryBlock tenantSlug={tenantSlug} />
-          </div>
-
-          {/* Column 4: Top Ad (16:9) + Trending News (titles) + Bottom Ad */}
-          <div className="space-y-4">
-            {/* Top banner ad 16:9 */}
-            <div className="overflow-hidden rounded-xl bg-white">
+          </Section>
+        )
+      case 'ad': {
+        const anyConfig = (block.config || {}) as any
+        const fmt = String(anyConfig.format || '').toLowerCase()
+        if (fmt === '16:9' || fmt === '16x9') {
+          return (
+            <div key={block.id} className="overflow-hidden rounded-xl bg-white">
               <div className="aspect-[16/9] w-full border bg-gray-50 text-center text-sm text-gray-500 flex items-center justify-center">
                 Banner Ad 16:9
               </div>
             </div>
-
-            {/* Trending News: titles only from latest feed */}
-            <Section title="Trending News" noShadow>
-              <div>
-                {articles.slice(0, 8).map((a) => (
-                  <a
-                    key={a.id}
-                    href={articleHref(tenantSlug, a.slug || a.id)}
-                    className="block px-3 py-2 border-b border-zinc-100 last:border-b-0 text-sm font-medium leading-snug hover:text-red-600 line-clamp-2"
-                  >
-                    {a.title}
-                  </a>
-                ))}
-              </div>
-            </Section>
-            {/* Bottom banner ad */}
-            <div className="overflow-hidden rounded-xl bg-white">
-              <div className="h-24 w-full border bg-gray-50 text-center text-sm text-gray-500 flex items-center justify-center">
-                Banner Ad
-              </div>
+          )
+        }
+        return (
+          <div key={block.id} className="overflow-hidden rounded-xl bg-white">
+            <div className="h-24 w-full border bg-gray-50 text-center text-sm text-gray-500 flex items-center justify-center">
+              Banner Ad
             </div>
           </div>
-        </div>
-        {/* Horizontal ad below hero section */}
-        <HorizontalAd className="my-6" label="Horizontal Ad" />
-        {/* Categories 4-column section */}
-        <div className="mt-8">
+        )
+      }
+      case 'horizontalAd': {
+        const anyConfig = (block.config || {}) as any
+        const label = typeof anyConfig.label === 'string' && anyConfig.label.trim() ? anyConfig.label.trim() : 'Horizontal Ad'
+        return <HorizontalAd key={block.id} className="my-6" label={label} />
+      }
+      case 'categoryColumns':
+        return (
+          <div key={block.id} className="mt-8">
             <Section title="" noShadow bodyClassName="grid grid-cols-1 gap-6 lg:grid-cols-4">
               <CategoryColumns tenantSlug={tenantSlug} />
             </Section>
-        </div>
-        {/* Horizontal ad below Category Hub */}
-        <HorizontalAd className="my-6" label="Horizontal Ad" />
-        {/* Web Stories + Sticky Ads */}
-        <div className="mt-8">
-          <WebStoriesArea tenantSlug={tenantSlug} />
-        </div>
-        {/* Optional additional ad below Web Stories (uncomment if needed) */}
-        {false && <HorizontalAd className="my-6" label="Horizontal Ad" />}
-      </main>
-      {/* Mobile bottom navigation */}
+          </div>
+        )
+      case 'webStoriesArea':
+        return (
+          <div key={block.id} className="mt-8">
+            <WebStoriesArea tenantSlug={tenantSlug} />
+          </div>
+        )
+      default:
+        return null
+    }
+  }
+
+  function renderMainGrid(section: HomeSection) {
+    const blocks = activeBlocksForSection(section)
+    const cols = section.layout?.type === 'grid' ? section.layout.columns.slice().sort((a, b) => a.position - b.position) : []
+    const blocksByCol = new Map<string, HomeBlock[]>()
+    for (const b of blocks) {
+      const colKey = b.columnKey || ''
+      if (!colKey) continue
+      const list = blocksByCol.get(colKey) || []
+      list.push(b)
+      blocksByCol.set(colKey, list)
+    }
+
+    const colClass = (colKey: string) => {
+      if (colKey === 'col-1') return 'space-y-6'
+      if (colKey === 'col-4') return 'space-y-4'
+      return ''
+    }
+
+    return (
+      <div key={section.id} className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        {cols.map((c) => (
+          <div key={c.key} id={c.key === 'col-1' ? 'left-col' : undefined} className={colClass(c.key)}>
+            {(blocksByCol.get(c.key) || []).map((b) => renderBlock(b))}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  function renderSection(section: HomeSection): { placement: 'outside' | 'main'; node: ReactNode } | null {
+    if (!section.isActive) return null
+
+    switch (section.key) {
+      case 'flashTicker':
+        return {
+          placement: 'outside',
+          node: (
+            <div key={section.id} className="bg-white">
+              <div className="mx-auto max-w-7xl px-4">
+                <FlashTicker tenantSlug={tenantSlug} items={(tickerItems.length > 0 ? tickerItems : articles).slice(0, 12)} />
+              </div>
+            </div>
+          ),
+        }
+      case 'mainGrid4':
+        return { placement: 'main', node: renderMainGrid(section) }
+      case 'horizontalAd1':
+      case 'horizontalAd2':
+      case 'horizontalAd3': {
+        const b = activeBlocksForSection(section).find((x) => x.type === 'horizontalAd')
+        if (!b) return null
+        return { placement: 'main', node: renderBlock(b) }
+      }
+      case 'categoryHub': {
+        const b = activeBlocksForSection(section).find((x) => x.type === 'categoryColumns')
+        if (!b) return null
+        return { placement: 'main', node: renderBlock(b) }
+      }
+      case 'webStories': {
+        const b = activeBlocksForSection(section).find((x) => x.type === 'webStoriesArea')
+        if (!b) return null
+        return { placement: 'main', node: renderBlock(b) }
+      }
+      default:
+        return null
+    }
+  }
+
+  const parts = activeSections.map((s) => renderSection(s)).filter(Boolean) as Array<{ placement: 'outside' | 'main'; node: ReactNode }>
+
+  const rendered: ReactNode[] = []
+  let mainChunk: ReactNode[] = []
+  let mainKey = 0
+
+  function flushMain() {
+    if (mainChunk.length === 0) return
+    rendered.push(
+      <main key={`main-${mainKey++}`} className="mx-auto max-w-7xl px-4 py-6">
+        {mainChunk}
+      </main>,
+    )
+    mainChunk = []
+  }
+
+  for (const p of parts) {
+    if (p.placement === 'outside') {
+      flushMain()
+      rendered.push(p.node)
+    } else {
+      mainChunk.push(p.node)
+    }
+  }
+  flushMain()
+
+  return (
+    <div className="theme-style1">
+      <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} />
+      {rendered}
       <MobileBottomNav tenantSlug={tenantSlug} />
       <Footer />
     </div>
