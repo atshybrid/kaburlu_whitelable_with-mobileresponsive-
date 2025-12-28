@@ -4,20 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "postinstall": "prisma generate",
-    "prebuild": "prisma generate",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev --name init",
-    "prisma:reset": "prisma migrate reset --force",
-    "db:seed": "tsx prisma/seed.ts",
     "sitemap": "next-sitemap"
   },
   "dependencies": {
-    "@prisma/client": "^5",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.5",
     "next": "^16.1.1",
@@ -35,9 +28,7 @@
     "eslint": "^9",
     "eslint-config-next": "^16.1.1",
     "prettier": "^3.3.3",
-    "prisma": "^5",
     "tailwindcss": "^4",
-    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }

@@ -18,14 +18,7 @@ Copy-Item .env.example .env
 npm install
 ```
 
-3) Generate Prisma client and create DB (SQLite by default):
-
-```powershell
-npx prisma migrate dev -n init
-npm run db:seed
-```
-
-4) Start the dev server:
+3) Start the dev server:
 
 ```powershell
 npm run dev
@@ -61,10 +54,7 @@ These values drive metadata, logo, and UI toggles in style1. Provide article/cat
 	- `GET {API_BASE_URL}/public/articles?category={slug}&page=1&pageSize=12` — category listing
 	- The frontend will also accept alternative shapes such as `{ item }`, `{ data }`, `{ articles }`.
 
-- Local (dev) API in this app (Prisma):
-	- `GET /api/tenants` — list tenants
-	- `GET /t/{tenant}/api/articles` — list articles for tenant
-	- `POST /t/{tenant}/api/articles` — create article (JSON body: `slug`, `title`, `content`, ...)
+Note: This project is configured as remote-only (no local Prisma DB). The built-in `/api/*` routes are disabled.
 
 ## Themes
 
@@ -72,11 +62,7 @@ Three themes live under `themes/style1|style2|style3`. Tenant theme is chosen vi
 
 ## Scripts
 
-- `npm run prisma:migrate` — create dev migration
-- `npm run prisma:reset` — reset database
-- `npm run db:seed` — seed demo data
 - `npm run sitemap` — generate static sitemap/robots to `public/`
 
-### Data source switch
-- Set `DATA_SOURCE=remote` to read content from your Node API (default).
-- Set `DATA_SOURCE=local` to use the local SQLite database via Prisma.
+### Data source
+- Remote-only via `API_BASE_URL`.
