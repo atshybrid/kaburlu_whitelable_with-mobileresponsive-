@@ -1,4 +1,3 @@
-import { prisma } from '@/lib/db'
 import { fetchJSON } from '@/lib/remote'
 import { headers } from 'next/headers'
 
@@ -16,37 +15,6 @@ export interface DataSource {
   homeFeed(tenantSlug: string, tenantId?: string): Promise<Article[]>
   articleBySlug(tenantSlug: string, slug: string, tenantId?: string): Promise<Article | null>
   articlesByCategory(tenantSlug: string, categorySlug: string, tenantId?: string): Promise<Article[]>
-}
-
-class LocalDataSource implements DataSource {
-  async homeFeed(_tenantSlug: string, tenantId?: string) {
-    void _tenantSlug
-    if (!tenantId) return []
-    return prisma.article.findMany({
-      where: { tenantId, status: 'PUBLISHED' },
-      include: { coverImage: true, categories: { include: { category: true } } },
-      orderBy: { publishedAt: 'desc' },
-      take: 12,
-    })
-  }
-  async articleBySlug(_tenantSlug: string, slug: string, tenantId?: string) {
-    void _tenantSlug
-    if (!tenantId) return null
-    return prisma.article.findFirst({
-      where: { tenantId, slug },
-      include: { coverImage: true, author: true, categories: { include: { category: true } } },
-    })
-  }
-  async articlesByCategory(_tenantSlug: string, categorySlug: string, tenantId?: string) {
-    void _tenantSlug
-    if (!tenantId) return []
-    return prisma.article.findMany({
-      where: { tenantId, categories: { some: { category: { slug: categorySlug } } }, status: 'PUBLISHED' },
-      include: { coverImage: true },
-      orderBy: { publishedAt: 'desc' },
-      take: 12,
-    })
-  }
 }
 
 class RemoteDataSource implements DataSource {
@@ -99,8 +67,8 @@ class RemoteDataSource implements DataSource {
 }
 
 export function getDataSource(): DataSource {
-  const mode = process.env.DATA_SOURCE || 'remote' // prefer remote if backend exists
-  if (mode === 'local') return new LocalDataSource()
+  // This app is configured to use the remote backend API (API_BASE_URL).
+  // Keep this function stable so callers don't change.
   return new RemoteDataSource()
 }
 

@@ -1,18 +1,12 @@
-import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
-import { z } from 'zod'
 
 export async function GET() {
-  const items = await prisma.tenant.findMany({ orderBy: { createdAt: 'desc' } })
-  return NextResponse.json(items)
+  return NextResponse.json(
+    { error: 'This endpoint is disabled (remote-only mode). Use API_BASE_URL public endpoints instead.' },
+    { status: 410 },
+  )
 }
 
-const Body = z.object({ slug: z.string().min(2), name: z.string().min(2), themeKey: z.enum(['style1', 'style2', 'style3']).default('style1'), domain: z.string().optional() })
-
-export async function POST(req: Request) {
-  const json = await req.json().catch(() => null)
-  const body = Body.safeParse(json)
-  if (!body.success) return NextResponse.json({ error: body.error.flatten() }, { status: 400 })
-  const created = await prisma.tenant.create({ data: body.data })
-  return NextResponse.json(created, { status: 201 })
+export async function POST() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
 }

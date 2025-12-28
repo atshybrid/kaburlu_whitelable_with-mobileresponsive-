@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server'
-import { prisma } from './db'
 
 export async function resolveTenant(req: NextRequest) {
   const defaultTenant = process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'demo'
@@ -14,5 +13,6 @@ export async function resolveTenant(req: NextRequest) {
     if (idx !== -1 && seg[idx + 1]) slug = seg[idx + 1]
   }
 
-  return prisma.tenant.findUnique({ where: { slug } })
+  // Remote-mode: we don't depend on a local DB for resolving tenants.
+  return { id: 'na', slug, name: slug, themeKey: 'style1', domain: null }
 }
