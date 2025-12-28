@@ -1,9 +1,10 @@
 import { headers } from 'next/headers'
 import { getDomainSettings, type EffectiveSettings } from './remote'
+import { cache as reactCache } from 'react'
 
 type CacheEntry = { value: EffectiveSettings; expires: number }
 const cache = new Map<string, CacheEntry>()
-const TTL_MS = 60 * 1000 // 1 minute
+const TTL_MS = Number(process.env.REMOTE_SETTINGS_MEMORY_TTL_SECONDS || '300') * 1000
 
 function domainFromHeaders(h: Headers) {
   const host = h.get('host') || 'localhost'
@@ -11,6 +12,10 @@ function domainFromHeaders(h: Headers) {
 }
 
 export async function getEffectiveSettings(): Promise<EffectiveSettings> {
+  return _getEffectiveSettings()
+}
+
+const _getEffectiveSettings = reactCache(async (): Promise<EffectiveSettings> => {
   const h = await headers()
   const domain = domainFromHeaders(h)
   const now = Date.now()
@@ -27,4 +32,4 @@ export async function getEffectiveSettings(): Promise<EffectiveSettings> {
   }
   cache.set(key, { value: effective, expires: now + TTL_MS })
   return effective
-}
+})

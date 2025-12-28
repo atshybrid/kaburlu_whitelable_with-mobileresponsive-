@@ -1,22 +1,58 @@
 const API_BASE_URL = process.env.API_BASE_URL || 'https://app.kaburlumedia.com/api/v1'
 
+const DEFAULT_REVALIDATE_SECONDS = Number(process.env.REMOTE_REVALIDATE_SECONDS || '30')
+const SETTINGS_REVALIDATE_SECONDS = Number(process.env.REMOTE_SETTINGS_REVALIDATE_SECONDS || '300')
+
 function getDomainFromHost(host?: string | null) {
   if (!host) return 'localhost'
   return host.split(':')[0]
 }
 
-export async function fetchJSON<T>(path: string, init?: RequestInit & { tenantDomain?: string }) {
+type NextFetchOptions = {
+  revalidate?: number
+  tags?: string[]
+}
+
+type FetchJSONInit = Omit<RequestInit, 'headers'> & {
+  tenantDomain?: string
+  headers?: HeadersInit
+  next?: NextFetchOptions
+  revalidateSeconds?: number
+  tags?: string[]
+}
+
+export async function fetchJSON<T>(path: string, init?: FetchJSONInit) {
   const url = `${API_BASE_URL}${path}`
-  const tenantDomain = init?.tenantDomain || getDomainFromHost(typeof window === 'undefined' ? process.env.HOST : window.location.hostname)
+
+  const {
+    tenantDomain: tenantDomainFromInit,
+    revalidateSeconds,
+    tags,
+    next: nextFromInit,
+    cache: cacheFromInit,
+    headers: headersFromInit,
+    ...rest
+  } = init ?? {}
+
+  const tenantDomain =
+    tenantDomainFromInit || getDomainFromHost(typeof window === 'undefined' ? process.env.HOST : window.location.hostname)
+
+  const method = String(rest.method || 'GET').toUpperCase()
+  const isCacheable = method === 'GET' || method === 'HEAD'
+
+  const next: NextFetchOptions | undefined =
+    nextFromInit ?? (isCacheable ? { revalidate: revalidateSeconds ?? DEFAULT_REVALIDATE_SECONDS, tags } : undefined)
+
   const res = await fetch(url, {
-    ...init,
+    ...rest,
     headers: {
       accept: 'application/json',
-      ...(init?.headers ?? {}),
+      ...(headersFromInit ?? {}),
       'X-Tenant-Domain': tenantDomain,
     },
-    // Always fetch on server; opt-out of Next cache to reflect admin changes immediately.
-    cache: 'no-store',
+    // Best-practice: cache GETs with revalidation to reduce TTFB and avoid repeated backend calls.
+    cache: cacheFromInit ?? (isCacheable ? 'force-cache' : 'no-store'),
+    next,
   })
   if (!res.ok) {
     const text = await res.text().catch(() => '')
@@ -45,5 +81,9 @@ export type DomainSettingsResponse = {
 }
 
 export async function getDomainSettings(domain: string) {
-  return fetchJSON<DomainSettingsResponse>('/public/domain/settings', { tenantDomain: domain })
+  return fetchJSON<DomainSettingsResponse>('/public/domain/settings', {
+    tenantDomain: domain,
+    revalidateSeconds: Number.isFinite(SETTINGS_REVALIDATE_SECONDS) ? SETTINGS_REVALIDATE_SECONDS : 300,
+    tags: [`domain-settings:${domain}`],
+  })
 }
