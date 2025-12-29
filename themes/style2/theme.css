@@ -1,4 +1,4 @@
 .theme-style2 { --accent: 0 85% 55%; }
-.theme-style2 a { color: hsl(var(--accent)); }
-.theme-style2 a:hover { color: hsl(var(--accent)); }
+.theme-style2 a { color: inherit; }
+.theme-style2 a:hover { color: inherit; }
 .theme-style2 .prose :where(h1,h2,h3){color:#111827}

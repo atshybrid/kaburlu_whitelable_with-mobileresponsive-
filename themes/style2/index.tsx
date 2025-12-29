@@ -21,8 +21,8 @@ function toHref(pathname: string): UrlObject {
 
 function SectionCard({ title, href, children }: { title: string; href?: string; children: React.ReactNode }) {
   return (
-    <section className="overflow-hidden rounded-md border bg-white">
-      <div className="border-b px-4 py-2">
+    <section className="overflow-hidden rounded-md bg-white">
+      <div className="px-4 py-2">
         {href ? (
           <Link
             href={toHref(href)}

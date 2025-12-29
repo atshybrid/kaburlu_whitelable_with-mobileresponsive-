@@ -77,7 +77,7 @@ function Section({ title, children, noShadow, flushBody, viewMoreHref, bodyClass
   return (
     <section className={`mb-8 rounded-xl bg-white ${noShadow ? '' : 'shadow-sm'}`}>
       {hasTitle && (
-        <div className="flex items-center justify-between border-b px-4 py-2">
+        <div className="flex items-center justify-between px-4 py-2">
           <div className="inline-flex items-center gap-2">
             <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
             <span className="text-sm font-bold uppercase tracking-wide">{title}</span>
@@ -113,7 +113,7 @@ async function CategoryBlock({ tenantSlug }: { tenantSlug: string }) {
 
   return (
     <section className="mb-8 rounded-xl bg-white">
-      <div className="flex items-center justify-between border-b px-4 py-2">
+      <div className="flex items-center justify-between px-4 py-2">
         <div className="inline-flex items-center gap-2">
           <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
           {href ? (

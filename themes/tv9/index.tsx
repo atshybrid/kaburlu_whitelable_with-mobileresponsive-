@@ -78,8 +78,8 @@ function CardSmall({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mb-6 rounded-xl border bg-white shadow-sm">
-      <div className="border-b bg-gradient-to-r from-red-600 to-red-500 px-4 py-2 text-sm font-bold uppercase tracking-wide text-white">
+    <section className="mb-6 rounded-xl bg-white shadow-sm">
+      <div className="bg-gradient-to-r from-red-600 to-red-500 px-4 py-2 text-sm font-bold uppercase tracking-wide text-white">
         {title}
       </div>
       <div className="p-4 space-y-4">{children}</div>

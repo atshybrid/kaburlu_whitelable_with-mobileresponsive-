@@ -1,2 +1,3 @@
 .theme-style3 { --accent: 30 90% 45%; }
-.theme-style3 a { color: hsl(var(--accent)); }
+.theme-style3 a { color: inherit; }
+.theme-style3 a:hover { color: inherit; }
