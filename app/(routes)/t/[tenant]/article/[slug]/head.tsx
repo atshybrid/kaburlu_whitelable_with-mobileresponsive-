@@ -1,5 +1,6 @@
 import SeoMaster from '@/components/SeoMaster'
 import { getArticleBySlug } from '@/lib/data'
+import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getEffectiveSettings } from '@/lib/settings'
 import { normalizeTenantDomain } from '@/lib/remote'
 import type { EffectiveSettings } from '@/lib/remote'
@@ -31,6 +32,37 @@ function pickFirstArray(obj: Record<string, unknown>, keys: string[]) {
   for (const k of keys) {
     const v = obj[k]
     if (Array.isArray(v)) return v
+  }
+  return undefined
+}
+
+function flattenCategories(items: Category[]): Category[] {
+  const out: Category[] = []
+  const stack = [...items]
+  while (stack.length) {
+    const c = stack.shift()!
+    out.push(c)
+    if (Array.isArray(c.children) && c.children.length) stack.push(...c.children)
+  }
+  return out
+}
+
+async function resolveCategoryNameFromArticle(a: Record<string, unknown>): Promise<string | undefined> {
+  // Backend may provide category IDs (uuid/cuid-like) or slugs; try both.
+  const raw = (a.categories as unknown) ?? (a.categoryIds as unknown)
+  const first = Array.isArray(raw) ? raw[0] : undefined
+  const firstStr = pickString(first)
+  if (!firstStr) return undefined
+
+  try {
+    const nav = await getCategoriesForNav()
+    const all = flattenCategories(nav)
+    const byId = all.find((c) => String(c.id) === firstStr)
+    if (byId?.name) return byId.name
+    const bySlug = all.find((c) => String(c.slug) === firstStr)
+    if (bySlug?.name) return bySlug.name
+  } catch {
+    // ignore
   }
   return undefined
 }
@@ -114,6 +146,8 @@ export default async function Head({
     pickString(a.categoryName) ||
     pickString(a.section)
 
+  const categoryNameResolved = categoryName || (await resolveCategoryNameFromArticle(a))
+
   const keywordsArr = pickFirstArray(a, ['keywords', 'tags'])
   const keywords = Array.isArray(keywordsArr) ? (keywordsArr as unknown[]).map((k) => String(k)) : undefined
   const location = pickString(a.location) || pickString(a.city) || pickString(a.region) || 'India'
@@ -129,7 +163,7 @@ export default async function Head({
         slug,
         createdAt: createdAt || undefined,
         updatedAt: updatedAt || undefined,
-        categoryName: categoryName || undefined,
+        categoryName: categoryNameResolved || undefined,
         keywords: keywords || undefined,
         authorName: authorName || undefined,
         location,
