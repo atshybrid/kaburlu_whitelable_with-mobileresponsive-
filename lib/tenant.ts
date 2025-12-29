@@ -10,12 +10,12 @@ export type Tenant = {
   domain?: string | null
 }
 
-export async function getTenantFromHeaders() {
+export async function resolveTenant({ slugOverride }: { slugOverride?: string } = {}) {
   const h = await headers()
   const mode = process.env.MULTITENANT_MODE || 'path'
   const defaultTenant = process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'demo'
 
-  let slug = defaultTenant
+  let slug = (slugOverride || '').trim() || defaultTenant
 
   const host = h.get('host') || ''
   const pathname = h.get('x-pathname') || ''
@@ -25,7 +25,9 @@ export async function getTenantFromHeaders() {
     if (parts.length > 2) slug = parts[0]
   }
 
-  if (mode === 'path' && pathname.startsWith('/t/')) {
+  // NOTE: `x-pathname` is set by `proxy.ts` in local/dev setups.
+  // In production, it may be missing; prefer passing `slugOverride` from route params.
+  if (!slugOverride && mode === 'path' && pathname.startsWith('/t/')) {
     const seg = pathname.split('/')
     if (seg[2]) slug = seg[2]
   }
@@ -36,7 +38,7 @@ export async function getTenantFromHeaders() {
   try {
     const res = await getDomainSettings(domain)
     const remoteThemeKey = res?.effective?.theme?.theme || res?.effective?.theme?.key || 'style1'
-    const themeKey = remoteThemeKey || local?.themeKey || 'style1'
+    const themeKey = local?.themeKey || remoteThemeKey || 'style1'
     const name = local?.name || slug
     return { id: res.tenantId ?? 'na', slug, name, themeKey, domain: res.domain ?? domain }
   } catch {
@@ -44,4 +46,8 @@ export async function getTenantFromHeaders() {
     const name = local?.name || slug
     return { id: 'na', slug, name, themeKey, domain }
   }
+}
+
+export async function getTenantFromHeaders() {
+  return resolveTenant()
 }

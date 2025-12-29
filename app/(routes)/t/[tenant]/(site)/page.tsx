@@ -1,5 +1,5 @@
 import { getHomeFeed } from '@/lib/data'
-import { getTenantFromHeaders } from '@/lib/tenant'
+import { resolveTenant } from '@/lib/tenant'
 
 import { getEffectiveSettings } from '@/lib/settings'
 import type { ReactElement } from 'react'
@@ -20,8 +20,9 @@ async function getThemeHome(themeKey: string) {
   }
 }
 
-export default async function TenantHomePage() {
-  const tenant = await getTenantFromHeaders()
+export default async function TenantHomePage({ params }: { params: Promise<{ tenant: string }> }) {
+  const { tenant: tenantSlug } = await params
+  const tenant = await resolveTenant({ slugOverride: tenantSlug })
   const articles = await getHomeFeed(tenant.id)
   const settings = await getEffectiveSettings()
 

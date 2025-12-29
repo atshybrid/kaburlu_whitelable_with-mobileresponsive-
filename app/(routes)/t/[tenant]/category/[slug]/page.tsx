@@ -1,12 +1,12 @@
-import { getTenantFromHeaders } from '@/lib/tenant'
+import { resolveTenant } from '@/lib/tenant'
 import { ArticleGrid } from '@/components/shared/ArticleGrid'
 import { Navbar } from '@/components/shared/Navbar'
 import { Footer } from '@/components/shared/Footer'
 import { getArticlesByCategory } from '@/lib/data'
 
 export default async function CategoryPage({ params }: { params: Promise<{ tenant: string; slug: string }> }) {
-  const { slug } = await params
-  const tenant = await getTenantFromHeaders()
+  const { tenant: tenantSlug, slug } = await params
+  const tenant = await resolveTenant({ slugOverride: tenantSlug })
   const articles = await getArticlesByCategory(tenant.id, slug)
 
   return (

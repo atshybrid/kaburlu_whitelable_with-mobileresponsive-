@@ -1,5 +1,5 @@
 import { getArticleBySlug } from '@/lib/data'
-import { getTenantFromHeaders } from '@/lib/tenant'
+import { resolveTenant } from '@/lib/tenant'
 import { notFound } from 'next/navigation'
 import type { Article } from '@/lib/data-sources'
 import type { ReactElement } from 'react'
@@ -19,8 +19,8 @@ async function getThemeArticle(themeKey: string) {
 }
 
 export default async function ArticlePage({ params }: { params: Promise<{ tenant: string; slug: string }> }) {
-  const { slug } = await params
-  const tenant = await getTenantFromHeaders()
+  const { tenant: tenantSlug, slug } = await params
+  const tenant = await resolveTenant({ slugOverride: tenantSlug })
   const article = await getArticleBySlug(tenant.id, slug)
   if (!article) return notFound()
 
