@@ -41,7 +41,7 @@ export async function Navbar({
             <Link href={toHref(homeHref(tenantSlug))} className="flex items-center justify-center">
               {logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoUrl} alt={title} className="h-10 w-auto sm:h-12" />
+                <img src={logoUrl} alt={title} className="h-12 w-auto sm:h-14" />
               ) : (
                 <div className="text-2xl font-extrabold tracking-tight">{title}</div>
               )}
@@ -53,7 +53,7 @@ export async function Navbar({
             <Link href={toHref(homeHref(tenantSlug))} className="flex items-center gap-3">
               {logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoUrl} alt={title} className="h-7 w-auto sm:h-8" />
+                <img src={logoUrl} alt={title} className="h-8 w-auto sm:h-9" />
               ) : (
                 <div className="text-base font-bold">{title}</div>
               )}

@@ -81,6 +81,20 @@ export interface EffectiveSettings {
   }
   content?: { defaultLanguage?: string }
   branding?: { logoUrl?: string; faviconUrl?: string; siteName?: string }
+  contact?: {
+    email?: string
+    phone?: string
+    city?: string
+    region?: string
+    country?: string
+  }
+  social?: {
+    facebook?: string
+    x?: string
+    instagram?: string
+    youtube?: string
+    telegram?: string
+  }
   settings?: {
     seo?: { ogImageUrl?: string; defaultMetaTitle?: string; defaultMetaDescription?: string; canonicalBaseUrl?: string }
     theme?: {
@@ -92,6 +106,20 @@ export interface EffectiveSettings {
     }
     content?: { defaultLanguage?: string }
     branding?: { logoUrl?: string; faviconUrl?: string; siteName?: string }
+    contact?: {
+      email?: string
+      phone?: string
+      city?: string
+      region?: string
+      country?: string
+    }
+    social?: {
+      facebook?: string
+      x?: string
+      instagram?: string
+      youtube?: string
+      telegram?: string
+    }
   }
 }
 

@@ -56,7 +56,7 @@ function LeadStory({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
       <div className="p-4">
         <Link
           href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-          className="block text-2xl font-extrabold leading-tight tracking-tight hover:underline"
+          className="block text-xl sm:text-2xl font-extrabold leading-tight tracking-tight hover:underline"
         >
           {a.title}
         </Link>
@@ -267,6 +267,7 @@ function SectionCardTOI({
 }) {
   const left = links.filter((_, idx) => idx % 2 === 0)
   const right = links.filter((_, idx) => idx % 2 === 1)
+  const flat = links
 
   return (
     <div className="min-w-0">
@@ -280,12 +281,12 @@ function SectionCardTOI({
         )}
         <div className="flex items-center gap-3">
           {href ? (
-            <Link href={toHref(href)} className="text-xs font-semibold text-zinc-600 hover:underline">
+            <Link href={toHref(href)} className="rounded px-2 py-1 text-xs font-semibold text-zinc-600 hover:underline">
               More
             </Link>
           ) : null}
           {href ? (
-            <Link href={toHref(href)} className="text-base font-bold leading-none text-zinc-700" aria-label="Open category">
+            <Link href={toHref(href)} className="rounded px-2 py-1 text-base font-bold leading-none text-zinc-700" aria-label="Open category">
               ›
             </Link>
           ) : (
@@ -303,8 +304,8 @@ function SectionCardTOI({
             ) : (
               <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
             )}
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-black/0 px-3 pb-3 pt-10">
-              <div className="line-clamp-2 text-sm font-semibold leading-snug text-white">{featured.title}</div>
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-black/0 px-3 pb-3 pt-10">
+              <div className="line-clamp-2 text-sm sm:text-[15px] font-semibold leading-snug text-white">{featured.title}</div>
             </div>
           </div>
         </Link>
@@ -312,7 +313,21 @@ function SectionCardTOI({
 
       <div className="mt-4 border-t border-dotted border-zinc-300" />
 
-      <div className="mt-4 grid grid-cols-2 divide-x divide-dotted divide-zinc-300">
+      {/* Mobile: single-column list for readability */}
+      <div className="mt-4 space-y-3 sm:hidden">
+        {flat.map((a) => (
+          <Link
+            key={a.id}
+            href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+            className="block border-b border-dotted border-zinc-300 pb-3 last:border-b-0 last:pb-0 line-clamp-2 text-sm font-medium leading-snug hover:underline"
+          >
+            {a.title}
+          </Link>
+        ))}
+      </div>
+
+      {/* Desktop: 2-column list */}
+      <div className="mt-4 hidden sm:grid sm:grid-cols-2 sm:divide-x sm:divide-dotted sm:divide-zinc-300">
         <div className="pr-4">
           <div className="space-y-3">
             {left.map((a) => (
@@ -531,8 +546,8 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
         )
 
         return (
-          <div key={block.id} className="border-t border-dotted border-zinc-300 pt-6">
-            <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
+          <div key={block.id} className="border-t border-dotted border-zinc-300 pt-4 sm:pt-6">
+            <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:grid-cols-3">
               {colsData.map(({ title, cat, items }, idx) => {
                 const featured = items[0]
                 const links = items.slice(1, 3)
@@ -558,7 +573,7 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
 
                     {featured ? (
                       <div className="mt-4 flex min-w-0 gap-4">
-                        <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-md bg-zinc-100">
+                        <div className="relative h-20 w-28 sm:w-32 shrink-0 overflow-hidden rounded-md bg-zinc-100">
                           {featured.coverImage?.url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -572,7 +587,7 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
                         </div>
                         <Link
                           href={toHref(articleHref(tenantSlug, featured.slug || featured.id))}
-                          className="min-w-0 line-clamp-2 text-base font-semibold leading-snug"
+                          className="min-w-0 line-clamp-2 text-sm sm:text-base font-semibold leading-snug"
                         >
                           {featured.title}
                         </Link>
@@ -581,15 +596,27 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
 
                     <div className="mt-4 border-t border-dotted border-zinc-300" />
 
-                    <div className="mt-4 grid grid-cols-2 divide-x divide-dotted divide-zinc-300">
+                    <div className="mt-4 space-y-3 sm:hidden">
+                      {links.map((a) => (
+                        <Link
+                          key={a.id}
+                          href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+                          className="block border-b border-dotted border-zinc-300 pb-3 last:border-b-0 last:pb-0 line-clamp-2 text-sm font-medium leading-snug hover:underline"
+                        >
+                          {a.title}
+                        </Link>
+                      ))}
+                    </div>
+
+                    <div className="mt-4 hidden sm:grid sm:grid-cols-2 sm:divide-x sm:divide-dotted sm:divide-zinc-300">
                       {links.map((a, i) => (
                         <Link
                           key={a.id}
                           href={toHref(articleHref(tenantSlug, a.slug || a.id))}
                           className={
                             i === 0
-                              ? 'pr-4 text-sm font-medium leading-snug line-clamp-3'
-                              : 'pl-4 text-sm font-medium leading-snug line-clamp-3'
+                              ? 'pr-4 text-sm font-medium leading-snug line-clamp-2 hover:underline'
+                              : 'pl-4 text-sm font-medium leading-snug line-clamp-2 hover:underline'
                           }
                         >
                           {a.title}
@@ -675,7 +702,7 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
         const actualRows = Math.max(1, Math.ceil(visible.length / perRow))
 
         return (
-          <div key={block.id} className="border-t border-dotted border-zinc-300 pt-8">
+          <div key={block.id} className="border-t border-dotted border-zinc-300 pt-6 sm:pt-8">
             <div className="space-y-10">
               {Array.from({ length: actualRows }).map((_, r) => {
                 const rowItems = visible.slice(r * perRow, r * perRow + perRow)
@@ -769,12 +796,22 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
         }),
       )
 
+      const isToiMainGrid = section.key === 'toiGrid3' || cols.some((c) => c.key === 'col-center')
+
+      function columnOrderClass(colKey: string) {
+        if (!isToiMainGrid) return ''
+        if (colKey === 'col-center') return 'order-1 lg:order-2'
+        if (colKey === 'col-left') return 'order-2 lg:order-1'
+        if (colKey === 'col-right') return 'order-3 lg:order-3'
+        return ''
+      }
+
       return {
         placement: 'main',
         node: (
           <div key={section.id} className={`grid grid-cols-1 gap-6 ${colTemplate}`}>
             {colNodes.map((c) => (
-              <div key={c.key} className="min-w-0 flex h-full flex-col gap-6">
+              <div key={c.key} className={`min-w-0 flex h-full flex-col gap-6 ${columnOrderClass(c.key)}`.trim()}>
                 {c.items.map(({ block, node }) => {
                   const cfg = (block.config || {}) as Record<string, unknown>
                   const fill = block.type === 'ad' && Boolean(cfg.fill)
@@ -815,7 +852,7 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
   function flushMain() {
     if (mainChunk.length === 0) return
     rendered.push(
-      <main key={`main-${mainKey++}`} className="mx-auto max-w-7xl px-4 py-6">
+      <main key={`main-${mainKey++}`} className="mx-auto max-w-7xl px-4 py-4 sm:py-6">
         {mainChunk}
       </main>,
     )
@@ -839,7 +876,7 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
       <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} variant="style2" />
 
       {rendered}
-      <Footer />
+      <Footer settings={settings} />
     </div>
   )
 }
@@ -854,10 +891,10 @@ export async function ThemeArticle({ tenantSlug, title, article }: { tenantSlug:
   return (
     <div className="theme-style2" style={cssVars}>
       <Navbar tenantSlug={tenantSlug} title={title} variant="style2" />
-      <main className="mx-auto max-w-7xl px-4 py-6">
+      <main className="mx-auto max-w-7xl px-4 py-4 sm:py-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <article className="min-w-0">
-            <h1 className="mb-3 text-3xl font-extrabold leading-tight tracking-tight">{article.title}</h1>
+            <h1 className="mb-3 text-2xl sm:text-3xl font-extrabold leading-tight tracking-tight">{article.title}</h1>
             {article.coverImage?.url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={article.coverImage.url} alt={article.title} className="mb-5 w-full rounded-md border" />
@@ -873,7 +910,7 @@ export async function ThemeArticle({ tenantSlug, title, article }: { tenantSlug:
           </aside>
         </div>
       </main>
-      <Footer />
+      <Footer settings={settings} />
     </div>
   )
 }
