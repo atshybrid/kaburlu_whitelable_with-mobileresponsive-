@@ -15,7 +15,7 @@ async function themeKeyForRequest(req: NextRequest): Promise<ThemeKey> {
   const domain = domainFromHost(req.headers.get('host'))
   try {
     const res = await getDomainSettings(domain)
-    const k = String(res?.effective?.theme?.key || 'style1') as ThemeKey
+    const k = String(res?.effective?.theme?.key || res?.effective?.theme?.theme || 'style1') as ThemeKey
     return ['style1', 'style2', 'style3', 'tv9'].includes(k) ? k : 'style1'
   } catch {
     return 'style1'

@@ -45,6 +45,7 @@ export type HomeBlockType =
   | 'webStoriesArea'
   | 'articleGrid'
   | 'heroImages'
+  | 'section3'
 
 export type HomeBlock = {
   id: string
@@ -254,6 +255,32 @@ export function defaultHomeLayout(tenantSlug: string, themeKey: HomeLayoutThemeK
           layout: { type: 'full' },
           blocks: [
             { id: 'b-top-stories-grid', key: 'topStoriesGrid', name: 'Top Stories', type: 'articleGrid', position: 1, isActive: true, config: { count: 9, offset: 3, columns: 3 } },
+          ],
+        },
+        {
+          id: 's-section3',
+          key: 'section3',
+          name: 'Section 3 (3 Columns: Technology / Education / Also In News)',
+          position: 4,
+          isActive: true,
+          layout: { type: 'full' },
+          blocks: [
+            {
+              id: 'b-section3',
+              key: 'section3',
+              name: 'Section 3',
+              type: 'section3',
+              position: 1,
+              isActive: true,
+              config: {
+                columns: [
+                  { title: 'Technology', match: 'technology', navIndexFallback: 0 },
+                  { title: 'Education', match: 'education', navIndexFallback: 1 },
+                  { title: 'Also In News', match: 'news', navIndexFallback: 2 },
+                ],
+                itemsPerColumn: 3,
+              },
+            },
           ],
         },
       ],

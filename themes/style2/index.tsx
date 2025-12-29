@@ -199,6 +199,16 @@ async function itemsForBlock({
   return { items: homeFeed.slice(offset, offset + count) }
 }
 
+function findCategoryByMatch(match: string | undefined, navCats: Category[]) {
+  const q = String(match || '').trim().toLowerCase()
+  if (!q) return undefined
+  return (
+    navCats.find((c) => c.slug.toLowerCase() === q) ||
+    navCats.find((c) => c.name.toLowerCase() === q) ||
+    navCats.find((c) => c.name.toLowerCase().includes(q))
+  )
+}
+
 function activeBlocksForSection(section: HomeSection) {
   return (section.blocks || []).filter((b) => b.isActive).slice().sort((a, b) => a.position - b.position)
 }
@@ -344,6 +354,125 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
               ))}
             </div>
           </SectionCard>
+        )
+      }
+      case 'section3': {
+        const cfg = (block.config || {}) as Record<string, unknown>
+        const colsCfg = (Array.isArray(cfg.columns) ? cfg.columns : []) as Array<Record<string, unknown>>
+        const itemsPerColumnRaw = Number(cfg.itemsPerColumn)
+        const itemsPerColumn = Number.isFinite(itemsPerColumnRaw) && itemsPerColumnRaw > 0 ? Math.min(6, Math.floor(itemsPerColumnRaw)) : 3
+
+        const defaults: Array<Record<string, unknown>> = [
+          { title: 'Technology', match: 'technology', navIndexFallback: 0 },
+          { title: 'Education', match: 'education', navIndexFallback: 1 },
+          { title: 'Also In News', match: 'news', navIndexFallback: 2 },
+        ]
+
+        const columns = (colsCfg.length ? colsCfg : defaults).slice(0, 3)
+
+        const colsData = await Promise.all(
+          columns.map(async (c, idx) => {
+            const title = String(c['title'] || defaults[idx]?.title || `Section ${idx + 1}`).trim()
+            const categorySlug = String(c['categorySlug'] || '').trim()
+            const match = String(c['match'] || '').trim()
+            const navIndexFallback = Number((c['navIndexFallback'] as unknown) ?? defaults[idx]?.navIndexFallback ?? idx)
+
+            const cat =
+              (categorySlug ? topNavCats.find((x) => x.slug === categorySlug) : undefined) ||
+              findCategoryByMatch(match, topNavCats) ||
+              topNavCats[(Number.isFinite(navIndexFallback) ? Math.max(0, Math.floor(navIndexFallback)) : idx)]
+
+            let items: Article[] = []
+            if (cat?.slug) {
+              items = (await getArticlesByCategory('na', cat.slug)).slice(0, itemsPerColumn)
+            }
+            if (!items.length) {
+              const start = 3 + idx * itemsPerColumn
+              items = homeFeed.slice(start, start + itemsPerColumn)
+            }
+
+            return { title, cat, items }
+          }),
+        )
+
+        return (
+          <div key={block.id} className="border-t border-dotted border-zinc-300 pt-6">
+            <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
+              {colsData.map(({ title, cat, items }, idx) => {
+                const featured = items[0]
+                const links = items.slice(1, 3)
+                const href = cat?.slug ? categoryHref(tenantSlug, cat.slug) : undefined
+                return (
+                  <div key={idx} className="min-w-0">
+                    <div className="flex items-center justify-between">
+                      {href ? (
+                        <Link href={toHref(href)} className="text-lg font-bold leading-none">
+                          {title}
+                        </Link>
+                      ) : (
+                        <div className="text-lg font-bold leading-none">{title}</div>
+                      )}
+                      {href ? (
+                        <Link href={toHref(href)} className="text-lg font-bold leading-none text-zinc-700">
+                          ›
+                        </Link>
+                      ) : (
+                        <div className="text-lg font-bold leading-none text-zinc-700">›</div>
+                      )}
+                    </div>
+
+                    {featured ? (
+                      <div className="mt-4 flex min-w-0 gap-4">
+                        <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-md bg-zinc-100">
+                          {featured.coverImage?.url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={featured.coverImage.url}
+                              alt={featured.title}
+                              className="absolute inset-0 h-full w-full object-cover"
+                            />
+                          ) : (
+                            <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
+                          )}
+                        </div>
+                        <Link
+                          href={toHref(articleHref(tenantSlug, featured.slug || featured.id))}
+                          className="min-w-0 line-clamp-2 text-base font-semibold leading-snug"
+                        >
+                          {featured.title}
+                        </Link>
+                      </div>
+                    ) : null}
+
+                    <div className="mt-4 border-t border-dotted border-zinc-300" />
+
+                    <div className="mt-4 grid grid-cols-2 divide-x divide-dotted divide-zinc-300">
+                      {links.map((a, i) => (
+                        <Link
+                          key={a.id}
+                          href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+                          className={
+                            i === 0
+                              ? 'pr-4 text-sm font-medium leading-snug line-clamp-3'
+                              : 'pl-4 text-sm font-medium leading-snug line-clamp-3'
+                          }
+                        >
+                          {a.title}
+                        </Link>
+                      ))}
+                      {links.length === 1 ? <div className="pl-4" /> : null}
+                      {links.length === 0 ? (
+                        <>
+                          <div className="pr-4" />
+                          <div className="pl-4" />
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         )
       }
       case 'ad':
