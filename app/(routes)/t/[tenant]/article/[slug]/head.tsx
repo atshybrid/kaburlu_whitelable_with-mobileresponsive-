@@ -128,7 +128,8 @@ export default async function Head({
     // Some backends send empty excerpt; fall back to a shorter plainText when available
     typeof a.plainText === 'string' ? a.plainText.slice(0, 220) : undefined,
   )
-  const image = pickString((a.coverImage as any)?.url) || pickString(a.imageUrl) || pickString(a.featuredImage)
+  const image =
+    pickFirstString(pickFrom(a, ['coverImage', 'url']), a.imageUrl, a.featuredImage) || undefined
 
   const createdAt =
     pickString(a.publishedAt) || pickString(a.createdAt) || pickString(a.datePublished) || undefined
@@ -142,9 +143,11 @@ export default async function Head({
     ) || undefined
 
   const categoryName =
-    pickString((a.categories as any)?.[0]?.category?.name) ||
-    pickString(a.categoryName) ||
-    pickString(a.section)
+    pickFirstString(
+      pickFrom(a, ['categories', '0', 'category', 'name']),
+      a.categoryName,
+      a.section,
+    ) || undefined
 
   const categoryNameResolved = categoryName || (await resolveCategoryNameFromArticle(a))
 

@@ -21,8 +21,8 @@ export default async function Home() {
   const requestedThemeKey: string =
     settings?.theme?.theme ||
     settings?.theme?.key ||
-    (settings as any)?.settings?.theme?.theme ||
-    (settings as any)?.settings?.theme?.key ||
+    settings?.settings?.theme?.theme ||
+    settings?.settings?.theme?.key ||
     'style1'
   const themeKey = (['style1', 'style2', 'style3', 'tv9'].includes(requestedThemeKey) ? requestedThemeKey : 'style1') as
     | 'style1'
