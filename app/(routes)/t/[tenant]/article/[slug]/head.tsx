@@ -10,6 +10,31 @@ function pickString(v: unknown) {
   return s || undefined
 }
 
+function pickFrom(obj: unknown, path: string[]): unknown {
+  let cur: unknown = obj
+  for (const key of path) {
+    if (!cur || typeof cur !== 'object') return undefined
+    cur = (cur as Record<string, unknown>)[key]
+  }
+  return cur
+}
+
+function pickFirstString(...vals: unknown[]) {
+  for (const v of vals) {
+    const s = pickString(v)
+    if (s) return s
+  }
+  return undefined
+}
+
+function pickFirstArray(obj: Record<string, unknown>, keys: string[]) {
+  for (const k of keys) {
+    const v = obj[k]
+    if (Array.isArray(v)) return v
+  }
+  return undefined
+}
+
 function langFromSettings(languageCodeRaw: unknown) {
   const raw = String(languageCodeRaw || 'en').trim().toLowerCase()
   if (raw === 'telugu') return 'te'
@@ -58,22 +83,39 @@ export default async function Head({
 
   const a = article as Record<string, unknown>
 
-  const title = String(article.title || '')
-  const summary = pickString(a.excerpt) || pickString(a.summary) || pickString(a.description)
+  // Prefer explicit SEO fields from backend if present
+  const seoTitle = pickString(pickFrom(a, ['meta', 'seoTitle']))
+  const seoDescription = pickString(pickFrom(a, ['meta', 'metaDescription']))
+
+  const title = String(seoTitle || article.title || '')
+  const summary = pickFirstString(
+    seoDescription,
+    a.excerpt,
+    a.summary,
+    a.description,
+    // Some backends send empty excerpt; fall back to a shorter plainText when available
+    typeof a.plainText === 'string' ? a.plainText.slice(0, 220) : undefined,
+  )
   const image = pickString((a.coverImage as any)?.url) || pickString(a.imageUrl) || pickString(a.featuredImage)
 
   const createdAt =
     pickString(a.publishedAt) || pickString(a.createdAt) || pickString(a.datePublished) || undefined
   const updatedAt = pickString(a.updatedAt) || pickString(a.dateModified) || createdAt
 
-  const authorName = pickString((a.author as any)?.name) || pickString(a.authorName) || undefined
+  const authorName =
+    pickFirstString(
+      pickFrom(a, ['author', 'name']),
+      pickFrom(a, ['authors', '0', 'name']),
+      a.authorName,
+    ) || undefined
 
   const categoryName =
     pickString((a.categories as any)?.[0]?.category?.name) ||
     pickString(a.categoryName) ||
     pickString(a.section)
 
-  const keywords = Array.isArray(a.keywords) ? (a.keywords as unknown[]).map((k) => String(k)) : undefined
+  const keywordsArr = pickFirstArray(a, ['keywords', 'tags'])
+  const keywords = Array.isArray(keywordsArr) ? (keywordsArr as unknown[]).map((k) => String(k)) : undefined
   const location = pickString(a.location) || pickString(a.city) || pickString(a.region) || 'India'
 
   return (
