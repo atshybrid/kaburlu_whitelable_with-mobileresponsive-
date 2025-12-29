@@ -1,5 +1,5 @@
 import { headers } from 'next/headers'
-import { getDomainSettings } from './remote'
+import { getDomainSettings, normalizeTenantDomain } from './remote'
 import { DEFAULT_TENANTS } from '@/config/tenants'
 
 export type Tenant = {
@@ -21,7 +21,7 @@ export async function getTenantFromHeaders() {
   const pathname = h.get('x-pathname') || ''
 
   if (mode === 'subdomain' && host && !host.startsWith('localhost')) {
-    const parts = host.split('.')
+    const parts = normalizeTenantDomain(host).split('.')
     if (parts.length > 2) slug = parts[0]
   }
 
@@ -32,7 +32,7 @@ export async function getTenantFromHeaders() {
 
   const local = DEFAULT_TENANTS.find((t) => t.slug === slug)
 
-  const domain = (host || 'localhost').split(':')[0]
+  const domain = normalizeTenantDomain(host || 'localhost')
   try {
     const res = await getDomainSettings(domain)
     const remoteThemeKey = res?.effective?.theme?.theme || res?.effective?.theme?.key || 'style1'

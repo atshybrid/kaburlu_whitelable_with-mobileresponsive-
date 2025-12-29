@@ -1,5 +1,5 @@
 import { headers } from 'next/headers'
-import { getDomainSettings, type EffectiveSettings } from './remote'
+import { getDomainSettings, normalizeTenantDomain, type EffectiveSettings } from './remote'
 import { cache as reactCache } from 'react'
 
 type CacheEntry = { value: EffectiveSettings; expires: number }
@@ -8,7 +8,7 @@ const TTL_MS = Number(process.env.REMOTE_SETTINGS_MEMORY_TTL_SECONDS || '300') *
 
 function domainFromHeaders(h: Headers) {
   const host = h.get('host') || 'localhost'
-  return host.split(':')[0]
+  return normalizeTenantDomain(host)
 }
 
 export async function getEffectiveSettings(): Promise<EffectiveSettings> {

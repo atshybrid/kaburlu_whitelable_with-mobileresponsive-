@@ -3,9 +3,17 @@ const API_BASE_URL = process.env.API_BASE_URL || 'https://app.kaburlumedia.com/a
 const DEFAULT_REVALIDATE_SECONDS = Number(process.env.REMOTE_REVALIDATE_SECONDS || '30')
 const SETTINGS_REVALIDATE_SECONDS = Number(process.env.REMOTE_SETTINGS_REVALIDATE_SECONDS || '300')
 
+export function normalizeTenantDomain(host?: string | null) {
+  const raw = String(host || 'localhost')
+    .trim()
+    .toLowerCase()
+    .split(':')[0]
+  if (raw.startsWith('www.')) return raw.slice(4)
+  return raw
+}
+
 function getDomainFromHost(host?: string | null) {
-  if (!host) return 'localhost'
-  return host.split(':')[0]
+  return normalizeTenantDomain(host)
 }
 
 type NextFetchOptions = {
