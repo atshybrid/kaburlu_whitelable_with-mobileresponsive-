@@ -12,6 +12,8 @@ import { getTenantFromHeaders } from '@/lib/tenant'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
 import { readHomeLayout, type HomeBlock, type HomeSection } from '@/lib/home-layout'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
+import { getEffectiveSettings } from '@/lib/settings'
+import { themeCssVarsFromSettings } from '@/lib/theme-vars'
 
 function toHref(pathname: string): UrlObject {
   return { pathname }
@@ -478,8 +480,10 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
   }
   flushMain()
 
+  const cssVars = themeCssVarsFromSettings(settings)
+
   return (
-    <div className="theme-style2">
+    <div className="theme-style2" style={cssVars}>
       <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} variant="style2" />
 
       {rendered}
@@ -489,12 +493,14 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
 }
 
 export async function ThemeArticle({ tenantSlug, title, article }: { tenantSlug: string; title: string; article: Article }) {
+  const settings = await getEffectiveSettings().catch(() => undefined)
+  const cssVars = themeCssVarsFromSettings(settings)
   const tenant = await getTenantFromHeaders()
   const sidebarFeed = await getHomeFeed(tenant.id)
   const sidebarLatest = sidebarFeed.filter((a) => a.id !== article.id).slice(0, 10)
 
   return (
-    <div className="theme-style2">
+    <div className="theme-style2" style={cssVars}>
       <Navbar tenantSlug={tenantSlug} title={title} variant="style2" />
       <main className="mx-auto max-w-7xl px-4 py-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">

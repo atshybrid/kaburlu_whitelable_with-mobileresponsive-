@@ -63,7 +63,7 @@ export function WebStoriesGrid({ items = SAMPLE_STORIES }: { items?: GridItem[] 
               </svg>
             </div>
             {/* bottom gradient title */}
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black to-transparent p-3">
               <div className="line-clamp-2 text-sm font-semibold text-white">{s.title}</div>
             </div>
           </div>

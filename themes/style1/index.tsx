@@ -985,7 +985,7 @@ async function HGBlock({ tenantSlug }: { tenantSlug: string }) {
                     ) : (
                       <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-4">
                       <h3 className="text-white text-lg font-extrabold leading-snug line-clamp-2 drop-shadow-md">{featured.title}</h3>
                     </div>

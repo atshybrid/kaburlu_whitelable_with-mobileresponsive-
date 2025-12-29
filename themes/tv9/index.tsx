@@ -22,7 +22,7 @@ function HeroLead({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
       ) : (
         <PlaceholderImg className="h-full w-full object-cover" />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/10" />
       <div className="absolute inset-x-0 bottom-0 p-6">
         <Link
           href={toHref(articleHref(tenantSlug, a.slug || a.id))}
@@ -44,7 +44,7 @@ function CardMedium({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
       ) : (
         <PlaceholderImg className="h-full w-full object-cover" />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/10" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/10" />
       <Link
         href={toHref(articleHref(tenantSlug, a.slug || a.id))}
         className="absolute inset-x-0 bottom-0 p-4 text-lg font-bold leading-snug text-white"
@@ -154,7 +154,7 @@ export function ThemeHome({ tenantSlug, title, articles, settings }: { tenantSlu
                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <Link
                     href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-                    className="absolute inset-x-0 bottom-0 line-clamp-2 bg-gradient-to-t from-black/80 to-transparent p-2 text-xs font-semibold text-white"
+                    className="absolute inset-x-0 bottom-0 line-clamp-2 bg-gradient-to-t from-black to-transparent p-2 text-xs font-semibold text-white"
                   >
                     {a.title}
                   </Link>
