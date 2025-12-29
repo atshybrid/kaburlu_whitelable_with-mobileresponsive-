@@ -209,6 +209,131 @@ function findCategoryByMatch(match: string | undefined, navCats: Category[]) {
   )
 }
 
+function clampInt(v: unknown, fallback: number, min: number, max: number) {
+  const n = Number(v)
+  if (!Number.isFinite(n)) return fallback
+  const i = Math.floor(n)
+  return Math.min(max, Math.max(min, i))
+}
+
+async function resolveSectionCardItems({
+  tenantSlug,
+  homeFeed,
+  topNavCats,
+  title,
+  match,
+  categorySlug,
+  navIndexFallback,
+  itemsPerCard,
+  fallbackStart,
+}: {
+  tenantSlug: string
+  homeFeed: Article[]
+  topNavCats: Category[]
+  title: string
+  match?: string
+  categorySlug?: string
+  navIndexFallback: number
+  itemsPerCard: number
+  fallbackStart: number
+}): Promise<{ title: string; href?: string; featured?: Article; links: Article[] }> {
+  const cat =
+    (categorySlug ? topNavCats.find((x) => x.slug === categorySlug) : undefined) ||
+    findCategoryByMatch(match, topNavCats) ||
+    topNavCats[Math.max(0, Math.floor(navIndexFallback))]
+
+  let items: Article[] = []
+  if (cat?.slug) {
+    items = (await getArticlesByCategory('na', cat.slug)).slice(0, itemsPerCard)
+  }
+  if (!items.length) items = homeFeed.slice(fallbackStart, fallbackStart + itemsPerCard)
+
+  const href = cat?.slug ? categoryHref(tenantSlug, cat.slug) : undefined
+  return { title, href, featured: items[0], links: items.slice(1, 3) }
+}
+
+function SectionCardTOI({
+  tenantSlug,
+  title,
+  href,
+  featured,
+  links,
+}: {
+  tenantSlug: string
+  title: string
+  href?: string
+  featured?: Article
+  links: Article[]
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="flex items-center justify-between">
+        {href ? (
+          <Link href={toHref(href)} className="text-base font-bold leading-none">
+            {title}
+          </Link>
+        ) : (
+          <div className="text-base font-bold leading-none">{title}</div>
+        )}
+        <div className="flex items-center gap-3">
+          {href ? (
+            <Link href={toHref(href)} className="text-xs font-semibold text-zinc-600 hover:underline">
+              More
+            </Link>
+          ) : null}
+          {href ? (
+            <Link href={toHref(href)} className="text-base font-bold leading-none text-zinc-700" aria-label="Open category">
+              ›
+            </Link>
+          ) : (
+            <div className="text-base font-bold leading-none text-zinc-700">›</div>
+          )}
+        </div>
+      </div>
+
+      {featured ? (
+        <div className="mt-4 flex min-w-0 gap-4">
+          <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-md bg-zinc-100">
+            {featured.coverImage?.url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={featured.coverImage.url} alt={featured.title} className="absolute inset-0 h-full w-full object-cover" />
+            ) : (
+              <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
+            )}
+          </div>
+          <Link
+            href={toHref(articleHref(tenantSlug, featured.slug || featured.id))}
+            className="min-w-0 line-clamp-2 text-sm font-semibold leading-snug"
+          >
+            {featured.title}
+          </Link>
+        </div>
+      ) : null}
+
+      <div className="mt-4 border-t border-dotted border-zinc-300" />
+
+      <div className="mt-4 grid grid-cols-2 divide-x divide-dotted divide-zinc-300">
+        {links.map((a, i) => (
+          <Link
+            key={a.id}
+            href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+            className={i === 0 ? 'pr-4 text-sm font-medium leading-snug line-clamp-3' : 'pl-4 text-sm font-medium leading-snug line-clamp-3'}
+          >
+            {a.title}
+          </Link>
+        ))}
+        {links.length === 1 ? <div className="pl-4" /> : null}
+        {links.length === 0 ? (
+          <>
+            <div className="pr-4" />
+            <div className="pl-4" />
+          </>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 function activeBlocksForSection(section: HomeSection) {
   return (section.blocks || []).filter((b) => b.isActive).slice().sort((a, b) => a.position - b.position)
 }
@@ -468,6 +593,68 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
                         </>
                       ) : null}
                     </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      }
+      case 'section4': {
+        const cfg = (block.config || {}) as Record<string, unknown>
+        const rows = clampInt(cfg.rows, 3, 1, 6)
+        const cols = clampInt(cfg.cols, 3, 1, 3)
+        const itemsPerCard = clampInt(cfg.itemsPerCard, 3, 2, 6)
+        const startNavIndex = clampInt(cfg.startNavIndex, 0, 0, 50)
+
+        const cardsCfg = (Array.isArray(cfg.cards) ? cfg.cards : []) as Array<Record<string, unknown>>
+        const totalCards = rows * cols
+
+        const defaultTitles = topNavCats.slice(startNavIndex, startNavIndex + totalCards).map((c) => c.name)
+
+        const cards = new Array(totalCards).fill(null).map((_, idx) => {
+          const c = cardsCfg[idx] || {}
+          const title = String(c['title'] || defaultTitles[idx] || `Category ${idx + 1}`).trim()
+          const match = String(c['match'] || '').trim()
+          const categorySlug = String(c['categorySlug'] || '').trim()
+          const navIndexFallback = Number((c['navIndexFallback'] as unknown) ?? startNavIndex + idx)
+          return {
+            title,
+            match: match || undefined,
+            categorySlug: categorySlug || undefined,
+            navIndexFallback: Number.isFinite(navIndexFallback) ? navIndexFallback : startNavIndex + idx,
+          }
+        })
+
+        const resolved = await Promise.all(
+          cards.map((c, idx) =>
+            resolveSectionCardItems({
+              tenantSlug,
+              homeFeed,
+              topNavCats,
+              title: c.title,
+              match: c.match,
+              categorySlug: c.categorySlug,
+              navIndexFallback: c.navIndexFallback,
+              itemsPerCard,
+              fallbackStart: 3 + idx * itemsPerCard,
+            }),
+          ),
+        )
+
+        return (
+          <div key={block.id} className="border-t border-dotted border-zinc-300 pt-6">
+            <div className="space-y-8">
+              {Array.from({ length: rows }).map((_, r) => {
+                const rowItems = resolved.slice(r * cols, r * cols + cols)
+                return (
+                  <div key={r}>
+                    <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
+                      {rowItems.map((x, i) => (
+                        <SectionCardTOI key={`${r}-${i}`} tenantSlug={tenantSlug} title={x.title} href={x.href} featured={x.featured} links={x.links} />
+                      ))}
+                    </div>
+                    {r < rows - 1 ? <div className="mt-8 border-t border-dotted border-zinc-300" /> : null}
                   </div>
                 )
               })}

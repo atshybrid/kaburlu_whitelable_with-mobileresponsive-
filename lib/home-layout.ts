@@ -46,6 +46,7 @@ export type HomeBlockType =
   | 'articleGrid'
   | 'heroImages'
   | 'section3'
+  | 'section4'
 
 export type HomeBlock = {
   id: string
@@ -279,6 +280,32 @@ export function defaultHomeLayout(tenantSlug: string, themeKey: HomeLayoutThemeK
                   { title: 'Also In News', match: 'news', navIndexFallback: 2 },
                 ],
                 itemsPerColumn: 3,
+              },
+            },
+          ],
+        },
+        {
+          id: 's-section4',
+          key: 'section4',
+          name: 'Section 4 (3x3 Category Grid)',
+          position: 5,
+          isActive: true,
+          layout: { type: 'full' },
+          blocks: [
+            {
+              id: 'b-section4',
+              key: 'section4',
+              name: 'Section 4',
+              type: 'section4',
+              position: 1,
+              isActive: true,
+              config: {
+                rows: 3,
+                cols: 3,
+                itemsPerCard: 3,
+                // Optional: override with explicit cards[] later via /api/home-layout
+                // cards: [{ title, match, categorySlug, navIndexFallback }, ...]
+                startNavIndex: 0,
               },
             },
           ],
