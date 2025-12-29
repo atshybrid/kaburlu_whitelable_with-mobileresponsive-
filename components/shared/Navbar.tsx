@@ -41,7 +41,7 @@ export async function Navbar({
             <Link href={toHref(homeHref(tenantSlug))} className="flex items-center justify-center">
               {logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoUrl} alt={title} className="h-12 w-auto sm:h-14" />
+                <img src={logoUrl} alt={title} className="h-14 w-auto sm:h-16" />
               ) : (
                 <div className="text-2xl font-extrabold tracking-tight">{title}</div>
               )}
