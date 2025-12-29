@@ -22,13 +22,13 @@ export function TopStoriesTilesCarouselClient({ tenantSlug, items }: { tenantSlu
   const canNext = page < pages.length - 1
 
   return (
-    <div className="relative overflow-hidden rounded-md border bg-white">
+    <div className="relative overflow-hidden rounded-md">
       <div className="flex w-full transition-transform duration-200 ease-out" style={{ transform: `translateX(-${page * 100}%)` }}>
         {pages.map((p, idx) => (
           <div key={idx} className="w-full shrink-0">
-            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {p.map((a) => (
-                <div key={a.id} className="p-3">
+                <div key={a.id} className="rounded-md bg-white p-3 shadow-sm">
                   <Link
                     href={{ pathname: articleHref(tenantSlug, a.slug || a.id) }}
                     className="block line-clamp-2 text-sm font-medium leading-snug hover:underline"
@@ -46,7 +46,7 @@ export function TopStoriesTilesCarouselClient({ tenantSlug, items }: { tenantSlu
         <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center gap-2">
           <button
             type="button"
-            className="pointer-events-auto rounded-md border bg-white px-2 py-1 text-sm disabled:opacity-40"
+            className="pointer-events-auto rounded-md bg-white px-2 py-1 text-sm shadow-sm disabled:opacity-40"
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={!canPrev}
             aria-label="Previous"
@@ -55,7 +55,7 @@ export function TopStoriesTilesCarouselClient({ tenantSlug, items }: { tenantSlu
           </button>
           <button
             type="button"
-            className="pointer-events-auto rounded-md border bg-white px-2 py-1 text-sm disabled:opacity-40"
+            className="pointer-events-auto rounded-md bg-white px-2 py-1 text-sm shadow-sm disabled:opacity-40"
             onClick={() => setPage((p) => Math.min(pages.length - 1, p + 1))}
             disabled={!canNext}
             aria-label="Next"

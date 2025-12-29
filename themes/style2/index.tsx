@@ -293,9 +293,10 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
           return (
             <SectionCard key={block.id} title={block.name || 'Top Stories'}>
               <div className="space-y-4">
+                <div className="-mx-4 h-px bg-zinc-200" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {top.map((a) => (
-                    <article key={a.id} className="overflow-hidden rounded-md border bg-white">
+                    <article key={a.id} className="overflow-hidden rounded-md bg-white shadow-sm">
                       <div className="relative aspect-[16/9] w-full">
                         {a.coverImage?.url ? (
                           // eslint-disable-next-line @next/next/no-img-element
