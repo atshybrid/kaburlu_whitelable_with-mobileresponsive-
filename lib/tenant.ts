@@ -1,5 +1,6 @@
 import { headers } from 'next/headers'
 import { getDomainSettings } from './remote'
+import { DEFAULT_TENANTS } from '@/config/tenants'
 
 export type Tenant = {
   id: string
@@ -29,12 +30,18 @@ export async function getTenantFromHeaders() {
     if (seg[2]) slug = seg[2]
   }
 
+  const local = DEFAULT_TENANTS.find((t) => t.slug === slug)
+
   const domain = (host || 'localhost').split(':')[0]
   try {
     const res = await getDomainSettings(domain)
-    const themeKey = res?.effective?.theme?.key || 'style1'
-    return { id: res.tenantId ?? 'na', slug, name: slug, themeKey, domain: res.domain ?? domain }
+    const remoteThemeKey = res?.effective?.theme?.theme || res?.effective?.theme?.key || 'style1'
+    const themeKey = remoteThemeKey || local?.themeKey || 'style1'
+    const name = local?.name || slug
+    return { id: res.tenantId ?? 'na', slug, name, themeKey, domain: res.domain ?? domain }
   } catch {
-    return { id: 'na', slug, name: slug, themeKey: 'style1', domain }
+    const themeKey = local?.themeKey || 'style1'
+    const name = local?.name || slug
+    return { id: 'na', slug, name, themeKey, domain }
   }
 }

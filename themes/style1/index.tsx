@@ -1,22 +1,25 @@
 import { Footer } from '@/components/shared/Footer'
-import { LiveTvEmbed } from '@/components/shared/LiveTvEmbed'
 import { Navbar } from '@/components/shared/Navbar'
 import type { Article } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
+import type { UrlObject } from 'url'
 import { PlaceholderImg } from '@/components/shared/PlaceholderImg'
 import { FlashTicker } from '@/components/shared/FlashTicker'
 import { articleHref, categoryHref } from '@/lib/url'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
-import { AdjustableList } from '@/components/shared/AdjustableList'
 import { getEffectiveSettings } from '@/lib/settings'
 import { WebStoriesPlayer } from '@/components/shared/WebStoriesPlayer'
 import { WebStoriesGrid } from '@/components/shared/WebStoriesGrid'
 import MobileBottomNav from '@/components/shared/MobileBottomNav'
 import { readHomeLayout, type HomeSection, type HomeBlock } from '@/lib/home-layout'
 import { getPublicHomepage, type PublicHomepageResponse, type PublicHomepageSection } from '@/lib/homepage'
+
+function toHref(pathname: string): UrlObject {
+  return { pathname }
+}
 
 function HorizontalAd({ className, label = 'Horizontal Ad' }: { className?: string; label?: string }) {
   return (
@@ -43,7 +46,7 @@ function HeroLead({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
           )}
         </div>
       </article>
-      <Link href={articleHref(tenantSlug, a.slug || a.id) as any} className="block text-2xl font-extrabold leading-tight line-clamp-2">
+      <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="block text-2xl font-extrabold leading-tight line-clamp-2">
         {a.title}
       </Link>
     </div>
@@ -61,25 +64,7 @@ function CardMedium({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
           <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
         )}
       </div>
-      <Link href={articleHref(tenantSlug, a.slug || a.id) as any} className="block p-3 text-base font-bold leading-snug hover:text-red-600 line-clamp-2">
-        {a.title}
-      </Link>
-    </article>
-  )
-}
-
-function CardSmall({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
-  return (
-    <article className="group flex gap-3 rounded-md bg-white p-3 hover:shadow-sm transition-shadow">
-      <div className="h-20 w-28 shrink-0 overflow-hidden rounded-md">
-        {a.coverImage?.url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={a.coverImage.url} alt={a.title} className="h-full w-full object-cover" />
-        ) : (
-          <PlaceholderImg className="h-full w-full object-cover" />
-        )}
-      </div>
-      <Link href={articleHref(tenantSlug, a.slug || a.id) as any} className="line-clamp-3 text-sm font-semibold leading-tight hover:text-red-600">
+      <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="block p-3 text-base font-bold leading-snug hover:text-red-600 line-clamp-2">
         {a.title}
       </Link>
     </article>
@@ -124,7 +109,7 @@ async function CategoryBlock({ tenantSlug }: { tenantSlug: string }) {
   const items = category ? (await getArticlesByCategory('na', category.slug)).slice(0, count) : []
 
   const title = category ? category.name : 'Last News'
-  const href = category ? (categoryHref(tenantSlug, category.slug) as any) : undefined
+  const href = category ? categoryHref(tenantSlug, category.slug) : undefined
 
   return (
     <section className="mb-8 rounded-xl bg-white">
@@ -176,7 +161,7 @@ async function CategoryBlock({ tenantSlug }: { tenantSlug: string }) {
 function ListRow({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
   return (
     <div className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-md bg-white p-3">
-      <Link href={articleHref(tenantSlug, a.slug || a.id) as any} className="line-clamp-2 text-sm font-semibold leading-tight hover:text-red-600">
+      <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="line-clamp-2 text-sm font-semibold leading-tight hover:text-red-600">
         {a.title}
       </Link>
       <div className="h-16 w-24 overflow-hidden rounded">
@@ -227,7 +212,7 @@ export async function ThemeHome({
     const items = (homepageData as Record<string, unknown>)[sec.id]
     if (!Array.isArray(items)) return []
     // Normalize common backend shapes into our `Article` shape.
-    return (items as any[]).map((u) => {
+    return (items as unknown[]).map((u) => {
       const o = (u ?? {}) as Record<string, unknown>
       const id = String(o.id ?? o._id ?? o.slug ?? Math.random().toString(36).slice(2))
       const slug = typeof o.slug === 'string' ? o.slug : undefined
@@ -240,9 +225,12 @@ export async function ThemeHome({
         const ci = o.coverImage as Record<string, unknown>
         if (typeof ci.url === 'string') coverUrl = ci.url
       }
-      if (!coverUrl && typeof (o as any).coverImageUrl === 'string') coverUrl = String((o as any).coverImageUrl)
-      if (!coverUrl && typeof (o as any).imageUrl === 'string') coverUrl = String((o as any).imageUrl)
-      if (!coverUrl && typeof (o as any).featuredImage === 'string') coverUrl = String((o as any).featuredImage)
+      const coverImageUrl = o['coverImageUrl']
+      const imageUrl = o['imageUrl']
+      const featuredImage = o['featuredImage']
+      if (!coverUrl && typeof coverImageUrl === 'string') coverUrl = coverImageUrl
+      if (!coverUrl && typeof imageUrl === 'string') coverUrl = imageUrl
+      if (!coverUrl && typeof featuredImage === 'string') coverUrl = featuredImage
       return { id, slug, title, excerpt: excerpt ?? null, content: content ?? null, coverImage: coverUrl ? { url: coverUrl } : undefined } as Article
     })
   }
@@ -256,14 +244,15 @@ export async function ThemeHome({
     if (direct.length > 0) return { items: direct }
 
     // Best-effort fallback: if API returns empty `data`, use its query to fetch.
-    const q = (sec.query || {}) as any
-    const kind = String(q.kind || '')
-    const limit = Number(q.limit || 0)
+    const q = (sec.query || {}) as Record<string, unknown>
+    const kind = String(q.kind ?? '')
+    const limit = Number(q.limit ?? 0)
     const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(50, Math.max(1, Math.floor(limit))) : undefined
 
     try {
-      if (kind === 'category' && typeof q.categorySlug === 'string' && q.categorySlug.trim()) {
-        const wanted = q.categorySlug.trim()
+      const categorySlug = typeof q.categorySlug === 'string' ? q.categorySlug.trim() : ''
+      if (kind === 'category' && categorySlug) {
+        const wanted = categorySlug
         const list = await getArticlesByCategory('na', wanted)
         const sliced = safeLimit ? list.slice(0, safeLimit) : list
         if (sliced.length > 0) return { items: sliced, categorySlugUsed: wanted }
@@ -343,8 +332,10 @@ export async function ThemeHome({
         )
       case 'categoryBlock':
         if (lastNewsItems.length > 0) {
-          const slug = String(lastNewsRes.categorySlugUsed || (lastNewsSection?.query as any)?.categorySlug || '')
-          const href = slug ? (categoryHref(tenantSlugForLinks, slug) as any) : undefined
+          const q = (lastNewsSection?.query || {}) as Record<string, unknown>
+          const configured = typeof q.categorySlug === 'string' ? q.categorySlug : ''
+          const slug = String(lastNewsRes.categorySlugUsed || configured || '')
+          const href = slug ? categoryHref(tenantSlugForLinks, slug) : undefined
           const label = String(lastNewsSection?.label || 'Last News')
           return (
             <section key={block.id} className="mb-8 rounded-xl bg-white">
@@ -391,7 +382,9 @@ export async function ThemeHome({
         return <CategoryBlock key={block.id} tenantSlug={tenantSlugForLinks} />
       case 'trendingCategoryBlock':
         if (trendingCategoryItems.length > 0) {
-          const slug = String(trendingCategoryRes.categorySlugUsed || (trendingCategorySection?.query as any)?.categorySlug || '')
+          const q = (trendingCategorySection?.query || {}) as Record<string, unknown>
+          const configured = typeof q.categorySlug === 'string' ? q.categorySlug : ''
+          const slug = String(trendingCategoryRes.categorySlugUsed || configured || '')
           const href = slug ? categoryHref(tenantSlugForLinks, slug) : undefined
           const label = String(trendingCategorySection?.label || 'Trending News')
           const items = trendingCategoryItems.slice(0, 6)
@@ -401,7 +394,7 @@ export async function ThemeHome({
                 <div className="inline-flex items-center gap-2">
                   <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
                   {href ? (
-                    <a href={href as any} className="text-sm font-bold uppercase tracking-wide hover:text-red-600">
+                    <a href={href} className="text-sm font-bold uppercase tracking-wide hover:text-red-600">
                       {label}
                     </a>
                   ) : (
@@ -409,7 +402,7 @@ export async function ThemeHome({
                   )}
                 </div>
                 {href ? (
-                  <a href={href as any} className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-50">
+                  <a href={href} className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-50">
                     View More →
                   </a>
                 ) : null}
@@ -452,8 +445,8 @@ export async function ThemeHome({
           </Section>
         )
       case 'ad': {
-        const anyConfig = (block.config || {}) as any
-        const fmt = String(anyConfig.format || '').toLowerCase()
+        const cfg = (block.config || {}) as Record<string, unknown>
+        const fmt = String(cfg.format ?? '').toLowerCase()
         if (fmt === '16:9' || fmt === '16x9') {
           return (
             <div key={block.id} className="overflow-hidden rounded-xl bg-white">
@@ -472,8 +465,8 @@ export async function ThemeHome({
         )
       }
       case 'horizontalAd': {
-        const anyConfig = (block.config || {}) as any
-        const label = typeof anyConfig.label === 'string' && anyConfig.label.trim() ? anyConfig.label.trim() : 'Horizontal Ad'
+        const cfg = (block.config || {}) as Record<string, unknown>
+        const label = typeof cfg.label === 'string' && cfg.label.trim() ? cfg.label.trim() : 'Horizontal Ad'
         return <HorizontalAd key={block.id} className="my-6" label={label} />
       }
       case 'categoryColumns':
@@ -718,8 +711,21 @@ async function LatestArticles({ tenantSlug }: { tenantSlug: string }) {
 async function RelatedArticles({ tenantSlug, article }: { tenantSlug: string; article: Article }) {
   let items: Article[] = []
   try {
-    const anyArticle = article as any
-    const firstCat = Array.isArray(anyArticle?.categories) ? anyArticle.categories[0]?.category?.slug || anyArticle.categories[0]?.slug : undefined
+    let firstCat: string | undefined
+    const categories = article['categories']
+    if (Array.isArray(categories) && categories.length > 0) {
+      const first = categories[0]
+      if (first && typeof first === 'object') {
+        const o = first as Record<string, unknown>
+        const categoryObj = o['category']
+        const directSlug = o['slug']
+        if (categoryObj && typeof categoryObj === 'object') {
+          const co = categoryObj as Record<string, unknown>
+          if (typeof co['slug'] === 'string') firstCat = co['slug']
+        }
+        if (!firstCat && typeof directSlug === 'string') firstCat = directSlug
+      }
+    }
     if (firstCat) {
       items = await getArticlesByCategory('na', firstCat)
     } else {
@@ -765,12 +771,12 @@ async function CategoryColumns({ tenantSlug }: { tenantSlug: string }) {
       {lists.map(({ category: c, items }) => (
         <section key={c.id} className="rounded-xl bg-white">
           <div className="flex items-center justify-between border-b px-4 py-2">
-            <Link href={categoryHref(tenantSlug, c.slug) as any} className="inline-flex items-center gap-2">
+            <Link href={toHref(categoryHref(tenantSlug, c.slug))} className="inline-flex items-center gap-2">
               <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
               <span className="text-sm font-bold uppercase tracking-wide hover:text-red-600">{c.name}</span>
             </Link>
             <Link
-              href={categoryHref(tenantSlug, c.slug) as any}
+              href={toHref(categoryHref(tenantSlug, c.slug))}
               className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-50"
             >
               View More →
@@ -788,7 +794,7 @@ async function CategoryColumns({ tenantSlug }: { tenantSlug: string }) {
                     <PlaceholderImg className="h-full w-full object-cover" />
                   )}
                 </div>
-                <Link href={articleHref(tenantSlug, items[0].slug || items[0].id) as any} className="line-clamp-2 text-sm font-semibold leading-snug hover:text-red-600">
+                <Link href={toHref(articleHref(tenantSlug, items[0].slug || items[0].id))} className="line-clamp-2 text-sm font-semibold leading-snug hover:text-red-600">
                   {items[0].title}
                 </Link>
               </div>
@@ -800,7 +806,7 @@ async function CategoryColumns({ tenantSlug }: { tenantSlug: string }) {
                 className="grid grid-cols-[1fr_auto] items-center gap-3 px-3 py-3 border-b border-dashed border-zinc-200 last:border-b-0"
               >
                 <Link
-                  href={articleHref(tenantSlug, a.slug || a.id) as any}
+                  href={toHref(articleHref(tenantSlug, a.slug || a.id))}
                   className="line-clamp-2 text-sm font-semibold leading-tight hover:text-red-600"
                 >
                   {a.title}
@@ -838,7 +844,7 @@ async function TrendingCategoryBlock({ tenantSlug }: { tenantSlug: string }) {
         <div className="inline-flex items-center gap-2">
           <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
           {href ? (
-            <a href={href as any} className="text-sm font-bold uppercase tracking-wide hover:text-red-600">
+            <a href={href} className="text-sm font-bold uppercase tracking-wide hover:text-red-600">
               {title}
             </a>
           ) : (
@@ -846,7 +852,7 @@ async function TrendingCategoryBlock({ tenantSlug }: { tenantSlug: string }) {
           )}
         </div>
         {href ? (
-          <a href={href as any} className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-50">
+          <a href={href} className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-50">
             View More →
           </a>
         ) : null}
@@ -880,7 +886,8 @@ async function WebStoriesArea({ tenantSlug }: { tenantSlug: string }) {
     ? cats.find((c) => c.slug.toLowerCase() === preferred || c.name.toLowerCase() === preferred) || cats[0]
     : cats[0]
   const items = category ? (await getArticlesByCategory('na', category.slug)).slice(0, 8) : []
-  const moreHref = category ? (categoryHref(tenantSlug, category.slug) as any) : undefined
+  void items
+  const moreHref = category ? categoryHref(tenantSlug, category.slug) : undefined
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
@@ -933,12 +940,12 @@ async function HGBlock({ tenantSlug }: { tenantSlug: string }) {
       {lists.map(({ category: c, items }, idx) => (
         <div key={c.id} className={idx > 0 ? 'mt-6' : ''}>
           <div className="flex items-center justify-between px-3 py-2">
-            <a href={categoryHref(tenantSlug, c.slug) as any} className="inline-flex items-center gap-2 text-base font-bold">
+            <a href={categoryHref(tenantSlug, c.slug)} className="inline-flex items-center gap-2 text-base font-bold">
               <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
               <span className="hover:text-red-600">{c.name}</span>
             </a>
             <a
-              href={categoryHref(tenantSlug, c.slug) as any}
+              href={categoryHref(tenantSlug, c.slug)}
               className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-sm font-medium hover:bg-zinc-50"
             >
               View More →

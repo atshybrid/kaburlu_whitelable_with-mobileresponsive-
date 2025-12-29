@@ -1,7 +1,8 @@
 "use client"
 
-import Script from "next/script"
-import Head from "next/head"
+import Script from 'next/script'
+import Head from 'next/head'
+import React from 'react'
 
 type StoryItem = {
   url: string
@@ -9,12 +10,12 @@ type StoryItem = {
   poster?: string
 }
 
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      "amp-story-player": any
-    }
-  }
+type AmpStoryPlayerProps = React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+  children?: React.ReactNode
+}
+
+function AmpStoryPlayer(props: AmpStoryPlayerProps) {
+  return React.createElement('amp-story-player', props)
 }
 
 export function WebStoriesPlayer({
@@ -24,27 +25,26 @@ export function WebStoriesPlayer({
   stories?: StoryItem[]
   height?: number
 }) {
-  const AmpPlayer = "amp-story-player" as any
   const sample: StoryItem[] = [
     {
-      url: "https://www.gstatic.com/amphtml/stamp/qa/media/animal-photo-essay/amp_story.html",
-      title: "Animal Photo Essay",
-      poster: "https://www.gstatic.com/amphtml/stamp/qa/media/animal-photo-essay/cover.jpg",
+      url: 'https://www.gstatic.com/amphtml/stamp/qa/media/animal-photo-essay/amp_story.html',
+      title: 'Animal Photo Essay',
+      poster: 'https://www.gstatic.com/amphtml/stamp/qa/media/animal-photo-essay/cover.jpg',
     },
     {
-      url: "https://www.gstatic.com/amphtml/stamp/qa/media/kitchen-sink/amp_story.html",
-      title: "Kitchen Sink",
-      poster: "https://www.gstatic.com/amphtml/stamp/qa/media/kitchen-sink/cover.jpg",
+      url: 'https://www.gstatic.com/amphtml/stamp/qa/media/kitchen-sink/amp_story.html',
+      title: 'Kitchen Sink',
+      poster: 'https://www.gstatic.com/amphtml/stamp/qa/media/kitchen-sink/cover.jpg',
     },
     {
-      url: "https://www.gstatic.com/amphtml/stamp/qa/media/thescenic/amp_story.html",
-      title: "The Scenic",
-      poster: "https://www.gstatic.com/amphtml/stamp/qa/media/thescenic/cover.jpg",
+      url: 'https://www.gstatic.com/amphtml/stamp/qa/media/thescenic/amp_story.html',
+      title: 'The Scenic',
+      poster: 'https://www.gstatic.com/amphtml/stamp/qa/media/thescenic/cover.jpg',
     },
     {
-      url: "https://www.gstatic.com/amphtml/stamp/qa/media/healthy-food/amp_story.html",
-      title: "Healthy Food",
-      poster: "https://www.gstatic.com/amphtml/stamp/qa/media/healthy-food/cover.jpg",
+      url: 'https://www.gstatic.com/amphtml/stamp/qa/media/healthy-food/amp_story.html',
+      title: 'Healthy Food',
+      poster: 'https://www.gstatic.com/amphtml/stamp/qa/media/healthy-food/cover.jpg',
     },
   ]
 
@@ -56,17 +56,17 @@ export function WebStoriesPlayer({
         <link rel="stylesheet" href="https://cdn.ampproject.org/amp-story-player-v0.css" />
       </Head>
       <Script src="https://cdn.ampproject.org/amp-story-player-v0.js" strategy="afterInteractive" />
-      <AmpPlayer style={{ width: "100%", height: `${height}px` }}>
+      <AmpStoryPlayer style={{ width: '100%', height: `${height}px` }}>
         {list.map((s) => (
           <a
             key={s.url}
             href={s.url}
-            title={s.title || "Web story"}
-            {...(s.poster ? { "data-poster-portrait-src": s.poster } : {})}
-            style={{ display: "block" }}
+            title={s.title || 'Web story'}
+            {...(s.poster ? { 'data-poster-portrait-src': s.poster } : {})}
+            style={{ display: 'block' }}
           />
         ))}
-      </AmpPlayer>
+      </AmpStoryPlayer>
     </div>
   )
 }

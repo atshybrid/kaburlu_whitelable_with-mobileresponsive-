@@ -1,6 +1,11 @@
 import Link from 'next/link'
+import type { UrlObject } from 'url'
 import type { Article } from '@/lib/data-sources'
 import { PlaceholderImg } from './PlaceholderImg'
+
+function toHref(pathname: string): UrlObject {
+  return { pathname }
+}
 
 export function ArticleCard({
   tenantSlug,
@@ -19,7 +24,7 @@ export function ArticleCard({
         <PlaceholderImg className="h-44 w-full object-cover" />
       )}
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <Link href={href as any} className="text-lg font-semibold leading-snug hover:text-blue-600">
+        <Link href={toHref(href)} className="text-lg font-semibold leading-snug hover:underline">
           {article.title}
         </Link>
         <p className="text-sm text-zinc-600">

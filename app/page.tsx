@@ -18,7 +18,7 @@ async function getThemeHome(themeKey: string) {
 export default async function Home() {
   // For root domain pages, use host-based settings and pick theme
   const settings = await getEffectiveSettings()
-  const requestedThemeKey: string = settings?.theme?.key || 'style1'
+  const requestedThemeKey: string = settings?.theme?.theme || settings?.theme?.key || 'style1'
   const themeKey = (['style1', 'style2', 'style3', 'tv9'].includes(requestedThemeKey) ? requestedThemeKey : 'style1') as
     | 'style1'
     | 'style2'

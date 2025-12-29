@@ -63,12 +63,25 @@ export async function fetchJSON<T>(path: string, init?: FetchJSONInit) {
 
 export interface EffectiveSettings {
   seo?: { ogImageUrl?: string; defaultMetaTitle?: string; defaultMetaDescription?: string; canonicalBaseUrl?: string }
-  theme?: { layout?: { footer?: string; header?: string; showTicker?: boolean; showTopBar?: boolean }; key?: string }
+  theme?: {
+    // Backend may send `theme` (current) or `key` (legacy)
+    theme?: string
+    key?: string
+    colors?: { accent?: string; primary?: string; secondary?: string }
+    typography?: { baseSize?: number; fontFamily?: string }
+    layout?: { footer?: string; header?: string; showTicker?: boolean; showTopBar?: boolean }
+  }
   content?: { defaultLanguage?: string }
   branding?: { logoUrl?: string; faviconUrl?: string; siteName?: string }
   settings?: {
     seo?: { ogImageUrl?: string; defaultMetaTitle?: string; defaultMetaDescription?: string; canonicalBaseUrl?: string }
-    theme?: { layout?: { footer?: string; header?: string; showTicker?: boolean; showTopBar?: boolean } }
+    theme?: {
+      theme?: string
+      key?: string
+      colors?: { accent?: string; primary?: string; secondary?: string }
+      typography?: { baseSize?: number; fontFamily?: string }
+      layout?: { footer?: string; header?: string; showTicker?: boolean; showTopBar?: boolean }
+    }
     content?: { defaultLanguage?: string }
     branding?: { logoUrl?: string; faviconUrl?: string; siteName?: string }
   }

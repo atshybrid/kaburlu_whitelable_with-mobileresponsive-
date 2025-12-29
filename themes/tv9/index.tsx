@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { UrlObject } from 'url'
 import { Footer } from '@/components/shared/Footer'
 import { LiveTvEmbed } from '@/components/shared/LiveTvEmbed'
 import { Navbar } from '@/components/shared/Navbar'
@@ -7,6 +8,10 @@ import type { EffectiveSettings } from '@/lib/remote'
 import { articleHref } from '@/lib/url'
 import { PlaceholderImg } from '@/components/shared/PlaceholderImg'
 import { FlashTicker } from '@/components/shared/FlashTicker'
+
+function toHref(pathname: string): UrlObject {
+  return { pathname }
+}
 
 function HeroLead({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
   return (
@@ -20,7 +25,7 @@ function HeroLead({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
       <div className="absolute inset-x-0 bottom-0 p-6">
         <Link
-          href={articleHref(tenantSlug, a.slug || a.id) as any}
+          href={toHref(articleHref(tenantSlug, a.slug || a.id))}
           className="block text-3xl font-extrabold leading-tight tracking-tight text-white drop-shadow-md"
         >
           {a.title}
@@ -41,7 +46,7 @@ function CardMedium({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/10" />
       <Link
-        href={articleHref(tenantSlug, a.slug || a.id) as any}
+        href={toHref(articleHref(tenantSlug, a.slug || a.id))}
         className="absolute inset-x-0 bottom-0 p-4 text-lg font-bold leading-snug text-white"
       >
         {a.title}
@@ -62,7 +67,7 @@ function CardSmall({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
         )}
       </div>
       <Link
-        href={articleHref(tenantSlug, a.slug || a.id) as any}
+        href={toHref(articleHref(tenantSlug, a.slug || a.id))}
         className="line-clamp-3 text-sm font-semibold leading-tight hover:text-red-600"
       >
         {a.title}
@@ -148,7 +153,7 @@ export function ThemeHome({ tenantSlug, title, articles, settings }: { tenantSlu
                   )}
                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <Link
-                    href={articleHref(tenantSlug, a.slug || a.id) as any}
+                    href={toHref(articleHref(tenantSlug, a.slug || a.id))}
                     className="absolute inset-x-0 bottom-0 line-clamp-2 bg-gradient-to-t from-black/80 to-transparent p-2 text-xs font-semibold text-white"
                   >
                     {a.title}

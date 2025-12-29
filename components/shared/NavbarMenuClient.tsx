@@ -3,6 +3,25 @@ import Link from 'next/link'
 import type { Route } from 'next'
 import { useEffect, useRef, useState } from 'react'
 
+function HomeIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M3 10.5L12 3l9 7.5" />
+      <path d="M5 10v10h14V10" />
+      <path d="M9 20v-6h6v6" />
+    </svg>
+  )
+}
+
 export default function NavbarMenuClient({ items }: { items: { href: string; label: string }[] }) {
   const visible = items.slice(0, 10)
   const rest = items.slice(10)
@@ -28,8 +47,14 @@ export default function NavbarMenuClient({ items }: { items: { href: string; lab
   return (
     <nav className="flex items-center gap-3 overflow-x-auto py-2 text-sm">
       {visible.map((it) => (
-        <Link key={it.href} href={it.href as unknown as Route} className="whitespace-nowrap font-medium hover:text-red-600">
-          {it.label}
+        <Link
+          key={it.href}
+          href={it.href as unknown as Route}
+          aria-label={it.label === 'Home' ? 'Home' : undefined}
+          title={it.label === 'Home' ? 'Home' : undefined}
+          className="whitespace-nowrap font-medium text-zinc-800 hover:text-[hsl(var(--accent))]"
+        >
+          {it.label === 'Home' ? <HomeIcon className="h-4 w-4" /> : it.label}
         </Link>
       ))}
       {rest.length > 0 && (
@@ -50,8 +75,20 @@ export default function NavbarMenuClient({ items }: { items: { href: string; lab
             <div role="menu" className="absolute right-0 z-50 mt-2 w-56 rounded-md border bg-white p-2 shadow-lg">
               <div className="grid max-h-64 grid-cols-1 gap-1 overflow-auto">
                 {rest.map((it) => (
-                  <Link key={it.href} href={it.href as unknown as Route} className="rounded px-2 py-1 text-sm hover:bg-gray-50 hover:text-red-600" onClick={() => setOpen(false)}>
-                    {it.label}
+                  <Link
+                    key={it.href}
+                    href={it.href as unknown as Route}
+                    className="rounded px-2 py-1 text-sm text-zinc-800 hover:bg-gray-50 hover:text-[hsl(var(--accent))]"
+                    onClick={() => setOpen(false)}
+                  >
+                    {it.label === 'Home' ? (
+                      <span className="inline-flex items-center gap-2">
+                        <HomeIcon className="h-4 w-4" />
+                        Home
+                      </span>
+                    ) : (
+                      it.label
+                    )}
                   </Link>
                 ))}
               </div>

@@ -1,8 +1,13 @@
 "use client"
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import type { UrlObject } from 'url'
 import type { Article } from '@/lib/data-sources'
 import { articleHref } from '@/lib/url'
+
+function toHref(pathname: string): UrlObject {
+  return { pathname }
+}
 
 export function FlashTicker({ tenantSlug, items, intervalMs = 3000 }: { tenantSlug: string; items: Article[]; intervalMs?: number }) {
   const list = useMemo(() => (Array.isArray(items) && items.length ? items : [{ id: 'na', title: 'No updates', slug: 'na' }]), [items])
@@ -11,7 +16,7 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 3000 }: { tenantSl
 
   useEffect(() => {
     const id = setInterval(() => {
-      setPrevIdx((p) => idx)
+      setPrevIdx(() => idx)
       setIdx((i) => (i + 1) % list.length)
     }, intervalMs)
     return () => clearInterval(id)
@@ -20,7 +25,6 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 3000 }: { tenantSl
   const current = list[idx]
   const previous = prevIdx !== null ? list[prevIdx] : null
   const currentHref = articleHref(tenantSlug, current.slug || current.id)
-  const previousHref = previous ? articleHref(tenantSlug, previous.slug || previous.id) : null
 
   return (
     <div className="flex items-stretch gap-3 py-2">
@@ -29,7 +33,7 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 3000 }: { tenantSl
         {previous && (
           <Link
             key={previous.id + '-' + prevIdx + '-out'}
-            href={previousHref as any}
+            href={toHref(articleHref(tenantSlug, previous.slug || previous.id))}
             className="ticker-item animate-[ticker-out_400ms_ease-in_forwards] block truncate text-sm"
             aria-hidden="true"
             tabIndex={-1}
@@ -39,7 +43,7 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 3000 }: { tenantSl
         )}
         <Link
           key={current.id + '-' + idx + '-in'}
-          href={currentHref as any}
+          href={toHref(currentHref)}
           className="ticker-item animate-[ticker-in_420ms_ease-out_forwards] block truncate text-sm hover:text-red-600"
         >
           {current.title}
