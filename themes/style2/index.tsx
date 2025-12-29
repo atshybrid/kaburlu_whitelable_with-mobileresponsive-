@@ -249,7 +249,7 @@ async function resolveSectionCardItems({
   if (!items.length) items = homeFeed.slice(fallbackStart, fallbackStart + itemsPerCard)
 
   const href = cat?.slug ? categoryHref(tenantSlug, cat.slug) : undefined
-  return { title, href, featured: items[0], links: items.slice(1, 3) }
+  return { title, href, featured: items[0], links: items.slice(1, 5) }
 }
 
 function SectionCardTOI({
@@ -265,6 +265,9 @@ function SectionCardTOI({
   featured?: Article
   links: Article[]
 }) {
+  const left = links.filter((_, idx) => idx % 2 === 0)
+  const right = links.filter((_, idx) => idx % 2 === 1)
+
   return (
     <div className="min-w-0">
       <div className="flex items-center justify-between">
@@ -292,43 +295,50 @@ function SectionCardTOI({
       </div>
 
       {featured ? (
-        <div className="mt-4 flex min-w-0 gap-4">
-          <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-md bg-zinc-100">
+        <Link href={toHref(articleHref(tenantSlug, featured.slug || featured.id))} className="mt-4 block">
+          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md bg-zinc-100">
             {featured.coverImage?.url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={featured.coverImage.url} alt={featured.title} className="absolute inset-0 h-full w-full object-cover" />
             ) : (
               <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
             )}
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-black/0 px-3 pb-3 pt-10">
+              <div className="line-clamp-2 text-sm font-semibold leading-snug text-white">{featured.title}</div>
+            </div>
           </div>
-          <Link
-            href={toHref(articleHref(tenantSlug, featured.slug || featured.id))}
-            className="min-w-0 line-clamp-2 text-sm font-semibold leading-snug"
-          >
-            {featured.title}
-          </Link>
-        </div>
+        </Link>
       ) : null}
 
       <div className="mt-4 border-t border-dotted border-zinc-300" />
 
       <div className="mt-4 grid grid-cols-2 divide-x divide-dotted divide-zinc-300">
-        {links.map((a, i) => (
-          <Link
-            key={a.id}
-            href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-            className={i === 0 ? 'pr-4 text-sm font-medium leading-snug line-clamp-3' : 'pl-4 text-sm font-medium leading-snug line-clamp-3'}
-          >
-            {a.title}
-          </Link>
-        ))}
-        {links.length === 1 ? <div className="pl-4" /> : null}
-        {links.length === 0 ? (
-          <>
-            <div className="pr-4" />
-            <div className="pl-4" />
-          </>
-        ) : null}
+        <div className="pr-4">
+          <div className="space-y-3">
+            {left.map((a) => (
+              <Link
+                key={a.id}
+                href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+                className="block line-clamp-2 text-sm font-medium leading-snug hover:underline"
+              >
+                {a.title}
+              </Link>
+            ))}
+          </div>
+        </div>
+        <div className="pl-4">
+          <div className="space-y-3">
+            {right.map((a) => (
+              <Link
+                key={a.id}
+                href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+                className="block line-clamp-2 text-sm font-medium leading-snug hover:underline"
+              >
+                {a.title}
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -604,29 +614,41 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
         const cfg = (block.config || {}) as Record<string, unknown>
         const rows = clampInt(cfg.rows, 3, 1, 6)
         const cols = clampInt(cfg.cols, 3, 1, 3)
-        const itemsPerCard = clampInt(cfg.itemsPerCard, 3, 2, 6)
+        const itemsPerCard = clampInt(cfg.itemsPerCard, 5, 3, 10)
         const startNavIndex = clampInt(cfg.startNavIndex, 0, 0, 50)
 
         const cardsCfg = (Array.isArray(cfg.cards) ? cfg.cards : []) as Array<Record<string, unknown>>
         const totalCards = rows * cols
 
-        const defaultTitles = topNavCats.slice(startNavIndex, startNavIndex + totalCards).map((c) => c.name)
+        const defaultCats = topNavCats.slice(startNavIndex, startNavIndex + totalCards)
 
-        const cards = new Array(totalCards).fill(null).map((_, idx) => {
-          const c = cardsCfg[idx] || {}
-          const title = String(c['title'] || defaultTitles[idx] || `Category ${idx + 1}`).trim()
-          const match = String(c['match'] || '').trim()
-          const categorySlug = String(c['categorySlug'] || '').trim()
-          const navIndexFallback = Number((c['navIndexFallback'] as unknown) ?? startNavIndex + idx)
-          return {
-            title,
-            match: match || undefined,
-            categorySlug: categorySlug || undefined,
-            navIndexFallback: Number.isFinite(navIndexFallback) ? navIndexFallback : startNavIndex + idx,
-          }
-        })
+        const cards = new Array(totalCards)
+          .fill(null)
+          .map((_, idx) => {
+            const c = cardsCfg[idx] || {}
+            const titleRaw = String(c['title'] || '').trim()
+            const defaultCat = defaultCats[idx]
+            const title = titleRaw || defaultCat?.name
+            if (!title) return null
 
-        const resolved = await Promise.all(
+            const match = String(c['match'] || '').trim()
+            const categorySlug = String(c['categorySlug'] || '').trim()
+            const navIndexFallback = Number((c['navIndexFallback'] as unknown) ?? startNavIndex + idx)
+            return {
+              title,
+              match: match || undefined,
+              categorySlug: categorySlug || undefined,
+              navIndexFallback: Number.isFinite(navIndexFallback) ? navIndexFallback : startNavIndex + idx,
+            }
+          })
+          .filter(Boolean) as Array<{
+          title: string
+          match?: string
+          categorySlug?: string
+          navIndexFallback: number
+        }>
+
+        const resolvedAll = await Promise.all(
           cards.map((c, idx) =>
             resolveSectionCardItems({
               tenantSlug,
@@ -642,19 +664,32 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
           ),
         )
 
+        // Don't show placeholder cards like "Category 7" when there is no content.
+        const resolved = resolvedAll.filter((x) => Boolean(x.featured) || (Array.isArray(x.links) && x.links.length > 0))
+
+        if (resolved.length === 0) return null
+
+        const perRow = cols
+        const maxCards = rows * cols
+        const visible = resolved.slice(0, maxCards)
+        const actualRows = Math.max(1, Math.ceil(visible.length / perRow))
+
         return (
-          <div key={block.id} className="border-t border-dotted border-zinc-300 pt-6">
-            <div className="space-y-8">
-              {Array.from({ length: rows }).map((_, r) => {
-                const rowItems = resolved.slice(r * cols, r * cols + cols)
+          <div key={block.id} className="border-t border-dotted border-zinc-300 pt-8">
+            <div className="space-y-10">
+              {Array.from({ length: actualRows }).map((_, r) => {
+                const rowItems = visible.slice(r * perRow, r * perRow + perRow)
+                if (!rowItems.length) return null
                 return (
                   <div key={r}>
-                    <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-0 lg:divide-x lg:divide-dotted lg:divide-zinc-300">
                       {rowItems.map((x, i) => (
-                        <SectionCardTOI key={`${r}-${i}`} tenantSlug={tenantSlug} title={x.title} href={x.href} featured={x.featured} links={x.links} />
+                        <div key={`${r}-${i}`} className="min-w-0 lg:px-8 lg:first:pl-0 lg:last:pr-0">
+                          <SectionCardTOI tenantSlug={tenantSlug} title={x.title} href={x.href} featured={x.featured} links={x.links} />
+                        </div>
                       ))}
                     </div>
-                    {r < rows - 1 ? <div className="mt-8 border-t border-dotted border-zinc-300" /> : null}
+                    {r < actualRows - 1 ? <div className="mt-10 border-t border-dotted border-zinc-300" /> : null}
                   </div>
                 )
               })}

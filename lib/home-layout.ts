@@ -302,7 +302,7 @@ export function defaultHomeLayout(tenantSlug: string, themeKey: HomeLayoutThemeK
               config: {
                 rows: 3,
                 cols: 3,
-                itemsPerCard: 3,
+                itemsPerCard: 5,
                 // Optional: override with explicit cards[] later via /api/home-layout
                 // cards: [{ title, match, categorySlug, navIndexFallback }, ...]
                 startNavIndex: 0,
