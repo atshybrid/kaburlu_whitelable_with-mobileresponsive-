@@ -430,6 +430,20 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
         const cfg = (block.config || {}) as Record<string, unknown>
         const count = pickCount(cfg.count ?? cfg.maxItems, 10, 30)
         const offset = pickOffset(cfg.offset)
+
+        // Optional: make this list category-driven (so title becomes a category link).
+        if (String(cfg.source || '').trim() === 'category') {
+          const slug = resolveCategorySlug(cfg, topNavCats)
+          const list = slug ? await getArticlesByCategory('na', slug) : []
+          const items = list.slice(offset, offset + count)
+          const href = slug ? categoryHref(tenantSlug, slug) : undefined
+          return (
+            <SectionCard key={block.id} title={block.name || 'Category'} href={href}>
+              <TitleList tenantSlug={tenantSlug} items={items} />
+            </SectionCard>
+          )
+        }
+
         const items = homeFeed.slice(offset, offset + count)
         return (
           <SectionCard key={block.id} title={block.name || 'Latest'}>
@@ -443,15 +457,30 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
         const count = isTopStoriesGrid ? 9 : pickCount(cfg.count ?? cfg.maxItems, 3, 30)
         const offset = pickOffset(cfg.offset)
         const cols = isTopStoriesGrid ? 3 : pickCount(cfg.columns, 3, 6)
-        let items = homeFeed.slice(offset, offset + count)
-        if (!items.length && offset > 0) items = homeFeed.slice(0, count)
+        let items: Article[] = []
+        let href: string | undefined
+
+        // Optional: category-driven grid (adds a category link on the section title).
+        if (String(cfg.source || '').trim() === 'category') {
+          const slug = resolveCategorySlug(cfg, topNavCats)
+          if (slug) {
+            const list = await getArticlesByCategory('na', slug)
+            items = list.slice(offset, offset + count)
+            href = categoryHref(tenantSlug, slug)
+          }
+        }
+
+        if (!items.length) {
+          items = homeFeed.slice(offset, offset + count)
+          if (!items.length && offset > 0) items = homeFeed.slice(0, count)
+        }
         const gridClass = cols >= 4 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4' : cols === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
 
         if (isTopStoriesGrid) {
           const top = items.slice(0, 3)
           const tiles = items.slice(3, 9)
           return (
-            <SectionCard key={block.id} title={block.name || 'Top Stories'}>
+            <SectionCard key={block.id} title={block.name || 'Top Stories'} href={href}>
               <div className="space-y-4">
                 <div className="-mx-4 h-px bg-zinc-200" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -483,7 +512,7 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
         }
 
         return (
-          <SectionCard key={block.id} title={block.name || 'Top Stories'}>
+          <SectionCard key={block.id} title={block.name || 'Top Stories'} href={href}>
             <div className={`grid ${gridClass} gap-4`}>
               {items.map((a) => (
                 <article key={a.id} className="overflow-hidden rounded-md border bg-white">

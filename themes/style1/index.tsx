@@ -430,7 +430,7 @@ export async function ThemeHome({
         return <TrendingCategoryBlock key={block.id} tenantSlug={tenantSlugForLinks} />
       case 'trendingList':
         return (
-          <Section key={block.id} title="Trending News" noShadow>
+          <Section key={block.id} title={String(sectionByType('titlesOnly')?.label || 'Trending News')} noShadow>
             <div>
               {(titlesOnlyItems.length > 0 ? titlesOnlyItems : articles).slice(0, 8).map((a) => (
                 <a
@@ -835,7 +835,7 @@ async function TrendingCategoryBlock({ tenantSlug }: { tenantSlug: string }) {
     ? cats.find((c) => c.slug.toLowerCase() === preferred || c.name.toLowerCase() === preferred) || cats[0]
     : cats[0]
   const items = category ? (await getArticlesByCategory('na', category.slug)).slice(0, 6) : []
-  const title = category ? category.name : 'Tranding News'
+  const title = category ? category.name : 'Trending News'
   const href = category ? categoryHref(tenantSlug, category.slug) : undefined
 
   return (
