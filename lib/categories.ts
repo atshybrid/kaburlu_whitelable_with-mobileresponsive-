@@ -42,10 +42,64 @@ export async function getCategoriesForNav(): Promise<Category[]> {
 
   const languageCode = String(lang || 'en')
 
-  // Prefer translations endpoint when a domain language is configured.
-  // Backend may still return English if translation is missing; we fall back gracefully.
+  // Always fetch categories (includeChildren) so we preserve parentId/children for sub-navigation.
+  // Then, for non-English tenants, optionally overlay names from translations.
+  const qs = new URLSearchParams({ includeChildren: 'true', languageCode })
 
-  // Avoid extra requests when English is used.
+  let categories: Category[] = []
+  try {
+    const res = await fetchJSON<Category[]>(`/public/categories?${qs.toString()}`, {
+      tenantDomain: domain,
+      revalidateSeconds: Number(process.env.REMOTE_CATEGORIES_REVALIDATE_SECONDS || '300'),
+      tags: [`categories:${domain}:${languageCode}`],
+    })
+    categories = Array.isArray(res) ? res : []
+  } catch {
+    categories = []
+  }
+
+  if (languageCode.toLowerCase() !== 'en') {
+    const translationsQs = new URLSearchParams({ languageCode })
+    try {
+      const translated = await fetchJSON<CategoryTranslationRow[]>(
+        `/public/category-translations?${translationsQs.toString()}`,
+        {
+          tenantDomain: domain,
+          revalidateSeconds: Number(process.env.REMOTE_CATEGORY_TRANSLATIONS_REVALIDATE_SECONDS || '300'),
+          tags: [`category-translations:${domain}:${languageCode}`],
+        }
+      )
+      const rows = Array.isArray(translated) ? translated : []
+      const enabled = rows.filter((r) => r && r.domainLanguageEnabled !== false)
+      if (enabled.length > 0) {
+        const bySlug = new Map<string, string>()
+        for (const r of enabled) {
+          const slug = String(r.slug || '').trim()
+          if (!slug) continue
+          const name = r.hasTranslation && r.translated ? String(r.translated) : String(r.baseName || r.slug)
+          if (name) bySlug.set(slug, name)
+        }
+
+        const applyNames = (list: Category[]) => {
+          for (const c of list) {
+            const translatedName = c?.slug ? bySlug.get(String(c.slug)) : undefined
+            if (translatedName) c.name = translatedName
+            if (Array.isArray(c.children) && c.children.length > 0) applyNames(c.children)
+          }
+        }
+        if (categories.length > 0) applyNames(categories)
+      }
+    } catch {
+      // ignore; keep category names from /public/categories
+    }
+  }
+
+  if (categories.length > 0) {
+    cache.set(key, { value: categories, expires: now + TTL_MS })
+    return categories
+  }
+
+  // Last resort: translation-only fallback (flat, no hierarchy)
   if (languageCode.toLowerCase() !== 'en') {
     const translationsQs = new URLSearchParams({ languageCode })
     try {
@@ -66,24 +120,8 @@ export async function getCategoriesForNav(): Promise<Category[]> {
         return mapped
       }
     } catch {
-      // ignore; fall back
+      // ignore
     }
-  }
-
-  const qs = new URLSearchParams({ includeChildren: 'true', languageCode })
-  try {
-    const res = await fetchJSON<Category[]>(`/public/categories?${qs.toString()}`, {
-      tenantDomain: domain,
-      revalidateSeconds: Number(process.env.REMOTE_CATEGORIES_REVALIDATE_SECONDS || '300'),
-      tags: [`categories:${domain}:${languageCode}`],
-    })
-    const flat = Array.isArray(res) ? res : []
-    if (flat.length > 0) {
-      cache.set(key, { value: flat, expires: now + TTL_MS })
-      return flat
-    }
-  } catch {
-    // ignore
   }
 
   const mock = makeMockCategories()

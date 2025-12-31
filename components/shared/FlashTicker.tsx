@@ -27,14 +27,14 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 3000 }: { tenantSl
   const currentHref = articleHref(tenantSlug, current.slug || current.id)
 
   return (
-    <div className="flex items-stretch gap-3 py-2">
-      <div className="flex items-center rounded bg-red-600 px-3 text-xs font-bold uppercase tracking-wide text-white">Flashnews</div>
-      <div className="relative flex-1 overflow-hidden">
+    <div className="flex items-center gap-3 py-2">
+      <div className="flex items-center rounded bg-red-600 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">Flashnews</div>
+      <div className="relative flex-1 overflow-hidden min-h-6 py-0.5">
         {previous && (
           <Link
             key={previous.id + '-' + prevIdx + '-out'}
             href={toHref(articleHref(tenantSlug, previous.slug || previous.id))}
-            className="ticker-item animate-[ticker-out_400ms_ease-in_forwards] block truncate text-sm"
+            className="ticker-item animate-[ticker-out_400ms_ease-in_forwards] block truncate text-sm font-bold leading-6"
             aria-hidden="true"
             tabIndex={-1}
           >
@@ -44,7 +44,7 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 3000 }: { tenantSl
         <Link
           key={current.id + '-' + idx + '-in'}
           href={toHref(currentHref)}
-          className="ticker-item animate-[ticker-in_420ms_ease-out_forwards] block truncate text-sm hover:text-red-600"
+          className="ticker-item animate-[ticker-in_420ms_ease-out_forwards] block truncate text-sm font-bold leading-6 hover:text-red-600"
         >
           {current.title}
         </Link>

@@ -10,10 +10,60 @@ import type { UrlObject } from 'url'
 import { articleHref, categoryHref } from '@/lib/url'
 import { getTenantFromHeaders } from '@/lib/tenant'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
+import { getPublicHomepageStyle2Shape, type Style2HomepageItem, type Style2HomepageResponse } from '@/lib/homepage'
 import { readHomeLayout, type HomeBlock, type HomeSection } from '@/lib/home-layout'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getEffectiveSettings } from '@/lib/settings'
 import { themeCssVarsFromSettings } from '@/lib/theme-vars'
+
+function style2ItemToArticle(item: Style2HomepageItem): Article {
+  return {
+    id: item.id,
+    slug: item.slug || item.id,
+    title: item.title,
+    excerpt: item.excerpt || undefined,
+    publishedAt: item.publishedAt || undefined,
+    coverImage: item.image ? { url: item.image } : undefined,
+  } as Article
+}
+
+function buildStyle2CategoryMap(home: Style2HomepageResponse | null): Map<string, Article[]> {
+  const map = new Map<string, Article[]>()
+  const sections = Array.isArray(home?.sections) ? home!.sections! : []
+  for (const section of sections) {
+    const slug = String(section?.categorySlug || '').trim()
+    if (!slug) continue
+    const items = Array.isArray(section.items) ? section.items : []
+    if (!items.length) continue
+    map.set(slug, items.map(style2ItemToArticle))
+  }
+  return map
+}
+
+function buildStyle2HomeFeed(home: Style2HomepageResponse | null): Article[] {
+  const seen = new Set<string>()
+  const out: Article[] = []
+  const push = (a: Article) => {
+    if (!a?.id) return
+    if (seen.has(a.id)) return
+    seen.add(a.id)
+    out.push(a)
+  }
+
+  const hero = Array.isArray(home?.hero) ? home!.hero! : []
+  const topStories = Array.isArray(home?.topStories) ? home!.topStories! : []
+  for (const i of hero) push(style2ItemToArticle(i))
+  for (const i of topStories) push(style2ItemToArticle(i))
+
+  const sections = Array.isArray(home?.sections) ? home!.sections! : []
+  const sorted = [...sections].sort((a, b) => (a?.position ?? 0) - (b?.position ?? 0))
+  for (const s of sorted) {
+    const items = Array.isArray(s.items) ? s.items : []
+    for (const i of items) push(style2ItemToArticle(i))
+  }
+
+  return out
+}
 
 function toHref(pathname: string): UrlObject {
   return { pathname }
@@ -22,19 +72,17 @@ function toHref(pathname: string): UrlObject {
 function SectionCard({ title, href, children }: { title: string; href?: string; children: React.ReactNode }) {
   return (
     <section className="overflow-hidden rounded-md bg-white">
-      <div className="px-4 py-2">
+      <div className="px-4 py-3">
         {href ? (
-          <Link
-            href={toHref(href)}
-            className="text-sm font-bold uppercase tracking-wide hover:underline"
-            style={{ color: 'hsl(var(--accent))' }}
-          >
-            {title}
-          </Link>
+          <h2 className="text-base sm:text-lg font-bold leading-tight tracking-tight" style={{ color: 'hsl(var(--accent))' }}>
+            <Link href={toHref(href)} className="hover:underline">
+              {title}
+            </Link>
+          </h2>
         ) : (
-          <div className="text-sm font-bold uppercase tracking-wide" style={{ color: 'hsl(var(--accent))' }}>
+          <h2 className="text-base sm:text-lg font-bold leading-tight tracking-tight" style={{ color: 'hsl(var(--accent))' }}>
             {title}
-          </div>
+          </h2>
         )}
       </div>
       <div className="p-4">{children}</div>
@@ -54,13 +102,12 @@ function LeadStory({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
         )}
       </div>
       <div className="p-4">
-        <Link
-          href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-          className="block text-xl sm:text-2xl font-extrabold leading-tight tracking-tight hover:underline"
-        >
-          {a.title}
-        </Link>
-        {a.excerpt ? <p className="mt-2 line-clamp-3 text-sm text-zinc-600">{a.excerpt}</p> : null}
+        <h1 className="text-xl sm:text-2xl font-bold leading-snug tracking-tight">
+          <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="hover:underline">
+            {a.title}
+          </Link>
+        </h1>
+        {a.excerpt ? <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-600">{a.excerpt}</p> : null}
       </div>
     </article>
   )
@@ -80,7 +127,7 @@ function CompactStory({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
       <div className="min-w-0">
         <Link
           href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-          className="line-clamp-3 text-sm font-semibold leading-tight hover:underline"
+          className="line-clamp-3 text-sm font-semibold leading-snug hover:underline"
         >
           {a.title}
         </Link>
@@ -121,7 +168,7 @@ function SmallCardList({ tenantSlug, items }: { tenantSlug: string; items: Artic
           <div className="min-w-0">
             <Link
               href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-              className="line-clamp-3 text-sm font-semibold leading-tight hover:underline"
+              className="line-clamp-3 text-sm font-semibold leading-snug hover:underline"
             >
               {a.title}
             </Link>
@@ -178,10 +225,12 @@ async function itemsForBlock({
   block,
   homeFeed,
   navCats,
+  byCategorySlug,
 }: {
   block: HomeBlock
   homeFeed: Article[]
   navCats: Category[]
+  byCategorySlug?: Map<string, Article[]>
 }): Promise<{ items: Article[]; categorySlugUsed?: string }> {
   const cfg = (block.config || {}) as Record<string, unknown>
   const source = String(cfg.source || '').trim()
@@ -191,6 +240,8 @@ async function itemsForBlock({
   if (source === 'category') {
     const slug = resolveCategorySlug({ ...cfg, categorySource: 'category' }, navCats)
     if (!slug) return { items: [] }
+    const backend = byCategorySlug?.get(slug)
+    if (backend?.length) return { items: backend.slice(offset, offset + count), categorySlugUsed: slug }
     const list = await getArticlesByCategory('na', slug)
     return { items: list.slice(offset, offset + count), categorySlugUsed: slug }
   }
@@ -226,6 +277,7 @@ async function resolveSectionCardItems({
   navIndexFallback,
   itemsPerCard,
   fallbackStart,
+  byCategorySlug,
 }: {
   tenantSlug: string
   homeFeed: Article[]
@@ -236,6 +288,7 @@ async function resolveSectionCardItems({
   navIndexFallback: number
   itemsPerCard: number
   fallbackStart: number
+  byCategorySlug?: Map<string, Article[]>
 }): Promise<{ title: string; href?: string; featured?: Article; links: Article[] }> {
   const cat =
     (categorySlug ? topNavCats.find((x) => x.slug === categorySlug) : undefined) ||
@@ -244,7 +297,12 @@ async function resolveSectionCardItems({
 
   let items: Article[] = []
   if (cat?.slug) {
-    items = (await getArticlesByCategory('na', cat.slug)).slice(0, itemsPerCard)
+    const backend = byCategorySlug?.get(cat.slug)
+    if (backend?.length) {
+      items = backend.slice(0, itemsPerCard)
+    } else {
+      items = (await getArticlesByCategory('na', cat.slug)).slice(0, itemsPerCard)
+    }
   }
   if (!items.length) items = homeFeed.slice(fallbackStart, fallbackStart + itemsPerCard)
 
@@ -271,14 +329,16 @@ function SectionCardTOI({
 
   return (
     <div className="min-w-0">
-      <div className="flex items-center justify-between">
-        {href ? (
-          <Link href={toHref(href)} className="text-base font-bold leading-none">
-            {title}
-          </Link>
-        ) : (
-          <div className="text-base font-bold leading-none">{title}</div>
-        )}
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-lg font-bold leading-tight tracking-tight">
+          {href ? (
+            <Link href={toHref(href)} className="hover:underline">
+              {title}
+            </Link>
+          ) : (
+            title
+          )}
+        </h3>
         <div className="flex items-center gap-3">
           {href ? (
             <Link href={toHref(href)} className="rounded px-2 py-1 text-xs font-semibold text-zinc-600 hover:underline">
@@ -286,11 +346,11 @@ function SectionCardTOI({
             </Link>
           ) : null}
           {href ? (
-            <Link href={toHref(href)} className="rounded px-2 py-1 text-base font-bold leading-none text-zinc-700" aria-label="Open category">
+            <Link href={toHref(href)} className="rounded px-2 py-1 text-base font-bold leading-tight text-zinc-700" aria-label="Open category">
               ›
             </Link>
           ) : (
-            <div className="text-base font-bold leading-none text-zinc-700">›</div>
+            <div className="text-base font-bold leading-tight text-zinc-700">›</div>
           )}
         </div>
       </div>
@@ -374,22 +434,40 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
     .sort((a, b) => a.position - b.position)
 
   // Home feed should already be passed, but keep a fallback for safety.
-  const homeFeed = articles && articles.length > 0 ? articles : await getHomeFeed('na')
+  const style2Home = await getPublicHomepageStyle2Shape().catch(() => null)
+  const byCategorySlug = buildStyle2CategoryMap(style2Home)
+  const style2Feed = buildStyle2HomeFeed(style2Home)
+  const style2Hero = Array.isArray(style2Home?.hero) ? style2Home!.hero!.map(style2ItemToArticle) : []
+  const style2TopStories = Array.isArray(style2Home?.topStories) ? style2Home!.topStories!.map(style2ItemToArticle) : []
+
+  const homeFeed = style2Feed.length
+    ? style2Feed
+    : (articles && articles.length > 0 ? articles : await getHomeFeed('na'))
+
+  async function itemsForCategorySlug(slug: string, count: number, offset = 0) {
+    const backend = byCategorySlug.get(slug)
+    if (backend?.length) return backend.slice(offset, offset + count)
+    const list = await getArticlesByCategory('na', slug)
+    return list.slice(offset, offset + count)
+  }
 
   async function renderBlock(block: HomeBlock): Promise<React.ReactNode | null> {
     if (!block.isActive) return null
 
     switch (block.type) {
       case 'heroLead': {
-        const { items } = await itemsForBlock({ block: { ...block, config: { ...(block.config || {}), count: 1, offset: 0 } }, homeFeed, navCats: topNavCats })
-        const lead = items[0]
+        const cfg = (block.config || {}) as Record<string, unknown>
+        const isCategory = String(cfg.source || '').trim() === 'category'
+        const lead = !isCategory && style2Hero.length
+          ? style2Hero[0]
+          : (await itemsForBlock({ block: { ...block, config: { ...cfg, count: 1, offset: 0 } }, homeFeed, navCats: topNavCats, byCategorySlug })).items[0]
         return lead ? <LeadStory key={block.id} tenantSlug={tenantSlug} a={lead} /> : null
       }
       case 'mediumCards': {
         const cfg = (block.config || {}) as Record<string, unknown>
         const count = pickCount(cfg.count, 2, 6)
         const offset = pickOffset(cfg.offset) || 1
-        const { items } = await itemsForBlock({ block: { ...block, config: { ...cfg, count, offset } }, homeFeed, navCats: topNavCats })
+        const { items } = await itemsForBlock({ block: { ...block, config: { ...cfg, count, offset } }, homeFeed, navCats: topNavCats, byCategorySlug })
         return (
           <div key={block.id} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {items.map((a) => (
@@ -402,7 +480,7 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
         const cfg = (block.config || {}) as Record<string, unknown>
         const count = pickCount(cfg.count, 6, 20)
         const offset = pickOffset(cfg.offset) || 3
-        const { items } = await itemsForBlock({ block: { ...block, config: { ...cfg, count, offset } }, homeFeed, navCats: topNavCats })
+        const { items } = await itemsForBlock({ block: { ...block, config: { ...cfg, count, offset } }, homeFeed, navCats: topNavCats, byCategorySlug })
         return (
           <SectionCard key={block.id} title={block.name || 'More Stories'}>
             <SmallCardList tenantSlug={tenantSlug} items={items} />
@@ -413,7 +491,7 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
         const cfg = (block.config || {}) as Record<string, unknown>
         const slug = resolveCategorySlug(cfg, topNavCats)
         const count = pickCount(cfg.count ?? cfg.maxItems, 8, 30)
-        const items = slug ? (await getArticlesByCategory('na', slug)).slice(0, count) : []
+        const items = slug ? await itemsForCategorySlug(slug, count, 0) : []
         const href = slug ? categoryHref(tenantSlug, slug) : undefined
         const listStyle = String(cfg.listStyle || '').trim().toLowerCase()
         return (
@@ -434,8 +512,7 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
         // Optional: make this list category-driven (so title becomes a category link).
         if (String(cfg.source || '').trim() === 'category') {
           const slug = resolveCategorySlug(cfg, topNavCats)
-          const list = slug ? await getArticlesByCategory('na', slug) : []
-          const items = list.slice(offset, offset + count)
+          const items = slug ? await itemsForCategorySlug(slug, count, offset) : []
           const href = slug ? categoryHref(tenantSlug, slug) : undefined
           return (
             <SectionCard key={block.id} title={block.name || 'Category'} href={href}>
@@ -464,10 +541,14 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
         if (String(cfg.source || '').trim() === 'category') {
           const slug = resolveCategorySlug(cfg, topNavCats)
           if (slug) {
-            const list = await getArticlesByCategory('na', slug)
-            items = list.slice(offset, offset + count)
+            items = await itemsForCategorySlug(slug, count, offset)
             href = categoryHref(tenantSlug, slug)
           }
+        }
+
+        if (!items.length && isTopStoriesGrid && String(cfg.source || '').trim() !== 'category' && style2TopStories.length) {
+          items = style2TopStories.slice(offset, offset + count)
+          if (!items.length && offset > 0) items = style2TopStories.slice(0, count)
         }
 
         if (!items.length) {
@@ -563,7 +644,7 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
 
             let items: Article[] = []
             if (cat?.slug) {
-              items = (await getArticlesByCategory('na', cat.slug)).slice(0, itemsPerColumn)
+              items = await itemsForCategorySlug(cat.slug, itemsPerColumn, 0)
             }
             if (!items.length) {
               const start = 3 + idx * itemsPerColumn
@@ -585,18 +666,20 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
                   <div key={idx} className="min-w-0">
                     <div className="flex items-center justify-between">
                       {href ? (
-                        <Link href={toHref(href)} className="text-lg font-bold leading-none">
-                          {title}
-                        </Link>
+                        <h3 className="text-lg font-bold leading-tight tracking-tight">
+                          <Link href={toHref(href)} className="hover:underline">
+                            {title}
+                          </Link>
+                        </h3>
                       ) : (
-                        <div className="text-lg font-bold leading-none">{title}</div>
+                        <h3 className="text-lg font-bold leading-tight tracking-tight">{title}</h3>
                       )}
                       {href ? (
-                        <Link href={toHref(href)} className="text-lg font-bold leading-none text-zinc-700">
+                        <Link href={toHref(href)} className="text-lg font-bold leading-tight text-zinc-700" aria-label="Open category">
                           ›
                         </Link>
                       ) : (
-                        <div className="text-lg font-bold leading-none text-zinc-700">›</div>
+                        <div className="text-lg font-bold leading-tight text-zinc-700">›</div>
                       )}
                     </div>
 
@@ -716,6 +799,7 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
               navIndexFallback: c.navIndexFallback,
               itemsPerCard,
               fallbackStart: 3 + idx * itemsPerCard,
+              byCategorySlug,
             }),
           ),
         )
@@ -923,7 +1007,7 @@ export async function ThemeArticle({ tenantSlug, title, article }: { tenantSlug:
       <main className="mx-auto max-w-7xl px-4 py-4 sm:py-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <article className="min-w-0">
-            <h1 className="mb-3 text-2xl sm:text-3xl font-extrabold leading-tight tracking-tight">{article.title}</h1>
+            <h1 className="mb-3 text-2xl sm:text-3xl font-bold leading-snug tracking-tight">{article.title}</h1>
             {article.coverImage?.url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={article.coverImage.url} alt={article.title} className="mb-5 w-full rounded-md border" />

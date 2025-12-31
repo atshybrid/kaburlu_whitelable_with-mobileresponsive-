@@ -3,6 +3,18 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* This app is currently styled for a light UI; force light color scheme so
+     mobile browsers don't auto-apply dark backgrounds/white text. */
+  color-scheme: light;
+
+  /* Offline-friendly defaults (no next/font/google build-time fetch). */
+  --font-geist-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-noto-sans-telugu: "Nirmala UI", "Noto Sans Telugu", "Lohit Telugu", "Arial Unicode MS", sans-serif;
+  /* Telugu title stack (offline-friendly). Prefer Nirmala UI on Windows. */
+  --font-telugu-title: "Nirmala UI", "Noto Sans Telugu", "Lohit Telugu", "Arial Unicode MS", sans-serif;
+
   --font-body: var(--font-geist-sans);
   --font-title: var(--font-body);
 }
@@ -14,13 +26,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
@@ -29,7 +34,7 @@ body {
 
 html[data-lang='te'] {
   --font-body: var(--font-noto-sans-telugu);
-  --font-title: var(--font-ramabhadra);
+  --font-title: var(--font-telugu-title);
 }
 
 h1,

@@ -1,36 +1,11 @@
 import type { Metadata } from "next";
 import { getEffectiveSettings } from "@/lib/settings";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Ramabhadra } from "next/font/google";
-import { Noto_Sans_Telugu } from "next/font/google";
 import "./globals.css";
 // Load theme styles globally so root pages can apply theme-specific classes
 import "@/themes/style1/theme.css";
 import "@/themes/style2/theme.css";
 import "@/themes/style3/theme.css";
 import "@/themes/tv9/theme.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const ramabhadra = Ramabhadra({
-  variable: "--font-ramabhadra",
-  weight: "400",
-  subsets: ["telugu"],
-});
-
-const notoSansTelugu = Noto_Sans_Telugu({
-  variable: "--font-noto-sans-telugu",
-  weight: ["400", "600", "700"],
-  subsets: ["telugu"],
-});
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
@@ -84,12 +59,11 @@ async function RootLayoutInner({
   }
 
   const primaryLang = (languageCodeRaw === 'telugu' ? 'te' : languageCodeRaw.split('-')[0]) || 'en'
-  const isTelugu = primaryLang === 'te'
 
   return (
     <html lang={primaryLang} data-lang={primaryLang}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${isTelugu ? `${ramabhadra.variable} ${notoSansTelugu.variable}` : ''} antialiased`}
+        className={"antialiased"}
       >
         {children}
       </body>

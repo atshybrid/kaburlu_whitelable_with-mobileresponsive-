@@ -95,6 +95,16 @@ export interface EffectiveSettings {
     youtube?: string
     telegram?: string
   }
+  navigation?: {
+    menu?: Array<{
+      href?: string
+      label?: string
+      categorySlug?: string
+      labels?: { base?: string; translated?: string }
+      labelEn?: string
+      labelNative?: string
+    }>
+  }
   settings?: {
     seo?: { ogImageUrl?: string; defaultMetaTitle?: string; defaultMetaDescription?: string; canonicalBaseUrl?: string }
     theme?: {
@@ -119,6 +129,16 @@ export interface EffectiveSettings {
       instagram?: string
       youtube?: string
       telegram?: string
+    }
+    navigation?: {
+      menu?: Array<{
+        href?: string
+        label?: string
+        categorySlug?: string
+        labels?: { base?: string; translated?: string }
+        labelEn?: string
+        labelNative?: string
+      }>
     }
   }
 }

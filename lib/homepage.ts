@@ -20,6 +20,39 @@ export type PublicHomepageResponse = {
   data: Record<string, Article[]>
 }
 
+// ---- Style2 "shape" homepage (legacy/alternate backend contract) ----
+
+export type Style2HomepageItem = {
+  id: string
+  slug?: string
+  title: string
+  image?: string | null
+  excerpt?: string | null
+  category?: unknown
+  publishedAt?: string | null
+  tags?: unknown[]
+  languageCode?: string | null
+}
+
+export type Style2HomepageSection = {
+  key: string
+  title: string
+  position: number
+  style?: string
+  limit?: number
+  categorySlug?: string | null
+  items?: Style2HomepageItem[]
+}
+
+export type Style2HomepageResponse = {
+  hero?: Style2HomepageItem[]
+  topStories?: Style2HomepageItem[]
+  sections?: Style2HomepageSection[]
+  config?: unknown
+  // Backend may also return per-section arrays keyed by section.key
+  [key: string]: unknown
+}
+
 function domainFromHost(host: string | null) {
   const h = (host || 'localhost').split(':')[0]
   return h || 'localhost'
@@ -31,6 +64,10 @@ export async function getPublicHomepage(params: {
   lang?: string
 }): Promise<PublicHomepageResponse> {
   return _getPublicHomepage(params)
+}
+
+export async function getPublicHomepageStyle2Shape(): Promise<Style2HomepageResponse> {
+  return _getPublicHomepageStyle2Shape()
 }
 
 const _getPublicHomepage = reactCache(async (params: {
@@ -54,5 +91,20 @@ const _getPublicHomepage = reactCache(async (params: {
     // Cache with revalidation; avoids repeated backend hits.
     revalidateSeconds: Number(process.env.REMOTE_HOMEPAGE_REVALIDATE_SECONDS || '30'),
     tags: [`homepage:${domain}:${lang}:${themeKey}`],
+  })
+})
+
+const _getPublicHomepageStyle2Shape = reactCache(async (): Promise<Style2HomepageResponse> => {
+  const h = await headers()
+  const domain = domainFromHost(h.get('host'))
+
+  // Backend contract: GET /public/homepage?domain=<domain>&shape=style2
+  // Still send X-Tenant-Domain via fetchJSON.
+  const qs = new URLSearchParams({ domain, shape: 'style2' })
+
+  return fetchJSON<Style2HomepageResponse>(`/public/homepage?${qs.toString()}`, {
+    tenantDomain: domain,
+    revalidateSeconds: Number(process.env.REMOTE_HOMEPAGE_REVALIDATE_SECONDS || '30'),
+    tags: [`homepage:${domain}:shape:style2`],
   })
 })
