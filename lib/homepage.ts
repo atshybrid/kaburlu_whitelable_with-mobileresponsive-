@@ -53,6 +53,21 @@ export type Style2HomepageResponse = {
   [key: string]: unknown
 }
 
+function normalizeStyle2HomepageResponse(u: unknown): Style2HomepageResponse {
+  if (!u || typeof u !== 'object') return {}
+  const o = u as Record<string, unknown>
+  const hero = o['hero']
+  const topStories = o['topStories']
+  const sections = o['sections']
+  if (Array.isArray(hero) || Array.isArray(topStories) || Array.isArray(sections)) return o as Style2HomepageResponse
+
+  const data = o['data']
+  if (data && typeof data === 'object') return normalizeStyle2HomepageResponse(data)
+  const result = o['result']
+  if (result && typeof result === 'object') return normalizeStyle2HomepageResponse(result)
+  return o as Style2HomepageResponse
+}
+
 function domainFromHost(host: string | null) {
   const h = (host || 'localhost').split(':')[0]
   return h || 'localhost'
@@ -114,9 +129,11 @@ const _getPublicHomepageStyle2Shape = reactCache(async (tenantDomainOverride?: s
   // Still send X-Tenant-Domain via fetchJSON.
   const qs = new URLSearchParams({ domain, shape: 'style2' })
 
-  return fetchJSON<Style2HomepageResponse>(`/public/homepage?${qs.toString()}`, {
+  const res = await fetchJSON<unknown>(`/public/homepage?${qs.toString()}`, {
     tenantDomain: domain,
     revalidateSeconds: Number(process.env.REMOTE_HOMEPAGE_REVALIDATE_SECONDS || '30'),
     tags: [`homepage:${domain}:shape:style2`],
   })
+
+  return normalizeStyle2HomepageResponse(res)
 })

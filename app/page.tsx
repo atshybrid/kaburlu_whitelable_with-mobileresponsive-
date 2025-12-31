@@ -1,5 +1,9 @@
-import { getEffectiveSettings } from '@/lib/settings'
+import { getEffectiveSettings, getEffectiveSettingsForDomain } from '@/lib/settings'
 import { getHomeFeed } from '@/lib/data'
+import { resolveTenant } from '@/lib/tenant'
+import type { Article } from '@/lib/data-sources'
+import type { EffectiveSettings } from '@/lib/remote'
+import type { ReactElement } from 'react'
 
 async function getThemeHome(themeKey: string) {
   switch (themeKey) {
@@ -16,8 +20,12 @@ async function getThemeHome(themeKey: string) {
 }
 
 export default async function Home() {
-  // For root domain pages, use host-based settings and pick theme
-  const settings = await getEffectiveSettings()
+  // For root domain pages, resolve tenant by host.
+  const tenant = await resolveTenant()
+
+  const settings = tenant.domain
+    ? await getEffectiveSettingsForDomain(tenant.domain)
+    : await getEffectiveSettings()
   const requestedThemeKey: string =
     settings?.theme?.theme ||
     settings?.theme?.key ||
@@ -30,16 +38,21 @@ export default async function Home() {
     | 'style3'
     | 'tv9'
   const Comp = await getThemeHome(themeKey)
-  // Use resilient getHomeFeed (it now falls back to dummy data on error)
-  const articles = await getHomeFeed('na')
-  const defaultTenant = process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'demo'
+
+  // Use resilient getHomeFeed (it falls back to mock data on error)
+  const articles = await getHomeFeed(tenant.id)
+
+  type HomeComp = (p: { tenantSlug: string; title: string; articles: Article[]; settings?: EffectiveSettings; tenantDomain?: string }) => ReactElement
+  const HomeComp = Comp as unknown as HomeComp
+
   return (
     <div className={`theme-${themeKey}`}>
-      <Comp
-        tenantSlug={defaultTenant}
-        title={settings?.branding?.siteName || process.env.SITE_NAME || 'Kaburlu News'}
+      <HomeComp
+        tenantSlug={tenant.slug}
+        title={settings?.branding?.siteName || tenant.name || process.env.SITE_NAME || 'Kaburlu News'}
         articles={articles}
         settings={settings}
+        tenantDomain={tenant.domain || undefined}
       />
     </div>
   )

@@ -102,8 +102,25 @@ function normalizeItem(u: unknown): Article {
 
 function normalizeList(u: unknown): Article[] {
   if (Array.isArray(u)) return u.map(normalizeItem)
-  const arr = pickFirst(u, ['items', 'data', 'articles'])
-  if (Array.isArray(arr)) return (arr as unknown[]).map(normalizeItem)
+  // Common API shapes:
+  // - { items: [...] }
+  // - { articles: [...] }
+  // - { data: [...] }
+  // - { data: { items: [...] } }
+  // - { result: { items: [...] } }
+  const direct = pickFirst(u, ['items', 'articles'])
+  if (Array.isArray(direct)) return (direct as unknown[]).map(normalizeItem)
+
+  const data = pickFirst(u, ['data', 'result'])
+  if (Array.isArray(data)) return (data as unknown[]).map(normalizeItem)
+  if (data && typeof data === 'object') {
+    const nested = pickFirst(data, ['items', 'articles', 'data'])
+    if (Array.isArray(nested)) return (nested as unknown[]).map(normalizeItem)
+    if (nested && typeof nested === 'object') {
+      const nested2 = pickFirst(nested, ['items', 'articles'])
+      if (Array.isArray(nested2)) return (nested2 as unknown[]).map(normalizeItem)
+    }
+  }
   return []
 }
 
