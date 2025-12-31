@@ -34,7 +34,10 @@ export async function resolveTenant({ slugOverride }: { slugOverride?: string } 
 
   const local = DEFAULT_TENANTS.find((t) => t.slug === slug)
 
-  const domain = normalizeTenantDomain(host || 'localhost')
+  // In path-based multitenancy deployments (e.g. Vercel), the host may be the app domain.
+  // If the route param itself looks like a domain, treat it as the tenant domain.
+  const slugLooksLikeDomain = slug.includes('.') && !slug.includes('/')
+  const domain = normalizeTenantDomain(slugLooksLikeDomain ? slug : (host || 'localhost'))
   try {
     const res = await getDomainSettings(domain)
     const remoteThemeKey = res?.effective?.theme?.theme || res?.effective?.theme?.key || 'style1'

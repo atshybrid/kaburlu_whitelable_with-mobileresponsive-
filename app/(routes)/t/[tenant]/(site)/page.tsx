@@ -1,7 +1,7 @@
 import { getHomeFeed } from '@/lib/data'
 import { resolveTenant } from '@/lib/tenant'
 
-import { getEffectiveSettings } from '@/lib/settings'
+import { getEffectiveSettingsForDomain } from '@/lib/settings'
 import type { ReactElement } from 'react'
 import type { Article } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
@@ -24,10 +24,10 @@ export default async function TenantHomePage({ params }: { params: Promise<{ ten
   const { tenant: tenantSlug } = await params
   const tenant = await resolveTenant({ slugOverride: tenantSlug })
   const articles = await getHomeFeed(tenant.id)
-  const settings = await getEffectiveSettings()
+  const settings = tenant.domain ? await getEffectiveSettingsForDomain(tenant.domain) : await getEffectiveSettingsForDomain('localhost')
 
-  type HomeComp = (p: { tenantSlug: string; title: string; articles: Article[]; settings?: EffectiveSettings }) => ReactElement
+  type HomeComp = (p: { tenantSlug: string; title: string; articles: Article[]; settings?: EffectiveSettings; tenantDomain?: string }) => ReactElement
   const Comp = (await getThemeHome(tenant.themeKey)) as HomeComp
 
-  return <Comp tenantSlug={tenant.slug} title={tenant.name} articles={articles} settings={settings} />
+  return <Comp tenantSlug={tenant.slug} title={tenant.name} articles={articles} settings={settings} tenantDomain={tenant.domain || undefined} />
 }

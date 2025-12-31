@@ -10,7 +10,7 @@ import type { UrlObject } from 'url'
 import { articleHref, categoryHref } from '@/lib/url'
 import { getTenantFromHeaders } from '@/lib/tenant'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
-import { getPublicHomepageStyle2Shape, type Style2HomepageItem, type Style2HomepageResponse } from '@/lib/homepage'
+import { getPublicHomepageStyle2ShapeForDomain, getPublicHomepageStyle2Shape, type Style2HomepageItem, type Style2HomepageResponse } from '@/lib/homepage'
 import { readHomeLayout, type HomeBlock, type HomeSection } from '@/lib/home-layout'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getEffectiveSettings } from '@/lib/settings'
@@ -423,7 +423,19 @@ function activeBlocksForSection(section: HomeSection) {
   return (section.blocks || []).filter((b) => b.isActive).slice().sort((a, b) => a.position - b.position)
 }
 
-export async function ThemeHome({ tenantSlug, title, articles, settings }: { tenantSlug: string; title: string; articles: Article[]; settings?: EffectiveSettings }) {
+export async function ThemeHome({
+  tenantSlug,
+  title,
+  articles,
+  settings,
+  tenantDomain,
+}: {
+  tenantSlug: string
+  title: string
+  articles: Article[]
+  settings?: EffectiveSettings
+  tenantDomain?: string
+}) {
   const layout = await readHomeLayout(tenantSlug, 'style2')
   const navCats = await getCategoriesForNav()
   const topNavCats = navCats.filter((c) => !c.parentId)
@@ -434,7 +446,10 @@ export async function ThemeHome({ tenantSlug, title, articles, settings }: { ten
     .sort((a, b) => a.position - b.position)
 
   // Home feed should already be passed, but keep a fallback for safety.
-  const style2Home = await getPublicHomepageStyle2Shape().catch(() => null)
+  const style2Home = await (tenantDomain
+    ? getPublicHomepageStyle2ShapeForDomain(tenantDomain)
+    : getPublicHomepageStyle2Shape()
+  ).catch(() => null)
   const byCategorySlug = buildStyle2CategoryMap(style2Home)
   const style2Feed = buildStyle2HomeFeed(style2Home)
   const style2Hero = Array.isArray(style2Home?.hero) ? style2Home!.hero!.map(style2ItemToArticle) : []

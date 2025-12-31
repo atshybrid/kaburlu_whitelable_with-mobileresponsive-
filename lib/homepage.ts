@@ -58,6 +58,14 @@ function domainFromHost(host: string | null) {
   return h || 'localhost'
 }
 
+function domainFromHeaders(h: Headers, override?: string) {
+  const explicit = String(override || '').trim()
+  if (explicit) return domainFromHost(explicit)
+  const fromHeader = String(h.get('x-tenant-domain') || '').trim()
+  if (fromHeader) return domainFromHost(fromHeader)
+  return domainFromHost(h.get('host'))
+}
+
 export async function getPublicHomepage(params: {
   v?: string | number
   themeKey?: string
@@ -67,7 +75,11 @@ export async function getPublicHomepage(params: {
 }
 
 export async function getPublicHomepageStyle2Shape(): Promise<Style2HomepageResponse> {
-  return _getPublicHomepageStyle2Shape()
+  return _getPublicHomepageStyle2Shape(undefined)
+}
+
+export async function getPublicHomepageStyle2ShapeForDomain(tenantDomain: string): Promise<Style2HomepageResponse> {
+  return _getPublicHomepageStyle2Shape(tenantDomain)
 }
 
 const _getPublicHomepage = reactCache(async (params: {
@@ -94,9 +106,9 @@ const _getPublicHomepage = reactCache(async (params: {
   })
 })
 
-const _getPublicHomepageStyle2Shape = reactCache(async (): Promise<Style2HomepageResponse> => {
+const _getPublicHomepageStyle2Shape = reactCache(async (tenantDomainOverride?: string): Promise<Style2HomepageResponse> => {
   const h = await headers()
-  const domain = domainFromHost(h.get('host'))
+  const domain = domainFromHeaders(h, tenantDomainOverride)
 
   // Backend contract: GET /public/homepage?domain=<domain>&shape=style2
   // Still send X-Tenant-Domain via fetchJSON.

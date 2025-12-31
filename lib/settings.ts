@@ -15,9 +15,14 @@ export async function getEffectiveSettings(): Promise<EffectiveSettings> {
   return _getEffectiveSettings()
 }
 
-const _getEffectiveSettings = reactCache(async (): Promise<EffectiveSettings> => {
+export async function getEffectiveSettingsForDomain(tenantDomain: string): Promise<EffectiveSettings> {
+  return _getEffectiveSettings(normalizeTenantDomain(tenantDomain))
+}
+
+const _getEffectiveSettings = reactCache(async (domainOverride?: string): Promise<EffectiveSettings> => {
   const h = await headers()
-  const domain = domainFromHeaders(h)
+  const headerDomain = normalizeTenantDomain(h.get('x-tenant-domain') || '')
+  const domain = normalizeTenantDomain(domainOverride || headerDomain || domainFromHeaders(h))
   const now = Date.now()
   const key = `settings:${domain}`
   const hit = cache.get(key)

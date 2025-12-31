@@ -1,9 +1,9 @@
 import SeoMaster from '@/components/SeoMaster'
 import { getArticleBySlug } from '@/lib/data'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
-import { getEffectiveSettings } from '@/lib/settings'
-import { normalizeTenantDomain } from '@/lib/remote'
+import { getEffectiveSettingsForDomain } from '@/lib/settings'
 import type { EffectiveSettings } from '@/lib/remote'
+import { resolveTenant } from '@/lib/tenant'
 import { headers } from 'next/headers'
 
 function pickString(v: unknown) {
@@ -88,10 +88,15 @@ export default async function Head({
 }) {
   const { tenant: tenantSlug, slug } = await params
 
-  const h = await headers()
-  const domain = normalizeTenantDomain(h.get('host') || 'localhost')
+  // For path-based multitenancy on platforms like Vercel, host may be the app domain.
+  // Resolve tenant via route param and use its domain for remote API calls.
+  const tenant = await resolveTenant({ slugOverride: tenantSlug })
+  const domain = tenant.domain || 'localhost'
 
-  const settings: EffectiveSettings = await getEffectiveSettings().catch(() => ({} as EffectiveSettings))
+  // Keep headers() call so Next can vary caching per request when needed.
+  await headers()
+
+  const settings: EffectiveSettings = await getEffectiveSettingsForDomain(domain).catch(() => ({} as EffectiveSettings))
 
   const canonicalBase =
     pickString(settings?.seo?.canonicalBaseUrl) ||
@@ -110,7 +115,7 @@ export default async function Head({
 
   const language = langFromSettings(settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage)
 
-  const article = await getArticleBySlug('na', slug)
+  const article = await getArticleBySlug(tenant.id, slug)
   if (!article) return null
 
   const a = article as Record<string, unknown>

@@ -24,8 +24,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ tenant
   const article = await getArticleBySlug(tenant.id, slug)
   if (!article) return notFound()
 
-  type ArticleComp = (p: { tenantSlug: string; title: string; article: Article }) => ReactElement | Promise<ReactElement>
+  type ArticleComp = (p: { tenantSlug: string; title: string; article: Article; tenantDomain?: string }) => ReactElement | Promise<ReactElement>
   const Comp = (await getThemeArticle(tenant.themeKey)) as ArticleComp
 
-  return <Comp tenantSlug={tenant.slug} title={tenant.name} article={article} />
+  return <Comp tenantSlug={tenant.slug} title={tenant.name} article={article} tenantDomain={tenant.domain || undefined} />
 }
