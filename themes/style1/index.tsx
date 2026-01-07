@@ -587,7 +587,7 @@ export async function ThemeHome({
       <Navbar tenantSlug={tenantSlugForLinks} title={title} logoUrl={settings?.branding?.logoUrl} />
       {rendered}
       <MobileBottomNav tenantSlug={tenantSlugForLinks} />
-      <Footer />
+      <Footer settings={settings} tenantSlug={tenantSlugForLinks} />
     </div>
   )
 }
@@ -651,7 +651,7 @@ export async function ThemeArticle({ tenantSlug, title, article }: { tenantSlug:
           </aside>
         </div>
       </main>
-      <Footer />
+      <Footer settings={settings} tenantSlug={tenantSlug} />
     </div>
   )
 }

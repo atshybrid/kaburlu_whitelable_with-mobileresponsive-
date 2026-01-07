@@ -1,8 +1,9 @@
-import { Footer } from '@/components/shared/Footer'
+import { Footer } from '@/components/shared'
 import { Navbar } from '@/components/shared/Navbar'
 import { FlashTicker } from '@/components/shared/FlashTicker'
 import { PlaceholderImg } from '@/components/shared/PlaceholderImg'
 import { TopStoriesTilesCarouselClient } from '@/components/shared/TopStoriesTilesCarouselClient'
+import MobileBottomNav from '@/components/shared/MobileBottomNav'
 import type { Article } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
 import Link from 'next/link'
@@ -71,66 +72,90 @@ function toHref(pathname: string): UrlObject {
 
 function SectionCard({ title, href, children }: { title: string; href?: string; children: React.ReactNode }) {
   return (
-    <section className="overflow-hidden rounded-md bg-white">
-      <div className="px-4 py-3">
+    <section className="overflow-hidden bg-white border-b border-zinc-200">
+      {/* Classic header with left accent bar */}
+      <div className="flex items-center justify-between border-b-2 border-[hsl(var(--primary,217_91%_60%))] pb-2 mb-4">
         {href ? (
-          <h2 className="text-base sm:text-lg font-bold leading-tight tracking-tight" style={{ color: 'hsl(var(--accent))' }}>
-            <Link href={toHref(href)} className="hover:underline">
-              {title}
-            </Link>
-          </h2>
-        ) : (
-          <h2 className="text-base sm:text-lg font-bold leading-tight tracking-tight" style={{ color: 'hsl(var(--accent))' }}>
+          <h2 className="text-lg font-bold text-black uppercase tracking-wide flex items-center gap-2">
             {title}
           </h2>
+        ) : (
+          <h2 className="text-lg font-bold text-black uppercase tracking-wide">{title}</h2>
         )}
+        {href ? (
+          <Link href={toHref(href)} className="text-xs font-semibold text-[hsl(var(--primary,217_91%_60%))] hover:underline">
+            View All →
+          </Link>
+        ) : null}
       </div>
-      <div className="p-4">{children}</div>
+      <div className="pb-4">{children}</div>
     </section>
   )
 }
 
 function LeadStory({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
   return (
-    <article className="overflow-hidden rounded-md border bg-white">
-      <div className="relative aspect-[16/9] w-full">
-        {a.coverImage?.url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={a.coverImage.url} alt={a.title} className="absolute inset-0 h-full w-full object-cover" />
-        ) : (
-          <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
-        )}
-      </div>
-      <div className="p-4">
-        <h1 className="text-xl sm:text-2xl font-bold leading-snug tracking-tight">
-          <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="hover:underline">
+    <article className="lead-story group bg-white">
+      <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="block">
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-zinc-100">
+          {a.coverImage?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img 
+              src={a.coverImage.url} 
+              alt={a.title} 
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" 
+            />
+          ) : (
+            <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
+          )}
+        </div>
+        <div className="pt-3">
+          <h1 className="text-xl sm:text-2xl font-bold leading-tight text-black group-hover:text-[hsl(var(--primary,217_91%_60%))] transition-colors">
             {a.title}
-          </Link>
-        </h1>
-        {a.excerpt ? <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-600">{a.excerpt}</p> : null}
-      </div>
+          </h1>
+          {a.excerpt ? (
+            <p className="mt-2 line-clamp-2 text-sm text-zinc-600">
+              {a.excerpt}
+            </p>
+          ) : null}
+          {a.publishedAt ? (
+            <time className="mt-2 text-xs text-zinc-500 block">
+              {new Date(String(a.publishedAt)).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </time>
+          ) : null}
+        </div>
+      </Link>
     </article>
   )
 }
 
 function CompactStory({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
   return (
-    <article className="flex gap-3 rounded-md border bg-white p-3">
-      <div className="h-20 w-28 shrink-0 overflow-hidden rounded">
+    <article className="group flex gap-3 py-3 border-b border-zinc-100 last:border-b-0">
+      <div className="h-16 w-24 shrink-0 overflow-hidden bg-zinc-100">
         {a.coverImage?.url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={a.coverImage.url} alt={a.title} className="h-full w-full object-cover" />
+          <img 
+            src={a.coverImage.url} 
+            alt={a.title} 
+            className="h-full w-full object-cover" 
+          />
         ) : (
           <PlaceholderImg className="h-full w-full object-cover" />
         )}
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex flex-col justify-center">
         <Link
           href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-          className="line-clamp-3 text-sm font-semibold leading-snug hover:underline"
+          className="line-clamp-2 text-sm font-semibold leading-snug text-black group-hover:text-[hsl(var(--primary,217_91%_60%))] transition-colors"
         >
           {a.title}
         </Link>
+        {a.publishedAt ? (
+          <time className="mt-1 text-xs text-zinc-500">
+            {new Date(String(a.publishedAt)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </time>
+        ) : null}
       </div>
     </article>
   )
@@ -138,14 +163,19 @@ function CompactStory({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
 
 function TitleList({ tenantSlug, items }: { tenantSlug: string; items: Article[] }) {
   return (
-    <div className="space-y-3">
-      {items.map((a) => (
+    <div className="title-list">
+      {items.map((a, idx) => (
         <Link
           key={a.id}
           href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-          className="block border-b border-dashed border-zinc-200 pb-3 last:border-b-0 last:pb-0 text-sm font-medium leading-snug hover:underline"
+          className="group flex items-start gap-3 py-2.5 border-b border-zinc-100 last:border-b-0"
         >
-          {a.title}
+          <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-[hsl(var(--primary,217_91%_60%))] text-[10px] font-bold text-white">
+            {idx + 1}
+          </span>
+          <span className="text-sm font-medium leading-snug text-black group-hover:text-[hsl(var(--primary,217_91%_60%))] transition-colors line-clamp-2">
+            {a.title}
+          </span>
         </Link>
       ))}
     </div>
@@ -154,21 +184,25 @@ function TitleList({ tenantSlug, items }: { tenantSlug: string; items: Article[]
 
 function SmallCardList({ tenantSlug, items }: { tenantSlug: string; items: Article[] }) {
   return (
-    <div className="space-y-3">
+    <div className="small-card-list">
       {items.map((a) => (
-        <article key={a.id} className="flex gap-3 border-b border-dashed border-zinc-200 pb-3 last:border-b-0 last:pb-0">
-          <div className="h-16 w-24 shrink-0 overflow-hidden rounded">
+        <article key={a.id} className="group flex gap-3 py-2.5 border-b border-zinc-100 last:border-b-0">
+          <div className="h-14 w-20 shrink-0 overflow-hidden bg-zinc-100">
             {a.coverImage?.url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={a.coverImage.url} alt={a.title} className="h-full w-full object-cover" />
+              <img 
+                src={a.coverImage.url} 
+                alt={a.title} 
+                className="h-full w-full object-cover" 
+              />
             ) : (
               <PlaceholderImg className="h-full w-full object-cover" />
             )}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex flex-col justify-center flex-1">
             <Link
               href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-              className="line-clamp-3 text-sm font-semibold leading-snug hover:underline"
+              className="line-clamp-2 text-sm font-medium text-black group-hover:text-[hsl(var(--primary,217_91%_60%))] transition-colors"
             >
               {a.title}
             </Link>
@@ -176,6 +210,203 @@ function SmallCardList({ tenantSlug, items }: { tenantSlug: string; items: Artic
         </article>
       ))}
     </div>
+  )
+}
+
+/* ==================== STYLED CATEGORY SECTIONS ==================== */
+
+// Style 1: Classic horizontal scroll section
+function BlueCategorySection({ 
+  tenantSlug, 
+  title, 
+  href, 
+  items 
+}: { 
+  tenantSlug: string
+  title: string
+  href?: string
+  items: Article[] 
+}) {
+  return (
+    <section className="bg-white py-6 border-t border-zinc-200">
+      {/* Classic header */}
+      <div className="flex items-center justify-between border-b-2 border-[hsl(var(--primary,217_91%_60%))] pb-2 mb-4">
+        <h2 className="text-lg font-bold text-black uppercase tracking-wide">{title}</h2>
+        {href && (
+          <Link href={toHref(href)} className="text-xs font-semibold text-[hsl(var(--primary,217_91%_60%))] hover:underline">
+            View All →
+          </Link>
+        )}
+      </div>
+      
+      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+        {items.slice(0, 6).map((a) => (
+          <Link 
+            key={a.id}
+            href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+            className="group flex-shrink-0 w-[180px] sm:w-[200px]"
+          >
+            <div className="relative aspect-[4/3] overflow-hidden bg-zinc-100">
+              {a.coverImage?.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img 
+                  src={a.coverImage.url} 
+                  alt={a.title} 
+                  className="absolute inset-0 h-full w-full object-cover" 
+                />
+              ) : (
+                <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
+              )}
+            </div>
+            <h3 className="mt-2 text-sm font-semibold text-black line-clamp-2 group-hover:text-[hsl(var(--primary,217_91%_60%))] transition-colors">
+              {a.title}
+            </h3>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// Style 2: Featured + list layout (classic)
+function RedCategorySection({ 
+  tenantSlug, 
+  title, 
+  href, 
+  items 
+}: { 
+  tenantSlug: string
+  title: string
+  href?: string
+  items: Article[] 
+}) {
+  const featured = items[0]
+  const list = items.slice(1, 5)
+  
+  return (
+    <section className="bg-white py-6 border-t border-zinc-200">
+      {/* Classic header */}
+      <div className="flex items-center justify-between border-b-2 border-[hsl(var(--primary,217_91%_60%))] pb-2 mb-4">
+        <h2 className="text-lg font-bold text-black uppercase tracking-wide">{title}</h2>
+        {href && (
+          <Link href={toHref(href)} className="text-xs font-semibold text-[hsl(var(--primary,217_91%_60%))] hover:underline">
+            View All →
+          </Link>
+        )}
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Featured article */}
+        {featured && (
+          <Link 
+            href={toHref(articleHref(tenantSlug, featured.slug || featured.id))}
+            className="group"
+          >
+            <div className="relative aspect-[16/10] overflow-hidden bg-zinc-100">
+              {featured.coverImage?.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img 
+                  src={featured.coverImage.url} 
+                  alt={featured.title} 
+                  className="absolute inset-0 h-full w-full object-cover" 
+                />
+              ) : (
+                <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
+              )}
+            </div>
+            <h3 className="mt-3 text-lg font-bold text-black line-clamp-2 group-hover:text-[hsl(var(--primary,217_91%_60%))] transition-colors">
+              {featured.title}
+            </h3>
+            {featured.excerpt && (
+              <p className="mt-1 text-sm text-zinc-600 line-clamp-2">{featured.excerpt}</p>
+            )}
+          </Link>
+        )}
+        
+        {/* List of articles */}
+        <div>
+          {list.map((a, idx) => (
+            <Link 
+              key={a.id}
+              href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+              className="group flex items-start gap-3 py-3 border-b border-zinc-100 last:border-b-0"
+            >
+              <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-[hsl(var(--primary,217_91%_60%))] text-xs font-bold text-white">
+                {idx + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <h4 className="text-sm font-semibold text-black line-clamp-2 group-hover:text-[hsl(var(--primary,217_91%_60%))] transition-colors">
+                  {a.title}
+                </h4>
+                {a.publishedAt ? (
+                  <time className="mt-1 text-xs text-zinc-500">
+                    {new Date(String(a.publishedAt)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </time>
+                ) : null}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// Style 3: Classic card grid
+function DarkCategorySection({ 
+  tenantSlug, 
+  title, 
+  href, 
+  items 
+}: { 
+  tenantSlug: string
+  title: string
+  href?: string
+  items: Article[] 
+}) {
+  return (
+    <section className="bg-white py-6 border-t border-zinc-200">
+      {/* Classic header */}
+      <div className="flex items-center justify-between border-b-2 border-[hsl(var(--primary,217_91%_60%))] pb-2 mb-4">
+        <h2 className="text-lg font-bold text-black uppercase tracking-wide">{title}</h2>
+        {href && (
+          <Link href={toHref(href)} className="text-xs font-semibold text-[hsl(var(--primary,217_91%_60%))] hover:underline">
+            View All →
+          </Link>
+        )}
+      </div>
+      
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {items.slice(0, 4).map((a) => (
+          <Link 
+            key={a.id}
+            href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+            className="group"
+          >
+            <div className="relative aspect-[4/3] overflow-hidden bg-zinc-100">
+              {a.coverImage?.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img 
+                  src={a.coverImage.url} 
+                  alt={a.title} 
+                  className="absolute inset-0 h-full w-full object-cover" 
+                />
+              ) : (
+                <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
+              )}
+            </div>
+            <h3 className="mt-2 text-sm font-semibold text-black line-clamp-2 group-hover:text-[hsl(var(--primary,217_91%_60%))] transition-colors">
+              {a.title}
+            </h3>
+            {a.publishedAt ? (
+              <time className="mt-1 text-xs text-zinc-500 block">
+                {new Date(String(a.publishedAt)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </time>
+            ) : null}
+          </Link>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -323,96 +554,58 @@ function SectionCardTOI({
   featured?: Article
   links: Article[]
 }) {
-  const left = links.filter((_, idx) => idx % 2 === 0)
-  const right = links.filter((_, idx) => idx % 2 === 1)
   const flat = links
 
   return (
-    <div className="min-w-0">
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="text-lg font-bold leading-tight tracking-tight">
+    <div className="min-w-0 bg-white">
+      {/* Header with underline accent */}
+      <div className="flex items-center justify-between border-b-2 border-[hsl(var(--primary,217_91%_60%))] pb-2 mb-3">
+        <h3 className="text-base font-bold text-black uppercase tracking-wide">
           {href ? (
-            <Link href={toHref(href)} className="hover:underline">
+            <Link href={toHref(href)} className="hover:text-[hsl(var(--primary,217_91%_60%))] transition-colors">
               {title}
             </Link>
           ) : (
             title
           )}
         </h3>
-        <div className="flex items-center gap-3">
-          {href ? (
-            <Link href={toHref(href)} className="rounded px-2 py-1 text-xs font-semibold text-zinc-600 hover:underline">
-              More
-            </Link>
-          ) : null}
-          {href ? (
-            <Link href={toHref(href)} className="rounded px-2 py-1 text-base font-bold leading-tight text-zinc-700" aria-label="Open category">
-              ›
-            </Link>
-          ) : (
-            <div className="text-base font-bold leading-tight text-zinc-700">›</div>
-          )}
-        </div>
-      </div>
-
-      {featured ? (
-        <Link href={toHref(articleHref(tenantSlug, featured.slug || featured.id))} className="mt-4 block">
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md bg-zinc-100">
-            {featured.coverImage?.url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={featured.coverImage.url} alt={featured.title} className="absolute inset-0 h-full w-full object-cover" />
-            ) : (
-              <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
-            )}
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-black/0 px-3 pb-3 pt-10">
-              <div className="line-clamp-2 text-sm sm:text-[15px] font-semibold leading-snug text-white">{featured.title}</div>
-            </div>
-          </div>
-        </Link>
-      ) : null}
-
-      <div className="mt-4 border-t border-dotted border-zinc-300" />
-
-      {/* Mobile: single-column list for readability */}
-      <div className="mt-4 space-y-3 sm:hidden">
-        {flat.map((a) => (
-          <Link
-            key={a.id}
-            href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-            className="block border-b border-dotted border-zinc-300 pb-3 last:border-b-0 last:pb-0 line-clamp-2 text-sm font-medium leading-snug hover:underline"
-          >
-            {a.title}
+        {href ? (
+          <Link href={toHref(href)} className="text-xs font-semibold text-[hsl(var(--primary,217_91%_60%))] hover:underline">
+            More →
           </Link>
-        ))}
+        ) : null}
       </div>
 
-      {/* Desktop: 2-column list */}
-      <div className="mt-4 hidden sm:grid sm:grid-cols-2 sm:divide-x sm:divide-dotted sm:divide-zinc-300">
-        <div className="pr-4">
-          <div className="space-y-3">
-            {left.map((a) => (
-              <Link
-                key={a.id}
-                href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-                className="block line-clamp-2 text-sm font-medium leading-snug hover:underline"
-              >
+      <div>
+        {/* Featured Image */}
+        {featured ? (
+          <Link href={toHref(articleHref(tenantSlug, featured.slug || featured.id))} className="block group mb-3">
+            <div className="relative aspect-[16/9] w-full overflow-hidden bg-zinc-100">
+              {featured.coverImage?.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={featured.coverImage.url} alt={featured.title} className="absolute inset-0 h-full w-full object-cover" />
+              ) : (
+                <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
+              )}
+            </div>
+            <h4 className="mt-2 text-sm font-bold text-black group-hover:text-[hsl(var(--primary,217_91%_60%))] transition-colors line-clamp-2">{featured.title}</h4>
+          </Link>
+        ) : null}
+
+        {/* Article list */}
+        <div>
+          {flat.map((a) => (
+            <Link
+              key={a.id}
+              href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+              className="group flex items-start gap-2 py-2 border-b border-zinc-100 last:border-b-0"
+            >
+              <span className="w-1.5 h-1.5 mt-1.5 bg-[hsl(var(--primary,217_91%_60%))] flex-shrink-0" />
+              <span className="text-sm font-medium text-black group-hover:text-[hsl(var(--primary,217_91%_60%))] line-clamp-2">
                 {a.title}
-              </Link>
-            ))}
-          </div>
-        </div>
-        <div className="pl-4">
-          <div className="space-y-3">
-            {right.map((a) => (
-              <Link
-                key={a.id}
-                href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-                className="block line-clamp-2 text-sm font-medium leading-snug hover:underline"
-              >
-                {a.title}
-              </Link>
-            ))}
-          </div>
+              </span>
+            </Link>
+          ))}
         </div>
       </div>
     </div>
@@ -578,26 +771,29 @@ export async function ThemeHome({
           return (
             <SectionCard key={block.id} title={block.name || 'Top Stories'} href={href}>
               <div className="space-y-4">
-                <div className="-mx-4 h-px bg-zinc-200" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {top.map((a) => (
-                    <article key={a.id} className="overflow-hidden rounded-md bg-white shadow-sm">
-                      <div className="relative aspect-[16/9] w-full">
-                        {a.coverImage?.url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={a.coverImage.url} alt={a.title} className="absolute inset-0 h-full w-full object-cover" />
-                        ) : (
-                          <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
-                        )}
-                      </div>
-                      <div className="p-3">
-                        <Link
-                          href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-                          className="line-clamp-2 text-sm font-semibold leading-snug hover:underline"
-                        >
-                          {a.title}
-                        </Link>
-                      </div>
+                  {top.map((a, idx) => (
+                    <article key={a.id} className="group overflow-hidden rounded-xl bg-white shadow-sm hover:shadow-lg transition-all duration-300 border border-zinc-100">
+                      <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="block">
+                        <div className="relative aspect-[16/9] w-full overflow-hidden">
+                          {a.coverImage?.url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={a.coverImage.url} alt={a.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                          ) : (
+                            <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
+                          )}
+                          <div className="absolute top-2 left-2">
+                            <span className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-blue-600 text-white rounded shadow-sm">
+                              #{idx + 1}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="p-3">
+                          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-800 group-hover:text-blue-600 transition-colors">
+                            {a.title}
+                          </h3>
+                        </div>
+                      </Link>
                     </article>
                   ))}
                 </div>
@@ -611,20 +807,22 @@ export async function ThemeHome({
           <SectionCard key={block.id} title={block.name || 'Top Stories'} href={href}>
             <div className={`grid ${gridClass} gap-4`}>
               {items.map((a) => (
-                <article key={a.id} className="overflow-hidden rounded-md border bg-white">
-                  <div className="relative aspect-[16/9] w-full">
-                    {a.coverImage?.url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={a.coverImage.url} alt={a.title} className="absolute inset-0 h-full w-full object-cover" />
-                    ) : (
-                      <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
-                    )}
-                  </div>
-                  <div className="p-3">
-                    <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="line-clamp-2 text-sm font-semibold leading-snug hover:underline">
-                      {a.title}
-                    </Link>
-                  </div>
+                <article key={a.id} className="group overflow-hidden rounded-xl bg-white shadow-sm hover:shadow-lg transition-all duration-300 border border-zinc-100">
+                  <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="block">
+                    <div className="relative aspect-[16/9] w-full overflow-hidden">
+                      {a.coverImage?.url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={a.coverImage.url} alt={a.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      ) : (
+                        <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-800 group-hover:text-blue-600 transition-colors">
+                        {a.title}
+                      </h3>
+                    </div>
+                  </Link>
                 </article>
               ))}
             </div>
@@ -671,91 +869,72 @@ export async function ThemeHome({
         )
 
         return (
-          <div key={block.id} className="border-t border-dotted border-zinc-300 pt-4 sm:pt-6">
-            <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:grid-cols-3">
+          <div key={block.id} className="mt-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
               {colsData.map(({ title, cat, items }, idx) => {
                 const featured = items[0]
-                const links = items.slice(1, 3)
+                const links = items.slice(1, 4)
                 const href = cat?.slug ? categoryHref(tenantSlug, cat.slug) : undefined
                 return (
-                  <div key={idx} className="min-w-0">
-                    <div className="flex items-center justify-between">
-                      {href ? (
-                        <h3 className="text-lg font-bold leading-tight tracking-tight">
-                          <Link href={toHref(href)} className="hover:underline">
+                  <div key={idx} className="min-w-0 bg-white">
+                    {/* Header with underline */}
+                    <div className="flex items-center justify-between border-b-2 border-[hsl(var(--primary,217_91%_60%))] pb-2 mb-3">
+                      <h3 className="text-base font-bold text-black uppercase tracking-wide">
+                        {href ? (
+                          <Link href={toHref(href)} className="hover:text-[hsl(var(--primary,217_91%_60%))] transition-colors">
                             {title}
                           </Link>
-                        </h3>
-                      ) : (
-                        <h3 className="text-lg font-bold leading-tight tracking-tight">{title}</h3>
-                      )}
+                        ) : (
+                          title
+                        )}
+                      </h3>
                       {href ? (
-                        <Link href={toHref(href)} className="text-lg font-bold leading-tight text-zinc-700" aria-label="Open category">
-                          ›
+                        <Link href={toHref(href)} className="text-xs font-semibold text-[hsl(var(--primary,217_91%_60%))] hover:underline">
+                          More →
                         </Link>
-                      ) : (
-                        <div className="text-lg font-bold leading-tight text-zinc-700">›</div>
-                      )}
-                    </div>
-
-                    {featured ? (
-                      <div className="mt-4 flex min-w-0 gap-4">
-                        <div className="relative h-20 w-28 sm:w-32 shrink-0 overflow-hidden rounded-md bg-zinc-100">
-                          {featured.coverImage?.url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={featured.coverImage.url}
-                              alt={featured.title}
-                              className="absolute inset-0 h-full w-full object-cover"
-                            />
-                          ) : (
-                            <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
-                          )}
-                        </div>
-                        <Link
-                          href={toHref(articleHref(tenantSlug, featured.slug || featured.id))}
-                          className="min-w-0 line-clamp-2 text-sm sm:text-base font-semibold leading-snug"
-                        >
-                          {featured.title}
-                        </Link>
-                      </div>
-                    ) : null}
-
-                    <div className="mt-4 border-t border-dotted border-zinc-300" />
-
-                    <div className="mt-4 space-y-3 sm:hidden">
-                      {links.map((a) => (
-                        <Link
-                          key={a.id}
-                          href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-                          className="block border-b border-dotted border-zinc-300 pb-3 last:border-b-0 last:pb-0 line-clamp-2 text-sm font-medium leading-snug hover:underline"
-                        >
-                          {a.title}
-                        </Link>
-                      ))}
-                    </div>
-
-                    <div className="mt-4 hidden sm:grid sm:grid-cols-2 sm:divide-x sm:divide-dotted sm:divide-zinc-300">
-                      {links.map((a, i) => (
-                        <Link
-                          key={a.id}
-                          href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-                          className={
-                            i === 0
-                              ? 'pr-4 text-sm font-medium leading-snug line-clamp-2 hover:underline'
-                              : 'pl-4 text-sm font-medium leading-snug line-clamp-2 hover:underline'
-                          }
-                        >
-                          {a.title}
-                        </Link>
-                      ))}
-                      {links.length === 1 ? <div className="pl-4" /> : null}
-                      {links.length === 0 ? (
-                        <>
-                          <div className="pr-4" />
-                          <div className="pl-4" />
-                        </>
                       ) : null}
+                    </div>
+
+                    <div>
+                      {/* Featured article */}
+                      {featured ? (
+                        <div className="flex min-w-0 gap-3 mb-3">
+                          <div className="relative h-16 w-24 shrink-0 overflow-hidden bg-zinc-100">
+                            {featured.coverImage?.url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={featured.coverImage.url}
+                                alt={featured.title}
+                                className="absolute inset-0 h-full w-full object-cover"
+                              />
+                            ) : (
+                              <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
+                            )}
+                          </div>
+                          <Link
+                            href={toHref(articleHref(tenantSlug, featured.slug || featured.id))}
+                            className="min-w-0 line-clamp-3 text-sm font-bold text-black hover:text-[hsl(var(--primary,217_91%_60%))] transition-colors"
+                          >
+                            {featured.title}
+                          </Link>
+                        </div>
+                      ) : null}
+
+                      {/* Article list */}
+                      <div>
+                        {links.map((a) => (
+                          <Link
+                            key={a.id}
+                            href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+                            className="group flex items-start gap-2 py-2 border-b border-zinc-100 last:border-b-0"
+                          >
+                            <span className="w-1.5 h-1.5 mt-1.5 bg-[hsl(var(--primary,217_91%_60%))] flex-shrink-0" />
+                            <span className="text-sm font-medium text-black group-hover:text-[hsl(var(--primary,217_91%_60%))]">
+                              {a.title}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )
@@ -908,7 +1087,7 @@ export async function ThemeHome({
         blocksByCol.set(colKey, list)
       }
 
-      const colTemplate = cols.length === 3 ? 'lg:grid-cols-[280px_minmax(0,1fr)_340px]' : cols.length === 2 ? 'lg:grid-cols-[minmax(0,1fr)_340px]' : 'lg:grid-cols-3'
+      const colTemplate = cols.length === 3 ? 'lg:grid-cols-[260px_minmax(0,1fr)_300px]' : cols.length === 2 ? 'lg:grid-cols-[minmax(0,1fr)_300px]' : 'lg:grid-cols-3'
 
       const colNodes = await Promise.all(
         cols.map(async (c) => {
@@ -999,12 +1178,58 @@ export async function ThemeHome({
 
   const cssVars = themeCssVarsFromSettings(settings)
 
+  // Build data for 3 styled category sections using available categories
+  const styledCat1 = topNavCats[0]
+  const styledCat2 = topNavCats[1]
+  const styledCat3 = topNavCats[2]
+
+  const [styledItems1, styledItems2, styledItems3] = await Promise.all([
+    styledCat1?.slug ? (byCategorySlug.get(styledCat1.slug) || await getArticlesByCategory('na', styledCat1.slug)) : homeFeed.slice(0, 6),
+    styledCat2?.slug ? (byCategorySlug.get(styledCat2.slug) || await getArticlesByCategory('na', styledCat2.slug)) : homeFeed.slice(6, 12),
+    styledCat3?.slug ? (byCategorySlug.get(styledCat3.slug) || await getArticlesByCategory('na', styledCat3.slug)) : homeFeed.slice(12, 18),
+  ])
+
   return (
-    <div className="theme-style2" style={cssVars}>
+    <div className="theme-style2 pb-16 sm:pb-0" style={cssVars}>
       <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} variant="style2" />
 
       {rendered}
-      <Footer settings={settings} />
+
+      {/* 3 Styled Category Sections */}
+      <section className="mx-auto max-w-7xl px-4 py-8 space-y-8">
+        {/* Blue Category Section */}
+        {styledItems1.length > 0 && (
+          <BlueCategorySection 
+            tenantSlug={tenantSlug}
+            title={styledCat1?.name || 'Trending Now'}
+            href={styledCat1?.slug ? categoryHref(tenantSlug, styledCat1.slug) : undefined}
+            items={styledItems1.slice(0, 6)}
+          />
+        )}
+
+        {/* Red Category Section */}
+        {styledItems2.length > 0 && (
+          <RedCategorySection 
+            tenantSlug={tenantSlug}
+            title={styledCat2?.name || 'Breaking News'}
+            href={styledCat2?.slug ? categoryHref(tenantSlug, styledCat2.slug) : undefined}
+            items={styledItems2.slice(0, 5)}
+          />
+        )}
+
+        {/* Dark Elegant Section */}
+        {styledItems3.length > 0 && (
+          <DarkCategorySection 
+            tenantSlug={tenantSlug}
+            title={styledCat3?.name || 'Must Read'}
+            href={styledCat3?.slug ? categoryHref(tenantSlug, styledCat3.slug) : undefined}
+            items={styledItems3.slice(0, 4)}
+          />
+        )}
+      </section>
+
+      <Footer settings={settings} tenantSlug={tenantSlug} />
+      <MobileBottomNav tenantSlug={tenantSlug} />
     </div>
   )
 }
@@ -1017,28 +1242,110 @@ export async function ThemeArticle({ tenantSlug, title, article }: { tenantSlug:
   const sidebarLatest = sidebarFeed.filter((a) => a.id !== article.id).slice(0, 10)
 
   return (
-    <div className="theme-style2" style={cssVars}>
+    <div className="theme-style2 pb-16 sm:pb-0" style={cssVars}>
       <Navbar tenantSlug={tenantSlug} title={title} variant="style2" />
-      <main className="mx-auto max-w-7xl px-4 py-4 sm:py-6">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:py-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
           <article className="min-w-0">
-            <h1 className="mb-3 text-2xl sm:text-3xl font-bold leading-snug tracking-tight">{article.title}</h1>
+            {/* Breadcrumb */}
+            <nav className="mb-4 flex items-center gap-2 text-sm text-zinc-500">
+              <Link href={`/t/${tenantSlug}`} className="hover:text-blue-600 transition-colors">Home</Link>
+              <span>›</span>
+              <span className="text-zinc-700">Article</span>
+            </nav>
+            
+            {/* Article Header */}
+            <header className="mb-6">
+              <h1 className="mb-4 text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight tracking-tight text-zinc-900">
+                {article.title}
+              </h1>
+              
+              {/* Meta info */}
+              <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-500">
+                {article.publishedAt ? (
+                  <time className="flex items-center gap-1.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {new Date(String(article.publishedAt)).toLocaleDateString('en-US', { 
+                      weekday: 'long',
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </time>
+                ) : null}
+                <span className="hidden sm:inline text-zinc-300">|</span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  5 min read
+                </span>
+              </div>
+            </header>
+
+            {/* Featured Image */}
             {article.coverImage?.url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={article.coverImage.url} alt={article.title} className="mb-5 w-full rounded-md border" />
+              <figure className="mb-6 -mx-4 sm:mx-0">
+                <div className="overflow-hidden sm:rounded-xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src={article.coverImage.url} 
+                    alt={article.title} 
+                    className="w-full aspect-video object-cover" 
+                  />
+                </div>
+              </figure>
             ) : null}
-            <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: article.content ?? '' }} />
+
+            {/* Share buttons */}
+            <div className="mb-6 flex items-center gap-3">
+              <span className="text-sm font-medium text-zinc-500">Share:</span>
+              <button className="share-btn w-9 h-9 flex items-center justify-center rounded-full bg-zinc-100 hover:bg-blue-600 hover:text-white transition-all" aria-label="Share on Facebook">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.77 7.46H14.5v-1.9c0-.9.6-1.1 1-1.1h3V.5h-4.33C10.24.5 9.5 3.44 9.5 5.32v2.15h-3v4h3v12h5v-12h3.85l.42-4z"/></svg>
+              </button>
+              <button className="share-btn w-9 h-9 flex items-center justify-center rounded-full bg-zinc-100 hover:bg-sky-500 hover:text-white transition-all" aria-label="Share on Twitter">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.44 4.83c-.8.37-1.5.38-2.22.02.93-.56.98-.96 1.32-2.02-.88.52-1.86.9-2.9 1.1-.82-.88-2-1.43-3.3-1.43-2.5 0-4.55 2.04-4.55 4.54 0 .36.03.7.1 1.04-3.77-.2-7.12-2-9.36-4.75-.4.67-.6 1.45-.6 2.3 0 1.56.8 2.95 2 3.77-.74-.03-1.44-.23-2.05-.57v.06c0 2.2 1.56 4.03 3.64 4.44-.67.2-1.37.2-2.06.08.58 1.8 2.26 3.12 4.25 3.16C5.78 18.1 3.37 18.74 1 18.46c2 1.3 4.4 2.04 6.97 2.04 8.35 0 12.92-6.92 12.92-12.93 0-.2 0-.4-.02-.6.9-.63 1.96-1.22 2.56-2.14z"/></svg>
+              </button>
+              <button className="share-btn w-9 h-9 flex items-center justify-center rounded-full bg-zinc-100 hover:bg-green-600 hover:text-white transition-all" aria-label="Share on WhatsApp">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              </button>
+            </div>
+
+            {/* Article Content */}
+            <div className="prose prose-lg max-w-none prose-headings:text-zinc-900 prose-p:text-zinc-700 prose-a:text-blue-600 prose-strong:text-zinc-900" dangerouslySetInnerHTML={{ __html: article.content ?? '' }} />
+
+            {/* Tags (placeholder) */}
+            <div className="mt-8 pt-6 border-t border-zinc-200">
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 text-xs font-medium bg-zinc-100 text-zinc-600 rounded-full hover:bg-blue-100 hover:text-blue-700 cursor-pointer transition-colors">News</span>
+                <span className="px-3 py-1 text-xs font-medium bg-zinc-100 text-zinc-600 rounded-full hover:bg-blue-100 hover:text-blue-700 cursor-pointer transition-colors">Latest</span>
+                <span className="px-3 py-1 text-xs font-medium bg-zinc-100 text-zinc-600 rounded-full hover:bg-blue-100 hover:text-blue-700 cursor-pointer transition-colors">Trending</span>
+              </div>
+            </div>
           </article>
 
+          {/* Sidebar */}
           <aside className="space-y-6">
             <SectionCard title="Latest News">
               <TitleList tenantSlug={tenantSlug} items={sidebarLatest} />
             </SectionCard>
-            <div className="rounded-md border bg-white p-4 text-center text-sm text-zinc-500">Ad</div>
+            
+            {/* Ad placeholder */}
+            <div className="sticky top-24">
+              <div className="rounded-xl border-2 border-dashed border-zinc-200 bg-gradient-to-br from-zinc-50 to-white p-6 text-center">
+                <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Advertisement</div>
+                <div className="flex items-center justify-center h-[250px] text-zinc-400">
+                  <span>Ad Space</span>
+                </div>
+              </div>
+            </div>
           </aside>
         </div>
       </main>
-      <Footer settings={settings} />
+      <Footer settings={settings} tenantSlug={tenantSlug} />
+      <MobileBottomNav tenantSlug={tenantSlug} />
     </div>
   )
 }

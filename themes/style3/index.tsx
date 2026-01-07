@@ -10,7 +10,7 @@ export function ThemeHome({ tenantSlug, title, articles }: { tenantSlug: string;
       <main className="mx-auto max-w-6xl px-4 py-6">
         <ArticleGrid tenantSlug={tenantSlug} items={articles} />
       </main>
-      <Footer />
+      <Footer tenantSlug={tenantSlug} />
     </div>
   )
 }
@@ -27,7 +27,7 @@ export function ThemeArticle({ tenantSlug, title, article }: { tenantSlug: strin
         )}
         <article className="prose max-w-none" dangerouslySetInnerHTML={{ __html: article.content ?? '' }} />
       </main>
-      <Footer />
+      <Footer tenantSlug={tenantSlug} />
     </div>
   )
 }

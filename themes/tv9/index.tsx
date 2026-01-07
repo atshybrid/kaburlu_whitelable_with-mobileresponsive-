@@ -165,7 +165,7 @@ export function ThemeHome({ tenantSlug, title, articles, settings }: { tenantSlu
         </div>
       </main>
 
-      <Footer />
+      <Footer settings={settings} tenantSlug={tenantSlug} />
     </div>
   )
 }
@@ -182,7 +182,7 @@ export function ThemeArticle({ tenantSlug, title, article }: { tenantSlug: strin
         <h1 className="mb-2 text-3xl font-extrabold leading-tight">{article.title}</h1>
         <article className="prose max-w-none" dangerouslySetInnerHTML={{ __html: article.content ?? '' }} />
       </main>
-      <Footer />
+      <Footer tenantSlug={tenantSlug} />
     </div>
   )
 }

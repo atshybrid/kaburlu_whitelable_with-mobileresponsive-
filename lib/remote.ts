@@ -71,6 +71,21 @@ export async function fetchJSON<T>(path: string, init?: FetchJSONInit) {
 
 export interface EffectiveSettings {
   seo?: { ogImageUrl?: string; defaultMetaTitle?: string; defaultMetaDescription?: string; canonicalBaseUrl?: string }
+  ads?: {
+    enabled?: boolean
+    debug?: boolean
+    googleAdsense?: { client?: string }
+    slots?: Record<
+      string,
+      {
+        enabled?: boolean
+        provider?: 'none' | 'local' | 'google'
+        label?: string
+        local?: { enabled?: boolean; imageUrl?: string; clickUrl?: string; alt?: string; logoUrl?: string }
+        google?: { enabled?: boolean; client?: string; slot?: string; format?: string; responsive?: boolean }
+      }
+    >
+  }
   theme?: {
     // Backend may send `theme` (current) or `key` (legacy)
     theme?: string
@@ -107,6 +122,21 @@ export interface EffectiveSettings {
   }
   settings?: {
     seo?: { ogImageUrl?: string; defaultMetaTitle?: string; defaultMetaDescription?: string; canonicalBaseUrl?: string }
+    ads?: {
+      enabled?: boolean
+      debug?: boolean
+      googleAdsense?: { client?: string }
+      slots?: Record<
+        string,
+        {
+          enabled?: boolean
+          provider?: 'none' | 'local' | 'google'
+          label?: string
+          local?: { enabled?: boolean; imageUrl?: string; clickUrl?: string; alt?: string; logoUrl?: string }
+          google?: { enabled?: boolean; client?: string; slot?: string; format?: string; responsive?: boolean }
+        }
+      >
+    }
     theme?: {
       theme?: string
       key?: string

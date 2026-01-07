@@ -12,6 +12,8 @@ async function getThemeArticle(themeKey: string) {
       return (await import('@/themes/style3')).ThemeArticle
     case 'tv9':
       return (await import('@/themes/tv9')).ThemeArticle
+    case 'toi':
+      return (await import('@/themes/toi')).ThemeArticle
     case 'style1':
     default:
       return (await import('@/themes/style1')).ThemeArticle

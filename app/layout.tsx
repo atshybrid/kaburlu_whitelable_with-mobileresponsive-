@@ -6,6 +6,7 @@ import "@/themes/style1/theme.css";
 import "@/themes/style2/theme.css";
 import "@/themes/style3/theme.css";
 import "@/themes/tv9/theme.css";
+import "@/themes/toi/theme.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   try {

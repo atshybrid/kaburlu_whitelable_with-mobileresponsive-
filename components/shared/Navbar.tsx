@@ -97,43 +97,52 @@ export async function Navbar({
       <header
         id="top"
         data-collapsed="false"
-        className="group w-full border-b bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 sticky top-0 z-40"
+        className="group w-full border-b border-zinc-200 bg-white sticky top-0 z-50 transition-none"
+        style={{ willChange: 'contents' }}
       >
-        <HeaderCollapseOnScrollClient targetId="top" threshold={120} />
+        <HeaderCollapseOnScrollClient targetId="top" threshold={100} hysteresis={15} />
 
         <div className="mx-auto max-w-7xl px-4">
-          {/* Masthead (center logo) - hides on scroll */}
-          <div className="py-4 sm:py-6 group-data-[collapsed=true]:hidden">
+          {/* Masthead (center logo) - smooth hide/show */}
+          <div 
+            className="overflow-hidden transition-all duration-300 ease-out
+              group-data-[collapsed=false]:max-h-24 group-data-[collapsed=false]:opacity-100 group-data-[collapsed=false]:py-4
+              group-data-[collapsed=true]:max-h-0 group-data-[collapsed=true]:opacity-0 group-data-[collapsed=true]:py-0"
+          >
             <Link href={toHref(homeHref(tenantSlug))} className="flex items-center justify-center">
               {logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoUrl} alt={title} className="h-14 w-auto sm:h-16" />
+                <img src={logoUrl} alt={title} className="h-12 w-auto sm:h-14" />
               ) : (
-                <div className="text-2xl font-extrabold tracking-tight">{title}</div>
+                <div className="text-2xl font-extrabold tracking-tight text-black">{title}</div>
               )}
             </Link>
           </div>
 
-          {/* Collapsed top bar (logo left) - shows after scroll */}
-          <div className="hidden h-12 items-center justify-start group-data-[collapsed=true]:flex">
-            <Link href={toHref(homeHref(tenantSlug))} className="flex items-center gap-3">
+          {/* Collapsed top bar (logo left) - smooth show/hide */}
+          <div 
+            className="flex items-center overflow-hidden transition-all duration-300 ease-out
+              group-data-[collapsed=false]:max-h-0 group-data-[collapsed=false]:opacity-0
+              group-data-[collapsed=true]:max-h-14 group-data-[collapsed=true]:opacity-100 group-data-[collapsed=true]:h-12"
+          >
+            <Link href={toHref(homeHref(tenantSlug))} className="flex items-center gap-2">
               {logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoUrl} alt={title} className="h-8 w-auto sm:h-9" />
+                <img src={logoUrl} alt={title} className="h-8 w-auto" />
               ) : (
-                <div className="text-base font-bold">{title}</div>
+                <div className="text-lg font-bold text-black">{title}</div>
               )}
             </Link>
           </div>
 
           {/* Navigation row */}
-          <div className="hidden pb-2 sm:block">
+          <nav className="hidden pb-2 sm:block" aria-label="Main navigation">
             <NavbarMenuClient items={items} />
-          </div>
+          </nav>
         </div>
 
-        {/* Accent strip */}
-        <div className="h-1 w-full" style={{ backgroundColor: 'hsl(var(--accent))' }} />
+        {/* Accent strip using dynamic primary color */}
+        <div className="h-0.5 w-full bg-[hsl(var(--primary,217_91%_60%))]" />
       </header>
     )
   }

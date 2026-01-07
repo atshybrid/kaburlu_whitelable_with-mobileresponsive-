@@ -14,6 +14,8 @@ async function getThemeHome(themeKey: string) {
       return (await import('@/themes/style3')).ThemeHome
     case 'tv9':
       return (await import('@/themes/tv9')).ThemeHome
+    case 'toi':
+      return (await import('@/themes/toi')).ThemeHome
     case 'style1':
     default:
       return (await import('@/themes/style1')).ThemeHome

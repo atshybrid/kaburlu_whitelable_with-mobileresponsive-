@@ -9,14 +9,53 @@
   color-scheme: light;
 
   /* Offline-friendly defaults (no next/font/google build-time fetch). */
-  --font-geist-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  --font-geist-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
   --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font-noto-sans-telugu: "Nirmala UI", "Noto Sans Telugu", "Lohit Telugu", "Arial Unicode MS", sans-serif;
-  /* Telugu title stack (offline-friendly). Prefer Nirmala UI on Windows. */
-  --font-telugu-title: "Nirmala UI", "Noto Sans Telugu", "Lohit Telugu", "Arial Unicode MS", sans-serif;
+  
+  /* Multi-language Font Stacks */
+  /* Telugu */
+  --font-noto-sans-telugu: "Nirmala UI", "Noto Sans Telugu", "Mandali", "Peddana", "Lohit Telugu", "Arial Unicode MS", sans-serif;
+  --font-telugu-title: "Nirmala UI", "Noto Sans Telugu", "Mandali", "Lohit Telugu", "Arial Unicode MS", sans-serif;
+  
+  /* Hindi/Devanagari */
+  --font-hindi: "Nirmala UI", "Noto Sans Devanagari", "Mangal", "Kokila", "Arial Unicode MS", sans-serif;
+  
+  /* Tamil */
+  --font-tamil: "Nirmala UI", "Noto Sans Tamil", "Latha", "Vijaya", "Arial Unicode MS", sans-serif;
+  
+  /* Kannada */
+  --font-kannada: "Nirmala UI", "Noto Sans Kannada", "Tunga", "Arial Unicode MS", sans-serif;
+  
+  /* Malayalam */
+  --font-malayalam: "Nirmala UI", "Noto Sans Malayalam", "Kartika", "Arial Unicode MS", sans-serif;
+  
+  /* Bengali */
+  --font-bengali: "Nirmala UI", "Noto Sans Bengali", "Vrinda", "Arial Unicode MS", sans-serif;
+  
+  /* Marathi (uses Devanagari) */
+  --font-marathi: "Nirmala UI", "Noto Sans Devanagari", "Mangal", "Arial Unicode MS", sans-serif;
+  
+  /* Gujarati */
+  --font-gujarati: "Nirmala UI", "Noto Sans Gujarati", "Shruti", "Arial Unicode MS", sans-serif;
+  
+  /* Punjabi/Gurmukhi */
+  --font-punjabi: "Nirmala UI", "Noto Sans Gurmukhi", "Raavi", "Arial Unicode MS", sans-serif;
+  
+  /* Odia */
+  --font-odia: "Nirmala UI", "Noto Sans Oriya", "Kalinga", "Arial Unicode MS", sans-serif;
+  
+  /* Urdu (RTL) */
+  --font-urdu: "Nirmala UI", "Noto Nastaliq Urdu", "Urdu Typesetting", "Arial Unicode MS", sans-serif;
+  
+  /* Arabic (RTL) */
+  --font-arabic: "Noto Sans Arabic", "Arabic Typesetting", "Traditional Arabic", "Arial Unicode MS", sans-serif;
 
   --font-body: var(--font-geist-sans);
   --font-title: var(--font-body);
+  
+  /* Font size adjustment for different scripts */
+  --font-size-adjust: 1;
+  --line-height-adjust: 1.6;
 }
 
 @theme inline {
@@ -30,11 +69,118 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-body);
+  font-size: calc(1rem * var(--font-size-adjust));
+  line-height: var(--line-height-adjust);
 }
 
-html[data-lang='te'] {
+/* Telugu Language Support */
+html[data-lang='te'],
+html[data-lang='telugu'] {
   --font-body: var(--font-noto-sans-telugu);
   --font-title: var(--font-telugu-title);
+  --font-size-adjust: 1.05;
+  --line-height-adjust: 1.7;
+}
+
+/* Hindi Language Support */
+html[data-lang='hi'],
+html[data-lang='hindi'] {
+  --font-body: var(--font-hindi);
+  --font-title: var(--font-hindi);
+  --font-size-adjust: 1.05;
+  --line-height-adjust: 1.7;
+}
+
+/* Tamil Language Support */
+html[data-lang='ta'],
+html[data-lang='tamil'] {
+  --font-body: var(--font-tamil);
+  --font-title: var(--font-tamil);
+  --font-size-adjust: 1.05;
+  --line-height-adjust: 1.7;
+}
+
+/* Kannada Language Support */
+html[data-lang='kn'],
+html[data-lang='kannada'] {
+  --font-body: var(--font-kannada);
+  --font-title: var(--font-kannada);
+  --font-size-adjust: 1.05;
+  --line-height-adjust: 1.7;
+}
+
+/* Malayalam Language Support */
+html[data-lang='ml'],
+html[data-lang='malayalam'] {
+  --font-body: var(--font-malayalam);
+  --font-title: var(--font-malayalam);
+  --font-size-adjust: 1.08;
+  --line-height-adjust: 1.75;
+}
+
+/* Bengali Language Support */
+html[data-lang='bn'],
+html[data-lang='bengali'] {
+  --font-body: var(--font-bengali);
+  --font-title: var(--font-bengali);
+  --font-size-adjust: 1.05;
+  --line-height-adjust: 1.7;
+}
+
+/* Marathi Language Support */
+html[data-lang='mr'],
+html[data-lang='marathi'] {
+  --font-body: var(--font-marathi);
+  --font-title: var(--font-marathi);
+  --font-size-adjust: 1.05;
+  --line-height-adjust: 1.7;
+}
+
+/* Gujarati Language Support */
+html[data-lang='gu'],
+html[data-lang='gujarati'] {
+  --font-body: var(--font-gujarati);
+  --font-title: var(--font-gujarati);
+  --font-size-adjust: 1.05;
+  --line-height-adjust: 1.7;
+}
+
+/* Punjabi Language Support */
+html[data-lang='pa'],
+html[data-lang='punjabi'] {
+  --font-body: var(--font-punjabi);
+  --font-title: var(--font-punjabi);
+  --font-size-adjust: 1.05;
+  --line-height-adjust: 1.7;
+}
+
+/* Odia Language Support */
+html[data-lang='or'],
+html[data-lang='odia'] {
+  --font-body: var(--font-odia);
+  --font-title: var(--font-odia);
+  --font-size-adjust: 1.05;
+  --line-height-adjust: 1.7;
+}
+
+/* Urdu Language Support - RTL */
+html[data-lang='ur'],
+html[data-lang='urdu'] {
+  --font-body: var(--font-urdu);
+  --font-title: var(--font-urdu);
+  --font-size-adjust: 1.15;
+  --line-height-adjust: 1.9;
+  direction: rtl;
+}
+
+/* Arabic Language Support - RTL */
+html[data-lang='ar'],
+html[data-lang='arabic'] {
+  --font-body: var(--font-arabic);
+  --font-title: var(--font-arabic);
+  --font-size-adjust: 1.1;
+  --line-height-adjust: 1.8;
+  direction: rtl;
 }
 
 h1,
