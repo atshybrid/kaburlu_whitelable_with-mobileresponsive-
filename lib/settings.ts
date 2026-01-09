@@ -2,7 +2,13 @@ import { headers } from 'next/headers'
 import { getDomainSettings, normalizeTenantDomain, type EffectiveSettings } from './remote'
 import { cache as reactCache } from 'react'
 
-type CacheEntry = { value: EffectiveSettings; expires: number }
+export type SettingsResult = {
+  settings: EffectiveSettings
+  isDomainNotLinked: boolean
+  isApiError: boolean
+}
+
+type CacheEntry = { value: SettingsResult; expires: number }
 const cache = new Map<string, CacheEntry>()
 const TTL_MS = Number(process.env.REMOTE_SETTINGS_MEMORY_TTL_SECONDS || '300') * 1000
 
@@ -12,14 +18,24 @@ function domainFromHeaders(h: Headers) {
 }
 
 export async function getEffectiveSettings(): Promise<EffectiveSettings> {
-  return _getEffectiveSettings()
+  const result = await _getSettingsResult()
+  return result.settings
 }
 
 export async function getEffectiveSettingsForDomain(tenantDomain: string): Promise<EffectiveSettings> {
-  return _getEffectiveSettings(normalizeTenantDomain(tenantDomain))
+  const result = await _getSettingsResult(normalizeTenantDomain(tenantDomain))
+  return result.settings
 }
 
-const _getEffectiveSettings = reactCache(async (domainOverride?: string): Promise<EffectiveSettings> => {
+export async function getSettingsResult(): Promise<SettingsResult> {
+  return _getSettingsResult()
+}
+
+export async function getSettingsResultForDomain(tenantDomain: string): Promise<SettingsResult> {
+  return _getSettingsResult(normalizeTenantDomain(tenantDomain))
+}
+
+const _getSettingsResult = reactCache(async (domainOverride?: string): Promise<SettingsResult> => {
   const h = await headers()
   const headerDomain = normalizeTenantDomain(h.get('x-tenant-domain') || '')
   const domain = normalizeTenantDomain(domainOverride || headerDomain || domainFromHeaders(h))
@@ -27,14 +43,34 @@ const _getEffectiveSettings = reactCache(async (domainOverride?: string): Promis
   const key = `settings:${domain}`
   const hit = cache.get(key)
   if (hit && hit.expires > now) return hit.value
-  let effective: EffectiveSettings = {}
+  
+  let result: SettingsResult = {
+    settings: {},
+    isDomainNotLinked: false,
+    isApiError: false
+  }
+  
   try {
     const res = await getDomainSettings(domain)
-    effective = res.effective || {}
-  } catch {
+    result.settings = res.effective || {}
+  } catch (error) {
+    const errorMessage = String(error).toLowerCase()
+    
+    // Check if it's a domain not found / not linked error
+    if (errorMessage.includes('404') || 
+        errorMessage.includes('not found') || 
+        errorMessage.includes('domain not linked') ||
+        errorMessage.includes('tenant not found')) {
+      result.isDomainNotLinked = true
+    } else {
+      // Other API errors (500, network issues, etc.)
+      result.isApiError = true
+    }
+    
     // Graceful fallback when remote settings are unavailable
-    effective = {}
+    result.settings = {}
   }
-  cache.set(key, { value: effective, expires: now + TTL_MS })
-  return effective
+  
+  cache.set(key, { value: result, expires: now + TTL_MS })
+  return result
 })

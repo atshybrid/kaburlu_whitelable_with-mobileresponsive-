@@ -1,46 +1,84 @@
-import { getEffectiveSettings, getEffectiveSettingsForDomain } from '@/lib/settings'
+import { getSettingsResult, getSettingsResultForDomain } from '@/lib/settings'
 import { getHomeFeed } from '@/lib/data'
 import { resolveTenant } from '@/lib/tenant'
+import { DomainNotLinked, TechnicalIssues } from '@/components/shared'
+import type { ThemeModule, ThemeHomeComponent } from '@/lib/theme-types'
 import type { Article } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
 import type { ReactElement } from 'react'
 
-async function getThemeHome(themeKey: string) {
+async function getThemeHome(themeKey: string): Promise<ThemeHomeComponent> {
+  let themeModule: ThemeModule
+  
   switch (themeKey) {
     case 'style2':
-      return (await import('@/themes/style2')).ThemeHome
+      themeModule = await import('@/themes/style2') as ThemeModule
+      break
     case 'style3':
-      return (await import('@/themes/style3')).ThemeHome
+      themeModule = await import('@/themes/style3') as ThemeModule
+      break
     case 'tv9':
-      return (await import('@/themes/tv9')).ThemeHome
+      themeModule = await import('@/themes/tv9') as ThemeModule
+      break
+    case 'toi':
+      themeModule = await import('@/themes/toi') as ThemeModule
+      break
     case 'style1':
     default:
-      return (await import('@/themes/style1')).ThemeHome
+      themeModule = await import('@/themes/style1') as ThemeModule
+      break
   }
+  
+  return themeModule.ThemeHome
 }
 
 export default async function Home() {
   // For root domain pages, resolve tenant by host.
   const tenant = await resolveTenant()
 
-  const settings = tenant.domain
-    ? await getEffectiveSettingsForDomain(tenant.domain)
-    : await getEffectiveSettings()
+  // Get settings result with error information
+  const settingsResult = tenant.domain
+    ? await getSettingsResultForDomain(tenant.domain)
+    : await getSettingsResult()
+  
+  // Handle domain not linked case
+  if (settingsResult.isDomainNotLinked) {
+    return <DomainNotLinked domain={tenant.domain || tenant.name} />
+  }
+  
+  // Handle API error case
+  if (settingsResult.isApiError) {
+    return (
+      <TechnicalIssues 
+        title="Technical Issues"
+        message="We're experiencing technical difficulties with our API services. Please contact Kaburlu Media support."
+      />
+    )
+  }
+  
+  const settings = settingsResult.settings
   const requestedThemeKey: string =
     settings?.theme?.theme ||
     settings?.theme?.key ||
     settings?.settings?.theme?.theme ||
     settings?.settings?.theme?.key ||
     'style1'
-  const themeKey = (['style1', 'style2', 'style3', 'tv9'].includes(requestedThemeKey) ? requestedThemeKey : 'style1') as
+  const themeKey = (['style1', 'style2', 'style3', 'tv9', 'toi'].includes(requestedThemeKey) ? requestedThemeKey : 'style1') as
     | 'style1'
     | 'style2'
     | 'style3'
     | 'tv9'
+    | 'toi'
   const Comp = await getThemeHome(themeKey)
 
   // Use resilient getHomeFeed (it falls back to mock data on error)
-  const articles = await getHomeFeed(tenant.id)
+  let articles: Article[]
+  try {
+    articles = await getHomeFeed(tenant.id)
+  } catch {
+    // If API fails, we'll let the theme components handle showing error messages
+    articles = []
+  }
 
   type HomeComp = (p: { tenantSlug: string; title: string; articles: Article[]; settings?: EffectiveSettings; tenantDomain?: string }) => ReactElement
   const HomeComp = Comp as unknown as HomeComp

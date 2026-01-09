@@ -1,4 +1,4 @@
-import { Footer } from '@/components/shared'
+import { Footer, TechnicalIssues, SectionError, EmptyState } from '@/components/shared'
 import type { Article } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
 import type { ReactNode } from 'react'
@@ -6,7 +6,7 @@ import Link from 'next/link'
 import type { UrlObject } from 'url'
 import { PlaceholderImg } from '@/components/shared/PlaceholderImg'
 import { articleHref, categoryHref, homeHref } from '@/lib/url'
-import { getCategoriesForNav } from '@/lib/categories'
+import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
 import { getEffectiveSettings } from '@/lib/settings'
 import { getPublicHomepage, type PublicHomepageResponse, type PublicHomepageSection } from '@/lib/homepage'
@@ -229,20 +229,59 @@ function CategoryListSection({
 // Two Column Category Grid
 // ============================================
 async function CategoryColumnsGrid({ tenantSlug }: { tenantSlug: string }) {
-  const cats = await getCategoriesForNav()
-  const topCats = cats.filter(c => !c.parentId).slice(0, 4)
+  let hasError = false
+  let categoriesData: Array<{category: Category; articles: Article[]}> = []
+  let shouldShowEmpty = false
   
-  const catData = await Promise.all(
-    topCats.map(async (cat) => {
-      const articles = await getArticlesByCategory('na', cat.slug)
-      return { category: cat, articles: articles.slice(0, 4) }
-    })
-  )
+  try {
+    const cats = await getCategoriesForNav()
+    const topCats = cats.filter(c => !c.parentId).slice(0, 4)
+    
+    if (topCats.length === 0) {
+      shouldShowEmpty = true
+    } else {
+      categoriesData = await Promise.all(
+        topCats.map(async (cat) => {
+          try {
+            const articles = await getArticlesByCategory('na', cat.slug)
+            return { category: cat, articles: articles.slice(0, 4) }
+          } catch {
+            return { category: cat, articles: [] }
+          }
+        })
+      )
+    }
+  } catch {
+    hasError = true
+  }
+  
+  if (hasError) {
+    return (
+      <section className="toi-section">
+        <SectionError 
+          title="Unable to load categories"
+          className="my-8"
+        />
+      </section>
+    )
+  }
+  
+  if (shouldShowEmpty) {
+    return (
+      <section className="toi-section">
+        <EmptyState 
+          title="No categories available" 
+          message="Categories will appear here when they become available."
+          className="my-8"
+        />
+      </section>
+    )
+  }
   
   return (
     <section className="toi-section">
       <div className="toi-grid-2">
-        {catData.map(({ category, articles }) => (
+        {categoriesData.map(({ category, articles }) => (
           <CategoryListSection
             key={category.id}
             tenantSlug={tenantSlug}
@@ -260,8 +299,32 @@ async function CategoryColumnsGrid({ tenantSlug }: { tenantSlug: string }) {
 // Related Articles
 // ============================================
 async function RelatedArticles({ tenantSlug, article }: { tenantSlug: string; article: Article }) {
-  const feed = await getHomeFeed('na')
-  const related = feed.filter((a) => a.id !== article.id).slice(0, 6)
+  let hasError = false
+  let related: Article[] = []
+  
+  try {
+    const feed = await getHomeFeed('na')
+    related = feed.filter((a) => a.id !== article.id).slice(0, 6)
+  } catch {
+    hasError = true
+  }
+  
+  if (hasError) {
+    return (
+      <SectionError 
+        title="Unable to load related articles"
+      />
+    )
+  }
+  
+  if (related.length === 0) {
+    return (
+      <EmptyState 
+        title="No related articles available" 
+        message="Related articles will appear here when available."
+      />
+    )
+  }
   
   return (
     <>
@@ -276,7 +339,52 @@ async function RelatedArticles({ tenantSlug, article }: { tenantSlug: string; ar
 // Latest Articles Sidebar
 // ============================================
 async function LatestArticlesSidebar({ tenantSlug }: { tenantSlug: string }) {
-  const items = await getHomeFeed('na')
+  let hasError = false
+  let items: Article[] = []
+  
+  try {
+    items = await getHomeFeed('na')
+  } catch {
+    hasError = true
+  }
+  
+  if (hasError) {
+    return (
+      <div className="toi-widget">
+        <div className="toi-widget-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+          <span className="toi-widget-title">Latest News</span>
+        </div>
+        <div className="toi-widget-body">
+          <SectionError title="Unable to load latest news" />
+        </div>
+      </div>
+    )
+  }
+  
+  if (items.length === 0) {
+    return (
+      <div className="toi-widget">
+        <div className="toi-widget-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+          <span className="toi-widget-title">Latest News</span>
+        </div>
+        <div className="toi-widget-body">
+          <EmptyState 
+            title="No latest news available" 
+            message="Latest news will appear here when available."
+          />
+        </div>
+      </div>
+    )
+  }
+  
   return <LatestNewsWidget tenantSlug={tenantSlug} articles={items.slice(0, 8)} />
 }
 
@@ -284,7 +392,50 @@ async function LatestArticlesSidebar({ tenantSlug }: { tenantSlug: string }) {
 // Trending Articles Sidebar
 // ============================================
 async function TrendingArticlesSidebar({ tenantSlug }: { tenantSlug: string }) {
-  const items = await getHomeFeed('na')
+  let hasError = false
+  let items: Article[] = []
+  
+  try {
+    items = await getHomeFeed('na')
+  } catch {
+    hasError = true
+  }
+  
+  if (hasError) {
+    return (
+      <div className="toi-widget">
+        <div className="toi-widget-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          <span className="toi-widget-title">Trending Now</span>
+        </div>
+        <div className="toi-widget-body">
+          <SectionError title="Unable to load trending articles" />
+        </div>
+      </div>
+    )
+  }
+  
+  if (items.length === 0) {
+    return (
+      <div className="toi-widget">
+        <div className="toi-widget-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          <span className="toi-widget-title">Trending Now</span>
+        </div>
+        <div className="toi-widget-body">
+          <EmptyState 
+            title="No trending articles available" 
+            message="Trending articles will appear here when available."
+          />
+        </div>
+      </div>
+    )
+  }
+  
   return <TrendingWidget tenantSlug={tenantSlug} articles={items.slice(0, 8)} />
 }
 
@@ -340,6 +491,24 @@ export async function ThemeHome({
   articles: Article[]
   settings?: EffectiveSettings
 }) {
+  // If no articles provided, show technical issues
+  if (!articles || articles.length === 0) {
+    return (
+      <div className="theme-toi">
+        <TOINavbar 
+          tenantSlug={tenantSlug} 
+          title={title} 
+          logoUrl={settings?.branding?.logoUrl} 
+        />
+        <TechnicalIssues 
+          title="Technical Issues"
+          message="We're experiencing technical difficulties with our content delivery. Please contact Kaburlu Media support."
+        />
+        <Footer settings={settings} tenantSlug={tenantSlug} />
+      </div>
+    )
+  }
+
   let homepage: PublicHomepageResponse | null = null
   try {
     const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'en'
@@ -433,6 +602,24 @@ export async function ThemeHome({
   const heroItems = heroStackRes.items.length > 0 ? heroStackRes.items : articles
   const lastNewsItems = lastNewsRes.items.length > 0 ? lastNewsRes.items : articles
 
+  // Ensure we have at least one main feature article
+  if (heroItems.length === 0) {
+    return (
+      <div className="theme-toi">
+        <TOINavbar 
+          tenantSlug={tenantSlugForLinks} 
+          title={title} 
+          logoUrl={settings?.branding?.logoUrl} 
+        />
+        <TechnicalIssues 
+          title="No Content Available"
+          message="We're unable to load content at this time. Please contact Kaburlu Media support."
+        />
+        <Footer settings={settings} tenantSlug={tenantSlugForLinks} />
+      </div>
+    )
+  }
+
   const mainFeature = heroItems[0]
   const secondaryFeatures = heroItems.slice(1, 5)
 
@@ -494,11 +681,18 @@ export async function ThemeHome({
                 title="Latest News" 
                 viewMoreHref={homeHref(tenantSlugForLinks)} 
               />
-              <div className="toi-list">
-                {lastNewsItems.slice(0, 8).map((article) => (
-                  <ListItem key={article.id} tenantSlug={tenantSlugForLinks} article={article} />
-                ))}
-              </div>
+              {lastNewsItems.length > 0 ? (
+                <div className="toi-list">
+                  {lastNewsItems.slice(0, 8).map((article) => (
+                    <ListItem key={article.id} tenantSlug={tenantSlugForLinks} article={article} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState 
+                  title="No latest news available" 
+                  message="Latest news will appear here when available."
+                />
+              )}
             </div>
 
             {/* Category Grid - 4 columns */}
@@ -506,11 +700,18 @@ export async function ThemeHome({
               <SectionHeader 
                 title="More Stories" 
               />
-              <div className="toi-grid-4">
-                {heroItems.slice(5, 13).map((article) => (
-                  <SecondaryCard key={article.id} tenantSlug={tenantSlugForLinks} article={article} />
-                ))}
-              </div>
+              {heroItems.slice(5, 13).length > 0 ? (
+                <div className="toi-grid-4">
+                  {heroItems.slice(5, 13).map((article) => (
+                    <SecondaryCard key={article.id} tenantSlug={tenantSlugForLinks} article={article} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState 
+                  title="No more stories available" 
+                  message="More stories will appear here when available."
+                />
+              )}
             </div>
 
             {/* Horizontal Ad */}

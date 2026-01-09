@@ -1,4 +1,4 @@
-import { Footer } from '@/components/shared/Footer'
+import { Footer, TechnicalIssues, SectionError, EmptyState } from '@/components/shared'
 import { Navbar } from '@/components/shared/Navbar'
 import type { Article } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
@@ -98,18 +98,71 @@ function Section({ title, children, noShadow, flushBody, viewMoreHref, bodyClass
 }
 
 async function CategoryBlock({ tenantSlug }: { tenantSlug: string }) {
-  const cats: Category[] = await getCategoriesForNav()
-  // Allow overriding via env: NEXT_PUBLIC_LAST_NEWS_CATEGORY
-  const preferred = (process.env.NEXT_PUBLIC_LAST_NEWS_CATEGORY || '').trim().toLowerCase()
-  const category = preferred
-    ? cats.find((c) => c.slug.toLowerCase() === preferred || c.name.toLowerCase() === preferred) || cats[0]
-    : cats[0]
-  const rawCount = Number(process.env.NEXT_PUBLIC_LAST_NEWS_COUNT || '8')
-  const count = Number.isFinite(rawCount) && rawCount > 0 ? Math.min(8, Math.max(5, Math.floor(rawCount))) : 8
-  const items = category ? (await getArticlesByCategory('na', category.slug)).slice(0, count) : []
+  try {
+    const cats: Category[] = await getCategoriesForNav()
+    // Allow overriding via env: NEXT_PUBLIC_LAST_NEWS_CATEGORY
+    const preferred = (process.env.NEXT_PUBLIC_LAST_NEWS_CATEGORY || '').trim().toLowerCase()
+    const category = preferred
+      ? cats.find((c) => c.slug.toLowerCase() === preferred || c.name.toLowerCase() === preferred) || cats[0]
+      : cats[0]
+    
+    if (!category) {
+      return (
+        <section className="mb-8 rounded-xl bg-white">
+          <div className="p-4">
+            <EmptyState 
+              title="No categories available" 
+              message="Categories will appear here when they become available."
+            />
+          </div>
+        </section>
+      )
+    }
+    
+    const rawCount = Number(process.env.NEXT_PUBLIC_LAST_NEWS_COUNT || '8')
+    const count = Number.isFinite(rawCount) && rawCount > 0 ? Math.min(8, Math.max(5, Math.floor(rawCount))) : 8
+    
+    let items: Article[] = []
+    try {
+      items = (await getArticlesByCategory('na', category.slug)).slice(0, count)
+    } catch {
+      // API failed - return section with error
+      return (
+        <section className="mb-8 rounded-xl bg-white">
+          <div className="flex items-center justify-between px-4 py-2">
+            <div className="inline-flex items-center gap-2">
+              <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
+              <span className="text-sm font-bold uppercase tracking-wide">{category.name}</span>
+            </div>
+          </div>
+          <div className="p-4">
+            <SectionError title="Unable to load articles" />
+          </div>
+        </section>
+      )
+    }
 
-  const title = category ? category.name : 'Last News'
-  const href = category ? categoryHref(tenantSlug, category.slug) : undefined
+    if (items.length === 0) {
+      return (
+        <section className="mb-8 rounded-xl bg-white">
+          <div className="flex items-center justify-between px-4 py-2">
+            <div className="inline-flex items-center gap-2">
+              <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
+              <span className="text-sm font-bold uppercase tracking-wide">{category.name}</span>
+            </div>
+          </div>
+          <div className="p-4">
+            <EmptyState 
+              title="No articles available in this category" 
+              message="Articles will appear here when they become available."
+            />
+          </div>
+        </section>
+      )
+    }
+
+    const title = category.name
+    const href = categoryHref(tenantSlug, category.slug)
 
   return (
     <section className="mb-8 rounded-xl bg-white">
@@ -156,6 +209,15 @@ async function CategoryBlock({ tenantSlug }: { tenantSlug: string }) {
       </div>
     </section>
   )
+  } catch {
+    return (
+      <section className="mb-8 rounded-xl bg-white">
+        <div className="p-4">
+          <SectionError title="Unable to load category section" />
+        </div>
+      </section>
+    )
+  }
 }
 
 function ListRow({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
@@ -187,6 +249,24 @@ export async function ThemeHome({
   articles: Article[]
   settings?: EffectiveSettings
 }) {
+  // If no articles provided, show technical issues
+  if (!articles || articles.length === 0) {
+    return (
+      <div className="theme-style1">
+        <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} />
+        <div className="bg-zinc-50">
+          <div className="mx-auto max-w-7xl px-4 py-8">
+            <TechnicalIssues 
+              title="Technical Issues"
+              message="We're experiencing technical difficulties with our content delivery. Please contact Kaburlu Media support."
+            />
+          </div>
+        </div>
+        <Footer settings={settings} tenantSlug={tenantSlug} />
+      </div>
+    )
+  }
+
   let homepage: PublicHomepageResponse | null = null
   try {
     const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'en'
@@ -1016,4 +1096,3 @@ async function HGBlock({ tenantSlug }: { tenantSlug: string }) {
     </Section>
   )
 }
-
