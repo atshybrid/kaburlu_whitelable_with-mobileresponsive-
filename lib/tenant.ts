@@ -8,9 +8,11 @@ export type Tenant = {
   name: string
   themeKey: string
   domain?: string | null
+  isDomainNotLinked?: boolean
+  isApiError?: boolean
 }
 
-export async function resolveTenant({ slugOverride }: { slugOverride?: string } = {}) {
+export async function resolveTenant({ slugOverride }: { slugOverride?: string } = {}): Promise<Tenant> {
   const h = await headers()
   const mode = process.env.MULTITENANT_MODE || 'path'
   const defaultTenant = process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'demo'
@@ -43,11 +45,28 @@ export async function resolveTenant({ slugOverride }: { slugOverride?: string } 
     const remoteThemeKey = res?.effective?.theme?.theme || res?.effective?.theme?.key || 'style1'
     const themeKey = local?.themeKey || remoteThemeKey || 'style1'
     const name = local?.name || slug
-    return { id: res.tenantId ?? 'na', slug, name, themeKey, domain: res.domain ?? domain }
-  } catch {
+    return { id: res.tenantId ?? 'na', slug, name, themeKey, domain: res.domain ?? domain, isDomainNotLinked: false, isApiError: false }
+  } catch (error) {
+    const errorMessage = String(error).toLowerCase()
+    
+    // Check if it's a domain not found / not linked error (404)
+    const isDomainNotLinked = errorMessage.includes('404') || 
+        errorMessage.includes('not found') || 
+        errorMessage.includes('domain not linked') ||
+        errorMessage.includes('domain_not_found') ||
+        errorMessage.includes('tenant not found')
+    
     const themeKey = local?.themeKey || 'style1'
     const name = local?.name || slug
-    return { id: 'na', slug, name, themeKey, domain }
+    return { 
+      id: 'na', 
+      slug, 
+      name, 
+      themeKey, 
+      domain,
+      isDomainNotLinked,
+      isApiError: !isDomainNotLinked
+    }
   }
 }
 

@@ -60,7 +60,10 @@ const _getSettingsResult = reactCache(async (domainOverride?: string): Promise<S
     if (errorMessage.includes('404') || 
         errorMessage.includes('not found') || 
         errorMessage.includes('domain not linked') ||
-        errorMessage.includes('tenant not found')) {
+        errorMessage.includes('domain_not_found') ||
+        errorMessage.includes('not_found_or_inactive') ||
+        errorMessage.includes('tenant not found') ||
+        errorMessage.includes('unknown')) {
       result.isDomainNotLinked = true
     } else {
       // Other API errors (500, network issues, etc.)

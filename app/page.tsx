@@ -36,17 +36,32 @@ export default async function Home() {
   // For root domain pages, resolve tenant by host.
   const tenant = await resolveTenant()
 
-  // Get settings result with error information
-  const settingsResult = tenant.domain
-    ? await getSettingsResultForDomain(tenant.domain)
-    : await getSettingsResult()
-  
-  // Handle domain not linked case
-  if (settingsResult.isDomainNotLinked) {
+  // Handle domain not linked case - check directly from tenant resolution
+  if (tenant.isDomainNotLinked) {
     return <DomainNotLinked domain={tenant.domain || tenant.name} />
   }
   
   // Handle API error case
+  if (tenant.isApiError) {
+    return (
+      <TechnicalIssues 
+        title="Technical Issues"
+        message="We're experiencing technical difficulties with our API services. Please contact Kaburlu Media support."
+      />
+    )
+  }
+
+  // Get settings result with error information (for additional checks)
+  const settingsResult = tenant.domain
+    ? await getSettingsResultForDomain(tenant.domain)
+    : await getSettingsResult()
+  
+  // Double-check: Handle domain not linked case from settings
+  if (settingsResult.isDomainNotLinked) {
+    return <DomainNotLinked domain={tenant.domain || tenant.name} />
+  }
+  
+  // Handle API error case from settings
   if (settingsResult.isApiError) {
     return (
       <TechnicalIssues 

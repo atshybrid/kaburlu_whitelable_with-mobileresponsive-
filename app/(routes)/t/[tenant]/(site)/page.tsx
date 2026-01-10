@@ -33,7 +33,22 @@ export default async function TenantHomePage({ params }: { params: Promise<{ ten
   const { tenant: tenantSlug } = await params
   const tenant = await resolveTenant({ slugOverride: tenantSlug })
   
-  // Check domain settings for this tenant
+  // Handle domain not linked case - check directly from tenant resolution
+  if (tenant.isDomainNotLinked) {
+    return <DomainNotLinked domain={tenant.domain || tenant.name} />
+  }
+  
+  // Handle API error case
+  if (tenant.isApiError) {
+    return (
+      <TechnicalIssues 
+        title="Technical Issues"
+        message="We're experiencing technical difficulties with our API services. Please contact Kaburlu Media support."
+      />
+    )
+  }
+  
+  // Double-check domain settings for this tenant
   if (tenant.domain) {
     const settingsResult = await getSettingsResultForDomain(tenant.domain)
     
