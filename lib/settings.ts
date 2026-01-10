@@ -42,7 +42,11 @@ const _getSettingsResult = reactCache(async (domainOverride?: string): Promise<S
   const now = Date.now()
   const key = `settings:${domain}`
   const hit = cache.get(key)
-  if (hit && hit.expires > now) return hit.value
+  
+  // Only use cache for successful results, not for error states
+  if (hit && hit.expires > now && !hit.value.isDomainNotLinked && !hit.value.isApiError) {
+    return hit.value
+  }
   
   let result: SettingsResult = {
     settings: {},
@@ -53,6 +57,8 @@ const _getSettingsResult = reactCache(async (domainOverride?: string): Promise<S
   try {
     const res = await getDomainSettings(domain)
     result.settings = res.effective || {}
+    // Only cache successful results
+    cache.set(key, { value: result, expires: now + TTL_MS })
   } catch (error) {
     const errorMessage = String(error).toLowerCase()
     
@@ -70,10 +76,10 @@ const _getSettingsResult = reactCache(async (domainOverride?: string): Promise<S
       result.isApiError = true
     }
     
-    // Graceful fallback when remote settings are unavailable
+    // Don't cache error results - always check fresh
     result.settings = {}
   }
   
-  cache.set(key, { value: result, expires: now + TTL_MS })
+  return result
   return result
 })

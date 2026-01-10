@@ -7,6 +7,9 @@ import type { Article } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
 import type { ReactElement } from 'react'
 
+// Force dynamic rendering - domain check must be fresh on every request
+export const dynamic = 'force-dynamic'
+
 async function getThemeHome(themeKey: string): Promise<ThemeHomeComponent> {
   let themeModule: ThemeModule
   

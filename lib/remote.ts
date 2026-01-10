@@ -180,9 +180,10 @@ export type DomainSettingsResponse = {
 }
 
 export async function getDomainSettings(domain: string) {
+  // Use no-store to always check domain status fresh (important for domain linking)
   return fetchJSON<DomainSettingsResponse>('/public/domain/settings', {
     tenantDomain: domain,
-    revalidateSeconds: Number.isFinite(SETTINGS_REVALIDATE_SECONDS) ? SETTINGS_REVALIDATE_SECONDS : 300,
+    cache: 'no-store', // Always check domain status fresh
     tags: [`domain-settings:${domain}`],
   })
 }
