@@ -43,7 +43,7 @@ export async function resolveTenant({ slugOverride }: { slugOverride?: string } 
   try {
     const res = await getDomainSettings(domain)
     const remoteThemeKey = res?.effective?.theme?.theme || res?.effective?.theme?.key || 'style1'
-    const themeKey = local?.themeKey || remoteThemeKey || 'style1'
+    const themeKey = local?.themeKey || remoteThemeKey
     const name = local?.name || slug
     return { id: res.tenantId ?? 'na', slug, name, themeKey, domain: res.domain ?? domain, isDomainNotLinked: false, isApiError: false }
   } catch (error) {

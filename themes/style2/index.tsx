@@ -10,7 +10,7 @@ import type { UrlObject } from 'url'
 import { articleHref, categoryHref } from '@/lib/url'
 import { getTenantFromHeaders } from '@/lib/tenant'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
-import { getPublicHomepageStyle2ShapeForDomain, getPublicHomepageStyle2Shape, type Style2HomepageItem, type Style2HomepageResponse } from '@/lib/homepage'
+import { getPublicHomepage, getPublicHomepageStyle2ShapeForDomain, getPublicHomepageStyle2Shape, type Style2HomepageItem, type Style2HomepageResponse, type NewHomepageResponse, feedItemsToArticles } from '@/lib/homepage'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getEffectiveSettings } from '@/lib/settings'
 import { themeCssVarsFromSettings } from '@/lib/theme-vars'
@@ -933,6 +933,25 @@ export async function ThemeHome({
     )
   }
 
+  // Use smart API integration for style2 with v=2
+  const themeKey = settings?.theme?.theme || settings?.theme?.key || 'style2'
+  const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'en'
+  
+  let homepage: NewHomepageResponse | null = null
+  try {
+    homepage = await getPublicHomepage({ v: 2, themeKey, lang })
+  } catch {
+    homepage = null
+  }
+
+  // Extract feeds from the new API structure
+  const feeds = homepage?.feeds || {}
+
+  // Smart section data extraction using feeds
+  const latestItems = feeds.latest?.items ? feedItemsToArticles(feeds.latest.items) : []
+  const mostReadItems = feeds.mostRead?.items ? feedItemsToArticles(feeds.mostRead.items).slice(0, 5) : []
+  const tickerItems = feeds.ticker?.items ? feedItemsToArticles(feeds.ticker.items) : []
+
   let navCats: Category[] = []
   
   try {
@@ -943,16 +962,23 @@ export async function ThemeHome({
   
   const topNavCats = navCats.filter((c) => !c.parentId)
 
-  const style2Home = await (tenantDomain
-    ? getPublicHomepageStyle2ShapeForDomain(tenantDomain)
-    : getPublicHomepageStyle2Shape()
-  ).catch(() => null)
+  // Fallback to old API if new one doesn't return data
+  const style2Home = (!latestItems.length && !mostReadItems.length) 
+    ? await (tenantDomain
+        ? getPublicHomepageStyle2ShapeForDomain(tenantDomain)
+        : getPublicHomepageStyle2Shape()
+      ).catch(() => null)
+    : null
   
   const byCategorySlug = buildStyle2CategoryMap(style2Home)
   const style2Feed = buildStyle2HomeFeed(style2Home)
   const style2Hero = Array.isArray(style2Home?.hero) ? style2Home!.hero!.map(style2ItemToArticle) : []
 
-  const homeFeed = style2Feed.length ? style2Feed : articles
+  // Use smart API data with fallbacks
+  const heroLeftData = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : articles)
+  const heroRightMostRead = mostReadItems.length > 0 ? mostReadItems : (style2Feed.length ? style2Feed.slice(0, 5) : articles.slice(0, 5))
+  
+  const homeFeed = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : articles)
   
   if (homeFeed.length === 0) {
     return (
@@ -1011,9 +1037,8 @@ export async function ThemeHome({
     })
   )
 
-  const heroArticle = style2Hero.length ? style2Hero[0] : homeFeed[0]
-  const secondaryArticles = homeFeed.slice(1, 5)
-  const trendingArticles = homeFeed.slice(5, 10)
+  const heroArticle = style2Hero.length ? style2Hero[0] : heroLeftData[0]
+  const secondaryArticles = heroLeftData.slice(1, 5)
   const latestArticles = homeFeed.slice(10, 20)
 
   return (
@@ -1022,14 +1047,14 @@ export async function ThemeHome({
 
       <div className="flash-ticker">
         <div className="mx-auto max-w-7xl px-4">
-          <FlashTicker tenantSlug={tenantSlug} items={homeFeed.slice(0, 10)} intervalMs={3500} />
+          <FlashTicker tenantSlug={tenantSlug} items={tickerItems.length > 0 ? tickerItems.slice(0, 10) : homeFeed.slice(0, 10)} intervalMs={3500} />
         </div>
       </div>
 
       <main className="mx-auto max-w-7xl px-4 py-6">
         {/* TOI-Style Hero Section with Sidebar */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_320px]">
-          {/* Main Content Area */}
+          {/* Main Content Area - Latest News (Left Side) */}
           <div className="space-y-6">
             {/* Hero Feature with Overlay */}
             {heroArticle ? <HeroFeature tenantSlug={tenantSlug} article={heroArticle} /> : null}
@@ -1044,11 +1069,17 @@ export async function ThemeHome({
             ) : null}
           </div>
 
-          {/* Sidebar with Widgets */}
+          {/* Sidebar with Widgets - Right Side */}
           <div className="space-y-6">
-            <TrendingWidget tenantSlug={tenantSlug} items={trendingArticles} />
+            {/* Most Read - Top of Right Side (5 items) */}
+            {heroRightMostRead.length > 0 ? (
+              <TrendingWidget tenantSlug={tenantSlug} items={heroRightMostRead} />
+            ) : null}
             <AdBanner variant="sidebar" size="medium" />
-            <LatestNewsWidget tenantSlug={tenantSlug} items={latestArticles.slice(0, 6)} />
+            {/* Latest News Widget - Bottom of Right Side */}
+            {latestArticles.length > 0 ? (
+              <LatestNewsWidget tenantSlug={tenantSlug} items={latestArticles.slice(0, 6)} />
+            ) : null}
           </div>
         </div>
 

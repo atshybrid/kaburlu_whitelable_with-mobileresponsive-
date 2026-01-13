@@ -20,6 +20,72 @@ export type PublicHomepageResponse = {
   data: Record<string, Article[]>
 }
 
+// ---- NEW: Actual API response structure ----
+
+export type HomepageFeedItem = {
+  id: string
+  slug?: string
+  title: string
+  excerpt?: string | null
+  content?: string | null
+  coverImage?: string | null
+  coverImageUrl?: string | null
+  publishedAt?: string | null
+  createdAt?: string | null
+  category?: unknown
+  tags?: unknown[]
+  languageCode?: string | null
+}
+
+export type HomepageFeed = {
+  kind: string
+  limit?: number
+  metric?: string
+  items: HomepageFeedItem[]
+}
+
+export type HomepageCategoryFeedItem = {
+  category: {
+    slug: string
+    name: string
+    href: string
+  }
+  items: HomepageFeedItem[]
+  message?: string
+}
+
+export type HomepageCategoriesFeed = {
+  kind: 'categories'
+  perCategoryLimit: number
+  items: HomepageCategoryFeedItem[]
+}
+
+export type HomepageFeeds = {
+  latest?: HomepageFeed
+  mostRead?: HomepageFeed
+  ticker?: HomepageFeed
+  breaking?: HomepageFeed
+  categories?: HomepageCategoriesFeed
+}
+
+export type NewHomepageResponse = {
+  version: string
+  tenant?: {
+    id: string
+    slug: string
+    name: string
+    nativeName?: string
+    language?: {
+      code: string
+      name: string
+    }
+  }
+  theme?: {
+    key: string
+  }
+  feeds: HomepageFeeds
+}
+
 // ---- Style2 "shape" homepage (legacy/alternate backend contract) ----
 
 export type Style2HomepageItem = {
@@ -85,8 +151,16 @@ export async function getPublicHomepage(params: {
   v?: string | number
   themeKey?: string
   lang?: string
-}): Promise<PublicHomepageResponse> {
+}): Promise<NewHomepageResponse> {
   return _getPublicHomepage(params)
+}
+
+export async function getPublicHomepageForDomain(tenantDomain: string, params: {
+  v?: string | number
+  themeKey?: string
+  lang?: string
+}): Promise<NewHomepageResponse> {
+  return _getPublicHomepageForDomain(tenantDomain, params)
 }
 
 export async function getPublicHomepageStyle2Shape(): Promise<Style2HomepageResponse> {
@@ -101,7 +175,7 @@ const _getPublicHomepage = reactCache(async (params: {
   v?: string | number
   themeKey?: string
   lang?: string
-}): Promise<PublicHomepageResponse> => {
+}): Promise<NewHomepageResponse> => {
   const h = await headers()
   const domain = domainFromHost(h.get('host'))
   const lang = String(params.lang || 'en')
@@ -113,11 +187,33 @@ const _getPublicHomepage = reactCache(async (params: {
   if (lang) qs.set('lang', lang)
   if (themeKey) qs.set('themeKey', themeKey)
 
-  return fetchJSON<PublicHomepageResponse>(`/public/homepage?${qs.toString()}`, {
+  return fetchJSON<NewHomepageResponse>(`/public/homepage?${qs.toString()}`, {
     tenantDomain: domain,
     // Cache with revalidation; avoids repeated backend hits.
     revalidateSeconds: Number(process.env.REMOTE_HOMEPAGE_REVALIDATE_SECONDS || '30'),
     tags: [`homepage:${domain}:${lang}:${themeKey}`],
+  })
+})
+
+const _getPublicHomepageForDomain = reactCache(async (tenantDomain: string, params: {
+  v?: string | number
+  themeKey?: string
+  lang?: string
+}): Promise<NewHomepageResponse> => {
+  const lang = String(params.lang || 'en')
+  const themeKey = String(params.themeKey || 'style1')
+
+  // Backend contract: GET /public/homepage?v=1 (optional lang/themeKey).
+  // Domain is inferred via X-Tenant-Domain header.
+  const qs = new URLSearchParams({ v: String(params.v ?? '1') })
+  if (lang) qs.set('lang', lang)
+  if (themeKey) qs.set('themeKey', themeKey)
+
+  return fetchJSON<NewHomepageResponse>(`/public/homepage?${qs.toString()}`, {
+    tenantDomain: domainFromHost(tenantDomain),
+    // Cache with revalidation; avoids repeated backend hits.
+    revalidateSeconds: Number(process.env.REMOTE_HOMEPAGE_REVALIDATE_SECONDS || '30'),
+    tags: [`homepage:${tenantDomain}:${lang}:${themeKey}`],
   })
 })
 
@@ -137,3 +233,22 @@ const _getPublicHomepageStyle2Shape = reactCache(async (tenantDomainOverride?: s
 
   return normalizeStyle2HomepageResponse(res)
 })
+
+// ---- Helper to convert feed items to Article format ----
+
+export function feedItemToArticle(item: HomepageFeedItem): Article {
+  const coverUrl = item.coverImageUrl || item.coverImage || undefined
+  return {
+    id: item.id,
+    slug: item.slug || item.id,
+    title: item.title,
+    excerpt: item.excerpt || null,
+    content: item.content || null,
+    coverImage: coverUrl ? { url: coverUrl } : undefined,
+    publishedAt: item.publishedAt || item.createdAt || undefined,
+  } as Article
+}
+
+export function feedItemsToArticles(items: HomepageFeedItem[]): Article[] {
+  return items.map(feedItemToArticle)
+}

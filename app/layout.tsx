@@ -8,6 +8,124 @@ import "@/themes/style3/theme.css";
 import "@/themes/tv9/theme.css";
 import "@/themes/toi/theme.css";
 
+// Import Google Fonts for multi-language support
+import { 
+  Inter, 
+  Noto_Sans_Telugu, 
+  Noto_Sans_Devanagari, 
+  Noto_Sans_Tamil,
+  Noto_Sans_Kannada,
+  Noto_Sans_Malayalam,
+  Noto_Sans_Bengali,
+  Noto_Sans_Gujarati,
+  Noto_Sans_Gurmukhi,
+  Noto_Sans_Oriya,
+  Noto_Nastaliq_Urdu,
+  Merriweather,
+  Playfair_Display
+} from 'next/font/google';
+
+// English/Default fonts
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const merriweather = Merriweather({ 
+  weight: ['300', '400', '700'],
+  subsets: ['latin'],
+  variable: '--font-merriweather',
+  display: 'swap',
+});
+
+const playfair = Playfair_Display({ 
+  weight: ['400', '700', '900'],
+  subsets: ['latin'],
+  variable: '--font-playfair',
+  display: 'swap',
+});
+
+// Telugu
+const notoSansTelugu = Noto_Sans_Telugu({
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['telugu'],
+  variable: '--font-telugu',
+  display: 'swap',
+});
+
+// Hindi/Devanagari (also for Marathi)
+const notoSansDevanagari = Noto_Sans_Devanagari({
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['devanagari'],
+  variable: '--font-devanagari',
+  display: 'swap',
+});
+
+// Tamil
+const notoSansTamil = Noto_Sans_Tamil({
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['tamil'],
+  variable: '--font-tamil',
+  display: 'swap',
+});
+
+// Kannada
+const notoSansKannada = Noto_Sans_Kannada({
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['kannada'],
+  variable: '--font-kannada',
+  display: 'swap',
+});
+
+// Malayalam
+const notoSansMalayalam = Noto_Sans_Malayalam({
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['malayalam'],
+  variable: '--font-malayalam',
+  display: 'swap',
+});
+
+// Bengali
+const notoSansBengali = Noto_Sans_Bengali({
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['bengali'],
+  variable: '--font-bengali',
+  display: 'swap',
+});
+
+// Gujarati
+const notoSansGujarati = Noto_Sans_Gujarati({
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['gujarati'],
+  variable: '--font-gujarati',
+  display: 'swap',
+});
+
+// Punjabi/Gurmukhi
+const notoSansGurmukhi = Noto_Sans_Gurmukhi({
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['gurmukhi'],
+  variable: '--font-gurmukhi',
+  display: 'swap',
+});
+
+// Odia
+const notoSansOriya = Noto_Sans_Oriya({
+  weight: ['400', '500', '600', '700', '800'],
+  subsets: ['oriya'],
+  variable: '--font-oriya',
+  display: 'swap',
+});
+
+// Urdu
+const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
+  weight: ['400', '500', '600', '700'],
+  subsets: ['arabic'],
+  variable: '--font-urdu',
+  display: 'swap',
+});
+
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const s = await getEffectiveSettings()
@@ -61,8 +179,25 @@ async function RootLayoutInner({
 
   const primaryLang = (languageCodeRaw === 'telugu' ? 'te' : languageCodeRaw.split('-')[0]) || 'en'
 
+  // Build font class string based on language
+  const fontClasses = [
+    inter.variable,
+    merriweather.variable,
+    playfair.variable,
+    notoSansTelugu.variable,
+    notoSansDevanagari.variable,
+    notoSansTamil.variable,
+    notoSansKannada.variable,
+    notoSansMalayalam.variable,
+    notoSansBengali.variable,
+    notoSansGujarati.variable,
+    notoSansGurmukhi.variable,
+    notoSansOriya.variable,
+    notoNastaliqUrdu.variable,
+  ].join(' ');
+
   return (
-    <html lang={primaryLang} data-lang={primaryLang}>
+    <html lang={primaryLang} data-lang={primaryLang} className={fontClasses}>
       <body
         className={"antialiased"}
       >

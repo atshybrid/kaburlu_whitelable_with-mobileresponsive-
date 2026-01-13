@@ -8,50 +8,10 @@
      mobile browsers don't auto-apply dark backgrounds/white text. */
   color-scheme: light;
 
-  /* Offline-friendly defaults (no next/font/google build-time fetch). */
-  --font-geist-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
-  --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  
-  /* Multi-language Font Stacks */
-  /* Telugu */
-  --font-noto-sans-telugu: "Nirmala UI", "Noto Sans Telugu", "Mandali", "Peddana", "Lohit Telugu", "Arial Unicode MS", sans-serif;
-  --font-telugu-title: "Nirmala UI", "Noto Sans Telugu", "Mandali", "Lohit Telugu", "Arial Unicode MS", sans-serif;
-  
-  /* Hindi/Devanagari */
-  --font-hindi: "Nirmala UI", "Noto Sans Devanagari", "Mangal", "Kokila", "Arial Unicode MS", sans-serif;
-  
-  /* Tamil */
-  --font-tamil: "Nirmala UI", "Noto Sans Tamil", "Latha", "Vijaya", "Arial Unicode MS", sans-serif;
-  
-  /* Kannada */
-  --font-kannada: "Nirmala UI", "Noto Sans Kannada", "Tunga", "Arial Unicode MS", sans-serif;
-  
-  /* Malayalam */
-  --font-malayalam: "Nirmala UI", "Noto Sans Malayalam", "Kartika", "Arial Unicode MS", sans-serif;
-  
-  /* Bengali */
-  --font-bengali: "Nirmala UI", "Noto Sans Bengali", "Vrinda", "Arial Unicode MS", sans-serif;
-  
-  /* Marathi (uses Devanagari) */
-  --font-marathi: "Nirmala UI", "Noto Sans Devanagari", "Mangal", "Arial Unicode MS", sans-serif;
-  
-  /* Gujarati */
-  --font-gujarati: "Nirmala UI", "Noto Sans Gujarati", "Shruti", "Arial Unicode MS", sans-serif;
-  
-  /* Punjabi/Gurmukhi */
-  --font-punjabi: "Nirmala UI", "Noto Sans Gurmukhi", "Raavi", "Arial Unicode MS", sans-serif;
-  
-  /* Odia */
-  --font-odia: "Nirmala UI", "Noto Sans Oriya", "Kalinga", "Arial Unicode MS", sans-serif;
-  
-  /* Urdu (RTL) */
-  --font-urdu: "Nirmala UI", "Noto Nastaliq Urdu", "Urdu Typesetting", "Arial Unicode MS", sans-serif;
-  
-  /* Arabic (RTL) */
-  --font-arabic: "Noto Sans Arabic", "Arabic Typesetting", "Traditional Arabic", "Arial Unicode MS", sans-serif;
-
-  --font-body: var(--font-geist-sans);
-  --font-title: var(--font-body);
+  /* Default English fonts (using Google Fonts variables) */
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-merriweather);
+  --font-display: var(--font-playfair);
   
   /* Font size adjustment for different scripts */
   --font-size-adjust: 1;
@@ -61,127 +21,202 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-body);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-body);
+  font-family: var(--font-sans);
   font-size: calc(1rem * var(--font-size-adjust));
   line-height: var(--line-height-adjust);
 }
 
+/* Typography Hierarchy */
+h1, h2, h3, h4, h5, h6,
+.title, .heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.article-content,
+.body-text {
+  font-family: var(--font-serif);
+  line-height: var(--line-height-adjust);
+}
+
+/* === LANGUAGE-SPECIFIC FONT MAPPINGS === */
+
 /* Telugu Language Support */
 html[data-lang='te'],
 html[data-lang='telugu'] {
-  --font-body: var(--font-noto-sans-telugu);
-  --font-title: var(--font-telugu-title);
-  --font-size-adjust: 1.05;
-  --line-height-adjust: 1.7;
+  --font-sans: var(--font-telugu);
+  --font-serif: var(--font-telugu);
+  --font-display: var(--font-telugu);
+  --font-size-adjust: 1.08;
+  --line-height-adjust: 1.75;
 }
 
-/* Hindi Language Support */
+html[data-lang='te'] body,
+html[data-lang='telugu'] body {
+  font-family: var(--font-telugu), 'Nirmala UI', sans-serif;
+}
+
+/* Hindi Language Support (Devanagari) */
 html[data-lang='hi'],
 html[data-lang='hindi'] {
-  --font-body: var(--font-hindi);
-  --font-title: var(--font-hindi);
-  --font-size-adjust: 1.05;
-  --line-height-adjust: 1.7;
+  --font-sans: var(--font-devanagari);
+  --font-serif: var(--font-devanagari);
+  --font-display: var(--font-devanagari);
+  --font-size-adjust: 1.06;
+  --line-height-adjust: 1.75;
+}
+
+html[data-lang='hi'] body,
+html[data-lang='hindi'] body {
+  font-family: var(--font-devanagari), 'Nirmala UI', sans-serif;
 }
 
 /* Tamil Language Support */
 html[data-lang='ta'],
 html[data-lang='tamil'] {
-  --font-body: var(--font-tamil);
-  --font-title: var(--font-tamil);
-  --font-size-adjust: 1.05;
-  --line-height-adjust: 1.7;
+  --font-sans: var(--font-tamil);
+  --font-serif: var(--font-tamil);
+  --font-display: var(--font-tamil);
+  --font-size-adjust: 1.08;
+  --line-height-adjust: 1.75;
+}
+
+html[data-lang='ta'] body,
+html[data-lang='tamil'] body {
+  font-family: var(--font-tamil), 'Nirmala UI', sans-serif;
 }
 
 /* Kannada Language Support */
 html[data-lang='kn'],
 html[data-lang='kannada'] {
-  --font-body: var(--font-kannada);
-  --font-title: var(--font-kannada);
-  --font-size-adjust: 1.05;
-  --line-height-adjust: 1.7;
+  --font-sans: var(--font-kannada);
+  --font-serif: var(--font-kannada);
+  --font-display: var(--font-kannada);
+  --font-size-adjust: 1.08;
+  --line-height-adjust: 1.75;
+}
+
+html[data-lang='kn'] body,
+html[data-lang='kannada'] body {
+  font-family: var(--font-kannada), 'Nirmala UI', sans-serif;
 }
 
 /* Malayalam Language Support */
 html[data-lang='ml'],
 html[data-lang='malayalam'] {
-  --font-body: var(--font-malayalam);
-  --font-title: var(--font-malayalam);
+  --font-sans: var(--font-malayalam);
+  --font-serif: var(--font-malayalam);
+  --font-display: var(--font-malayalam);
   --font-size-adjust: 1.08;
   --line-height-adjust: 1.75;
+}
+
+html[data-lang='ml'] body,
+html[data-lang='malayalam'] body {
+  font-family: var(--font-malayalam), 'Nirmala UI', sans-serif;
 }
 
 /* Bengali Language Support */
 html[data-lang='bn'],
 html[data-lang='bengali'] {
-  --font-body: var(--font-bengali);
-  --font-title: var(--font-bengali);
-  --font-size-adjust: 1.05;
-  --line-height-adjust: 1.7;
+  --font-sans: var(--font-bengali);
+  --font-serif: var(--font-bengali);
+  --font-display: var(--font-bengali);
+  --font-size-adjust: 1.06;
+  --line-height-adjust: 1.75;
 }
 
-/* Marathi Language Support */
+html[data-lang='bn'] body,
+html[data-lang='bengali'] body {
+  font-family: var(--font-bengali), 'Nirmala UI', sans-serif;
+}
+
+/* Marathi Language Support (uses Devanagari) */
 html[data-lang='mr'],
 html[data-lang='marathi'] {
-  --font-body: var(--font-marathi);
-  --font-title: var(--font-marathi);
-  --font-size-adjust: 1.05;
-  --line-height-adjust: 1.7;
+  --font-sans: var(--font-devanagari);
+  --font-serif: var(--font-devanagari);
+  --font-display: var(--font-devanagari);
+  --font-size-adjust: 1.06;
+  --line-height-adjust: 1.75;
+}
+
+html[data-lang='mr'] body,
+html[data-lang='marathi'] body {
+  font-family: var(--font-devanagari), 'Nirmala UI', sans-serif;
 }
 
 /* Gujarati Language Support */
 html[data-lang='gu'],
 html[data-lang='gujarati'] {
-  --font-body: var(--font-gujarati);
-  --font-title: var(--font-gujarati);
-  --font-size-adjust: 1.05;
-  --line-height-adjust: 1.7;
+  --font-sans: var(--font-gujarati);
+  --font-serif: var(--font-gujarati);
+  --font-display: var(--font-gujarati);
+  --font-size-adjust: 1.06;
+  --line-height-adjust: 1.75;
 }
 
-/* Punjabi Language Support */
+html[data-lang='gu'] body,
+html[data-lang='gujarati'] body {
+  font-family: var(--font-gujarati), 'Nirmala UI', sans-serif;
+}
+
+/* Punjabi Language Support (Gurmukhi script) */
 html[data-lang='pa'],
 html[data-lang='punjabi'] {
-  --font-body: var(--font-punjabi);
-  --font-title: var(--font-punjabi);
-  --font-size-adjust: 1.05;
-  --line-height-adjust: 1.7;
+  --font-sans: var(--font-gurmukhi);
+  --font-serif: var(--font-gurmukhi);
+  --font-display: var(--font-gurmukhi);
+  --font-size-adjust: 1.06;
+  --line-height-adjust: 1.75;
+}
+
+html[data-lang='pa'] body,
+html[data-lang='punjabi'] body {
+  font-family: var(--font-gurmukhi), 'Nirmala UI', sans-serif;
 }
 
 /* Odia Language Support */
 html[data-lang='or'],
 html[data-lang='odia'] {
-  --font-body: var(--font-odia);
-  --font-title: var(--font-odia);
-  --font-size-adjust: 1.05;
-  --line-height-adjust: 1.7;
+  --font-sans: var(--font-oriya);
+  --font-serif: var(--font-oriya);
+  --font-display: var(--font-oriya);
+  --font-size-adjust: 1.06;
+  --line-height-adjust: 1.75;
+}
+
+html[data-lang='or'] body,
+html[data-lang='odia'] body {
+  font-family: var(--font-oriya), 'Nirmala UI', sans-serif;
 }
 
 /* Urdu Language Support - RTL */
 html[data-lang='ur'],
 html[data-lang='urdu'] {
-  --font-body: var(--font-urdu);
-  --font-title: var(--font-urdu);
+  --font-sans: var(--font-urdu);
+  --font-serif: var(--font-urdu);
+  --font-display: var(--font-urdu);
   --font-size-adjust: 1.15;
   --line-height-adjust: 1.9;
   direction: rtl;
 }
 
-/* Arabic Language Support - RTL */
-html[data-lang='ar'],
-html[data-lang='arabic'] {
-  --font-body: var(--font-arabic);
-  --font-title: var(--font-arabic);
-  --font-size-adjust: 1.1;
-  --line-height-adjust: 1.8;
+html[data-lang='ur'] body,
+html[data-lang='urdu'] body {
+  font-family: var(--font-urdu), 'Nirmala UI', sans-serif;
   direction: rtl;
+  text-align: right;
 }
+
+/* === END LANGUAGE-SPECIFIC FONTS === */
 
 h1,
 h2,
@@ -212,4 +247,14 @@ h6 {
   left: 0;
   right: 0;
   white-space: nowrap;
+}
+
+/* Hide scrollbar for navigation */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

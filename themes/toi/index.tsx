@@ -9,7 +9,7 @@ import { articleHref, categoryHref, homeHref } from '@/lib/url'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
 import { getEffectiveSettings } from '@/lib/settings'
-import { getPublicHomepage, type PublicHomepageResponse, type PublicHomepageSection } from '@/lib/homepage'
+import { getPublicHomepage, type NewHomepageResponse, feedItemsToArticles } from '@/lib/homepage'
 import { TOINavbar } from '@/themes/toi/components/TOINavbar'
 import { TOITicker } from '@/themes/toi/components/TOITicker'
 import { TOIMobileNav } from '@/themes/toi/components/TOIMobileNav'
@@ -389,34 +389,9 @@ async function LatestArticlesSidebar({ tenantSlug }: { tenantSlug: string }) {
 }
 
 // ============================================
-// Trending Articles Sidebar
+// Trending Articles Sidebar (Most Read)
 // ============================================
-async function TrendingArticlesSidebar({ tenantSlug }: { tenantSlug: string }) {
-  let hasError = false
-  let items: Article[] = []
-  
-  try {
-    items = await getHomeFeed('na')
-  } catch {
-    hasError = true
-  }
-  
-  if (hasError) {
-    return (
-      <div className="toi-widget">
-        <div className="toi-widget-header">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-          </svg>
-          <span className="toi-widget-title">Trending Now</span>
-        </div>
-        <div className="toi-widget-body">
-          <SectionError title="Unable to load trending articles" />
-        </div>
-      </div>
-    )
-  }
-  
+function TrendingArticlesSidebar({ tenantSlug, items }: { tenantSlug: string; items: Article[] }) {
   if (items.length === 0) {
     return (
       <div className="toi-widget">
@@ -424,7 +399,7 @@ async function TrendingArticlesSidebar({ tenantSlug }: { tenantSlug: string }) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
           </svg>
-          <span className="toi-widget-title">Trending Now</span>
+          <span className="toi-widget-title">Most Read</span>
         </div>
         <div className="toi-widget-body">
           <EmptyState 
@@ -509,7 +484,7 @@ export async function ThemeHome({
     )
   }
 
-  let homepage: PublicHomepageResponse | null = null
+  let homepage: NewHomepageResponse | null = null
   try {
     const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'en'
     homepage = await getPublicHomepage({ v: 1, themeKey: 'toi', lang })
@@ -518,89 +493,22 @@ export async function ThemeHome({
   }
 
   const tenantSlugForLinks = homepage?.tenant?.slug || tenantSlug
-  const homepageSections = homepage?.sections || []
-  const homepageData = homepage?.data || {}
+  
+  // Extract feeds from the new API structure
+  const feeds = homepage?.feeds || {}
+  
+  // Smart section data extraction using feeds
+  const latestItems = feeds.latest?.items ? feedItemsToArticles(feeds.latest.items) : []
+  const tickerItems = feeds.ticker?.items ? feedItemsToArticles(feeds.ticker.items) : []
+  const mostReadItems = feeds.mostRead?.items ? feedItemsToArticles(feeds.mostRead.items).slice(0, 3) : []
+  
+  // Use smart API data with fallbacks
+  const tickerData = tickerItems.length > 0 ? tickerItems : articles.slice(0, 10)
+  const latestData = latestItems.length > 0 ? latestItems : articles
+  const mostReadData = mostReadItems.length > 0 ? mostReadItems : articles.slice(0, 3)
 
-  function sectionByType(type: string): PublicHomepageSection | undefined {
-    return homepageSections.find((s) => s && s.type === type)
-  }
-
-  function itemsForSectionType(type: string): Article[] {
-    const sec = sectionByType(type)
-    if (!sec) return []
-    const items = (homepageData as Record<string, unknown>)[sec.id]
-    if (!Array.isArray(items)) return []
-    return (items as unknown[]).map((u) => {
-      const o = (u ?? {}) as Record<string, unknown>
-      const id = String(o.id ?? o._id ?? o.slug ?? Math.random().toString(36).slice(2))
-      const slug = typeof o.slug === 'string' ? o.slug : undefined
-      const titleStr = String(o.title ?? o.headline ?? 'Untitled')
-      const excerpt = typeof o.excerpt === 'string' ? o.excerpt : (typeof o.summary === 'string' ? o.summary : undefined)
-      const content = typeof o.content === 'string' ? o.content : undefined
-      let coverUrl: string | undefined
-      if (typeof o.coverImage === 'string') coverUrl = o.coverImage
-      if (o.coverImage && typeof o.coverImage === 'object') {
-        const ci = o.coverImage as Record<string, unknown>
-        if (typeof ci.url === 'string') coverUrl = ci.url
-      }
-      const coverImageUrl = o['coverImageUrl']
-      const imageUrl = o['imageUrl']
-      const featuredImage = o['featuredImage']
-      if (!coverUrl && typeof coverImageUrl === 'string') coverUrl = coverImageUrl
-      if (!coverUrl && typeof imageUrl === 'string') coverUrl = imageUrl
-      if (!coverUrl && typeof featuredImage === 'string') coverUrl = featuredImage
-      return { id, slug, title: titleStr, excerpt: excerpt ?? null, content: content ?? null, coverImage: coverUrl ? { url: coverUrl } : undefined } as Article
-    })
-  }
-
-  const navCats = await getCategoriesForNav()
-
-  async function resolveSectionItems(type: string): Promise<{ items: Article[]; categorySlugUsed?: string }> {
-    const sec = sectionByType(type)
-    if (!sec) return { items: [] }
-    const direct = itemsForSectionType(type)
-    if (direct.length > 0) return { items: direct }
-
-    const q = (sec.query || {}) as Record<string, unknown>
-    const kind = String(q.kind ?? '')
-    const limit = Number(q.limit ?? 0)
-    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(50, Math.max(1, Math.floor(limit))) : undefined
-
-    try {
-      const categorySlug = typeof q.categorySlug === 'string' ? q.categorySlug.trim() : ''
-      if (kind === 'category' && categorySlug) {
-        const wanted = categorySlug
-        const list = await getArticlesByCategory('na', wanted)
-        const sliced = safeLimit ? list.slice(0, safeLimit) : list
-        if (sliced.length > 0) return { items: sliced, categorySlugUsed: wanted }
-
-        const fallbackIndex = type === 'listWithThumb' ? 0 : type === 'twoColRows' ? 1 : 0
-        const fallbackSlug = navCats[fallbackIndex]?.slug || navCats[0]?.slug
-        if (fallbackSlug && fallbackSlug !== wanted) {
-          const alt = await getArticlesByCategory('na', fallbackSlug)
-          const altSliced = safeLimit ? alt.slice(0, safeLimit) : alt
-          if (altSliced.length > 0) return { items: altSliced, categorySlugUsed: fallbackSlug }
-        }
-        return { items: [] }
-      }
-      if (kind === 'latest') {
-        const list = await getHomeFeed('na')
-        const sliced = safeLimit ? list.slice(0, safeLimit) : list
-        return { items: sliced }
-      }
-    } catch {
-      // ignore
-    }
-    return { items: [] }
-  }
-
-  const tickerRes = await resolveSectionItems('ticker')
-  const heroStackRes = await resolveSectionItems('heroStack')
-  const lastNewsRes = await resolveSectionItems('listWithThumb')
-
-  const tickerItems = tickerRes.items.length > 0 ? tickerRes.items : articles.slice(0, 10)
-  const heroItems = heroStackRes.items.length > 0 ? heroStackRes.items : articles
-  const lastNewsItems = lastNewsRes.items.length > 0 ? lastNewsRes.items : articles
+  const heroItems = latestData
+  const lastNewsItems = latestData
 
   // Ensure we have at least one main feature article
   if (heroItems.length === 0) {
@@ -633,7 +541,7 @@ export async function ThemeHome({
       />
 
       {/* Breaking News Ticker */}
-      <TOITicker tenantSlug={tenantSlugForLinks} items={tickerItems} />
+      <TOITicker tenantSlug={tenantSlugForLinks} items={tickerData} />
 
       {/* Hero Section */}
       <section className="toi-section">
@@ -724,7 +632,7 @@ export async function ThemeHome({
           {/* Sidebar */}
           <aside className="toi-sidebar hidden lg:flex">
             <SidebarAd />
-            <TrendingArticlesSidebar tenantSlug={tenantSlugForLinks} />
+            <TrendingArticlesSidebar tenantSlug={tenantSlugForLinks} items={mostReadData} />
             <SidebarAd size="300×600" />
             <LatestArticlesSidebar tenantSlug={tenantSlugForLinks} />
           </aside>
@@ -753,6 +661,22 @@ export async function ThemeArticle({
   article: Article 
 }) {
   const settings = await getEffectiveSettings()
+  
+  // Fetch most read data for sidebar
+  let mostReadData: Article[] = []
+  try {
+    const homepage = await getPublicHomepage({ v: 1, themeKey: 'toi', lang: 'en' })
+    const feeds = homepage?.feeds || {}
+    mostReadData = feeds.mostRead?.items ? feedItemsToArticles(feeds.mostRead.items).slice(0, 5) : []
+  } catch {
+    // Use fallback data
+    try {
+      const articles = await getHomeFeed('na')
+      mostReadData = articles.slice(0, 5)
+    } catch {
+      mostReadData = []
+    }
+  }
   
   return (
     <div className="theme-toi">
@@ -840,7 +764,7 @@ export async function ThemeArticle({
           {/* Sidebar */}
           <aside className="toi-sidebar hidden lg:flex">
             <SidebarAd />
-            <TrendingArticlesSidebar tenantSlug={tenantSlug} />
+            <TrendingArticlesSidebar tenantSlug={tenantSlug} items={mostReadData} />
             <SidebarAd size="300×600" />
             <LatestArticlesSidebar tenantSlug={tenantSlug} />
           </aside>
@@ -872,6 +796,22 @@ export async function ThemeCategory({
   articles: Article[]
 }) {
   const settings = await getEffectiveSettings()
+  
+  // Fetch most read data for sidebar
+  let mostReadData: Article[] = []
+  try {
+    const homepage = await getPublicHomepage({ v: 1, themeKey: 'toi', lang: 'en' })
+    const feeds = homepage?.feeds || {}
+    mostReadData = feeds.mostRead?.items ? feedItemsToArticles(feeds.mostRead.items).slice(0, 5) : []
+  } catch {
+    // Use fallback data
+    try {
+      const articlesData = await getHomeFeed('na')
+      mostReadData = articlesData.slice(0, 5)
+    } catch {
+      mostReadData = []
+    }
+  }
   
   return (
     <div className="theme-toi">
@@ -911,7 +851,7 @@ export async function ThemeCategory({
           {/* Sidebar */}
           <aside className="toi-sidebar hidden lg:flex">
             <SidebarAd />
-            <TrendingArticlesSidebar tenantSlug={tenantSlug} />
+            <TrendingArticlesSidebar tenantSlug={tenantSlug} items={mostReadData} />
             <LatestArticlesSidebar tenantSlug={tenantSlug} />
           </aside>
         </div>

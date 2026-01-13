@@ -106,8 +106,8 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
             <div className="flex items-center gap-3">
               <span className="text-2xl animate-pulse">🔴</span>
               <div>
-                <span className="text-sm font-bold text-white">బ్రేకింగ్ న్యూస్ అలర్ట్స్ పొందండి!</span>
-                <span className="hidden sm:inline text-sm text-white/80 ml-2">• వెంటనే తెలుసుకోండి</span>
+                <span className="text-sm font-bold text-black">బ్రేకింగ్ న్యూస్ అలర్ట్స్ పొందండి!</span>
+                <span className="hidden sm:inline text-sm text-black/70 ml-2">• వెంటనే తెలుసుకోండి</span>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -130,12 +130,12 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
             <div className="max-w-xl">
               <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
                 <span className="text-3xl">📰</span>
-                <h3 className="text-2xl font-bold text-white">తాజా వార్తలను మిస్ అవ్వకండి!</h3>
+                <h3 className="text-2xl font-bold text-black">తాజా వార్తలను మిస్ అవ్వకండి!</h3>
               </div>
-              <p className="text-white/90">
+              <p className="text-black/80">
                 రోజూ ఉదయం మీ ఇన్‌బాక్స్‌లో బ్రేకింగ్ న్యూస్, ట్రెండింగ్ స్టోరీలు మరియు ఎక్స్‌క్లూజివ్ కంటెంట్ పొందండి.
               </p>
-              <div className="flex items-center justify-center lg:justify-start gap-4 mt-3 text-sm text-white/80">
+              <div className="flex items-center justify-center lg:justify-start gap-4 mt-3 text-sm text-black/70">
                 <span className="flex items-center gap-1"><span>✓</span> ఉచితం</span>
                 <span className="flex items-center gap-1"><span>✓</span> స్పామ్ లేదు</span>
                 <span className="flex items-center gap-1"><span>✓</span> ఎప్పుడైనా అన్‌సబ్‌స్క్రైబ్</span>
@@ -147,9 +147,9 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
                 name="email"
                 required
                 placeholder="మీ ఇమెయిల్ నమోదు చేయండి"
-                className="flex-1 rounded-xl border-2 border-white/30 bg-white/20 px-5 py-3.5 text-sm text-white placeholder:text-white/70 outline-none focus:border-white focus:bg-white/30 backdrop-blur transition-all"
+                className="flex-1 rounded-xl border-2 border-zinc-300 bg-white px-5 py-3.5 text-sm text-black placeholder:text-zinc-500 outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all"
               />
-              <button type="submit" className="shrink-0 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-[hsl(var(--primary))] hover:bg-zinc-100 hover:scale-105 transition-all shadow-lg">
+              <button type="submit" className="shrink-0 rounded-xl bg-black px-6 py-3.5 text-sm font-bold text-white hover:bg-zinc-800 hover:scale-105 transition-all shadow-lg">
                 🚀 సబ్‌స్క్రైబ్ చేయండి
               </button>
             </form>
@@ -240,18 +240,18 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
 
             {/* Legal Links */}
             <div>
-              <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                <span className="w-6 h-0.5 bg-gradient-to-r from-amber-500 to-orange-500" />
+              <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
+                <span className="w-6 h-0.5 bg-[hsl(var(--primary))]" />
                 చట్టపరమైన
               </h4>
               <nav aria-label="Legal links">
-                <ul className="space-y-2.5 text-white">
-                  <li><a className="hover:text-white hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/about-us')}>మా గురించి</a></li>
-                  <li><a className="hover:text-white hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/privacy-policy')}>గోప్యతా విధానం</a></li>
-                  <li><a className="hover:text-white hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/terms')}>సేవా నిబంధనలు</a></li>
-                  <li><a className="hover:text-white hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/disclaimer')}>నిరాకరణ</a></li>
-                  <li><a className="hover:text-white hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/advertise')}>ప్రకటనలు ఇవ్వండి</a></li>
-                  <li><a className="hover:text-white hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/contact-us')}>మమ్మల్ని సంప్రదించండి</a></li>
+                <ul className="space-y-2.5 text-zinc-600">
+                  <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/about-us')}>మా గురించి</a></li>
+                  <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/privacy-policy')}>గోప్యతా విధానం</a></li>
+                  <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/terms')}>సేవా నిబంధనలు</a></li>
+                  <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/disclaimer')}>నిరాకరణ</a></li>
+                  <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/advertise')}>ప్రకటనలు ఇవ్వండి</a></li>
+                  <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/contact-us')}>మమ్మల్ని సంప్రదించండి</a></li>
                 </ul>
               </nav>
             </div>

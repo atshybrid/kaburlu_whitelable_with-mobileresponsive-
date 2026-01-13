@@ -109,13 +109,12 @@ export async function Navbar({
               group-data-[collapsed=false]:max-h-24 group-data-[collapsed=false]:opacity-100 group-data-[collapsed=false]:py-4
               group-data-[collapsed=true]:max-h-0 group-data-[collapsed=true]:opacity-0 group-data-[collapsed=true]:py-0"
           >
-            <Link href={toHref(homeHref(tenantSlug))} className="flex items-center justify-center">
-              {logoUrl ? (
+            <Link href={toHref(homeHref(tenantSlug))} className="flex items-center justify-center gap-3">
+              {logoUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoUrl} alt={title} className="h-12 w-auto sm:h-14" />
-              ) : (
-                <div className="text-2xl font-extrabold tracking-tight text-black">{title}</div>
               )}
+              <div className="text-2xl font-medium tracking-tight text-black">{title}</div>
             </Link>
           </div>
 
@@ -126,12 +125,11 @@ export async function Navbar({
               group-data-[collapsed=true]:max-h-14 group-data-[collapsed=true]:opacity-100 group-data-[collapsed=true]:h-12"
           >
             <Link href={toHref(homeHref(tenantSlug))} className="flex items-center gap-2">
-              {logoUrl ? (
+              {logoUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoUrl} alt={title} className="h-8 w-auto" />
-              ) : (
-                <div className="text-lg font-bold text-black">{title}</div>
               )}
+              <div className="text-lg font-medium text-black">{title}</div>
             </Link>
           </div>
 
@@ -148,24 +146,25 @@ export async function Navbar({
   }
 
   return (
-    <header id="top" className="w-full border-b bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 sticky top-0 z-40">
+    <header id="top" className="w-full border-b border-zinc-200 bg-white sticky top-0 z-50 shadow-sm">
       <div className="mx-auto max-w-7xl px-4">
-        {/* Top bar: logo only (hide title text) */}
-        <div className="flex h-12 items-center sm:h-14">
+        {/* Top bar with logo and title */}
+        <div className="flex h-16 items-center justify-between sm:h-20">
           <Link href={toHref(homeHref(tenantSlug))} className="flex items-center gap-3">
-            {logoUrl ? (
+            {logoUrl && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt={title} className="h-7 w-auto sm:h-8" />
-            ) : null}
+              <img src={logoUrl} alt={title} className="h-10 w-auto sm:h-12" />
+            )}
+            <div className="text-xl sm:text-2xl font-medium text-zinc-900">{title}</div>
           </Link>
         </div>
-        {/* Navigation below logo with More dropdown */}
+        {/* Navigation row */}
         <div className="hidden pb-2 sm:block">
           <NavbarMenuClient items={items} />
         </div>
       </div>
-      {/* Accent strip */}
-      <div className="h-1 w-full" style={{ backgroundColor: 'hsl(var(--accent))' }} />
+      {/* Primary color accent strip */}
+      <div className="h-1 w-full bg-[hsl(var(--primary,217_91%_60%))]" />
     </header>
   )
 }

@@ -1,7 +1,6 @@
 const API_BASE_URL = process.env.API_BASE_URL || 'https://app.kaburlumedia.com/api/v1'
 
 const DEFAULT_REVALIDATE_SECONDS = Number(process.env.REMOTE_REVALIDATE_SECONDS || '30')
-const SETTINGS_REVALIDATE_SECONDS = Number(process.env.REMOTE_SETTINGS_REVALIDATE_SECONDS || '300')
 
 export function normalizeTenantDomain(host?: string | null) {
   const raw = String(host || 'localhost')
