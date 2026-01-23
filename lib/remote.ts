@@ -42,13 +42,20 @@ export async function fetchJSON<T>(path: string, init?: FetchJSONInit) {
   } = init ?? {}
 
   const tenantDomain =
-    tenantDomainFromInit || getDomainFromHost(typeof window === 'undefined' ? process.env.HOST : window.location.hostname)
+    tenantDomainFromInit || getDomainFromHost(
+      typeof window === 'undefined' 
+        ? process.env.HOST 
+        : (process.env.NEXT_PUBLIC_HOST || window.location.hostname)
+    )
 
   const method = String(rest.method || 'GET').toUpperCase()
   const isCacheable = method === 'GET' || method === 'HEAD'
+  
+  // Don't set revalidation when cache is explicitly 'no-store'
+  const shouldUseRevalidation = isCacheable && cacheFromInit !== 'no-store'
 
   const next: NextFetchOptions | undefined =
-    nextFromInit ?? (isCacheable ? { revalidate: revalidateSeconds ?? DEFAULT_REVALIDATE_SECONDS, tags } : undefined)
+    nextFromInit ?? (shouldUseRevalidation ? { revalidate: revalidateSeconds ?? DEFAULT_REVALIDATE_SECONDS, tags } : (tags ? { tags } : undefined))
 
   const res = await fetch(url, {
     ...rest,

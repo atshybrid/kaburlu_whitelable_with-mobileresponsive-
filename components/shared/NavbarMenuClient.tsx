@@ -125,7 +125,7 @@ export default function NavbarMenuClient({
         href={it.href as unknown as Route}
         aria-label={isHome ? 'Home' : undefined}
         title={isHome ? 'Home' : undefined}
-        className="group relative inline-flex items-center gap-2 whitespace-nowrap font-medium text-[15px] text-zinc-800 hover:text-[hsl(var(--primary,217_91%_60%))] transition-all px-3 py-2.5 rounded-lg flex-shrink-0"
+        className="group relative inline-flex items-center gap-2 whitespace-nowrap font-medium text-[15px] text-zinc-800 hover:text-[hsl(var(--primary,217_91%_60%))] transition-all px-3 py-2.5 rounded-lg shrink-0"
       >
         {isHome ? (
           <HomeIcon className="h-[18px] w-[18px]" />
@@ -156,7 +156,7 @@ export default function NavbarMenuClient({
               setOpenItemHref(null)
             }}
           >
-            <CategoryIcon className="h-4 w-4 flex-shrink-0" />
+            <CategoryIcon className="h-4 w-4 shrink-0" />
             <span>{it.label}</span>
           </Link>
           <div className="grid grid-cols-1 gap-1 pl-6 border-l-2 border-zinc-100 ml-3">
@@ -192,7 +192,7 @@ export default function NavbarMenuClient({
           aria-haspopup="menu"
           aria-expanded={isOpen}
           onClick={() => setOpenItemHref((cur) => (cur === it.href ? null : it.href))}
-          className={`group relative inline-flex items-center gap-2 whitespace-nowrap font-medium text-[15px] transition-all px-3 py-2.5 rounded-lg flex-shrink-0 ${
+          className={`group relative inline-flex items-center gap-2 whitespace-nowrap font-medium text-[15px] transition-all px-3 py-2.5 rounded-lg shrink-0 ${
             isOpen ? 'text-[hsl(var(--primary,217_91%_60%))] bg-[hsl(var(--primary,217_91%_60%))]/5' : 'text-zinc-800 hover:text-[hsl(var(--primary,217_91%_60%))]'
           }`}
         >
@@ -201,7 +201,7 @@ export default function NavbarMenuClient({
           ) : (
             it.label
           )}
-          <ChevronIcon isOpen={isOpen} className="flex-shrink-0" />
+          <ChevronIcon isOpen={isOpen} className="shrink-0" />
           <span className={`absolute bottom-0 left-1/2 h-0.5 transition-all duration-300 ${isOpen ? 'w-3/4 left-[12.5%] bg-[hsl(var(--primary,217_91%_60%))]' : 'w-0 bg-[hsl(var(--primary,217_91%_60%))] group-hover:w-3/4 group-hover:left-[12.5%]'}`} />
         </button>
 
@@ -213,7 +213,7 @@ export default function NavbarMenuClient({
             onMouseLeave={handleMouseLeave}
           >
             {/* Header with parent category */}
-            <div className="border-b border-zinc-100 bg-gradient-to-r from-[hsl(var(--primary,217_91%_60%))]/5 to-transparent px-6 py-4">
+            <div className="border-b border-zinc-100 bg-linear-to-r from-[hsl(var(--primary,217_91%_60%))]/5 to-transparent px-6 py-4">
               <Link
                 href={it.href as unknown as Route}
                 className="group inline-flex items-center gap-3 text-lg font-bold text-zinc-900 hover:text-[hsl(var(--primary,217_91%_60%))] transition-colors"
@@ -254,7 +254,7 @@ export default function NavbarMenuClient({
                   }`} />
                   
                   {/* Icon with number badge */}
-                  <div className="relative flex-shrink-0">
+                  <div className="relative shrink-0">
                     <div className={`flex h-11 w-11 items-center justify-center rounded-lg transition-all duration-200 ${
                       hoveredChild === k.href
                         ? 'bg-[hsl(var(--primary,217_91%_60%))] text-white shadow-lg shadow-[hsl(var(--primary,217_91%_60%))]/30'
@@ -262,7 +262,7 @@ export default function NavbarMenuClient({
                     }`}>
                       <CategoryIcon className="h-5 w-5" />
                     </div>
-                    <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-600 text-[10px] font-bold text-white shadow-sm">
+                    <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-linear-to-br from-red-500 to-red-600 text-[10px] font-bold text-white shadow-sm">
                       {idx + 1}
                     </div>
                   </div>
@@ -394,7 +394,7 @@ export default function NavbarMenuClient({
                 onMouseEnter={() => setOpenMore(true)}
                 onMouseLeave={() => setOpenMore(false)}
               >
-                <div className="border-b border-zinc-100 bg-gradient-to-r from-zinc-50 to-transparent px-6 py-4">
+                <div className="border-b border-zinc-100 bg-linear-to-r from-zinc-50 to-transparent px-6 py-4">
                   <h3 className="text-sm font-bold uppercase tracking-wide text-zinc-500">More Categories</h3>
                 </div>
                 <div className="grid max-h-[480px] grid-cols-1 gap-2 overflow-auto p-4 custom-scrollbar">

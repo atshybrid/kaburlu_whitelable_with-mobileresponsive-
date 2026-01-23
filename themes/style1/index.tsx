@@ -49,7 +49,7 @@ function AdBanner({ variant = 'default', className }: { variant?: 'default' | 't
   return (
     <div className={className}>
       <div className={`${dimensions[variant]} overflow-hidden rounded-xl shadow-lg relative group`}>
-        <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-90`} />
+        <div className={`absolute inset-0 bg-linear-to-br ${gradient} opacity-90`} />
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzR2Nmg2di02aC02em0wIDB2LTZoLTZ2Nmg2eiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
         <div className="relative h-full flex flex-col items-center justify-center text-white p-6 text-center">
           <div className="mb-3">
@@ -76,59 +76,53 @@ function HorizontalAd({ className, label = 'Horizontal Ad' }: { className?: stri
 
 function HeroLead({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
   return (
-    <article className="group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300">
-      <div className="relative aspect-[16/9] w-full overflow-hidden">
-        {a.coverImage?.url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img 
-            src={a.coverImage.url} 
-            alt={a.title} 
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
-            loading="eager"
-          />
-        ) : (
-          <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-6">
-          <Link 
-            href={toHref(articleHref(tenantSlug, a.slug || a.id))} 
-            className="block text-2xl sm:text-3xl font-extrabold leading-tight text-white line-clamp-3 drop-shadow-lg hover:text-red-300 transition-colors"
-          >
-            {a.title}
-          </Link>
-          {a.excerpt && (
-            <p className="mt-3 text-sm text-white/90 line-clamp-2 leading-relaxed">
-              {a.excerpt}
-            </p>
+    <article className="group overflow-hidden rounded-lg bg-white shadow-md hover:shadow-xl transition-shadow">
+      <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="block">
+        <div className="relative aspect-video w-full overflow-hidden bg-zinc-100">
+          {a.coverImage?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img 
+              src={a.coverImage.url} 
+              alt={a.title} 
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+              loading="eager"
+            />
+          ) : (
+            <PlaceholderImg className="h-full w-full object-cover" />
           )}
         </div>
-      </div>
+        <div className="p-4">
+          <h2 className="text-lg font-bold text-zinc-900 group-hover:text-red-600 transition-colors line-clamp-3" style={{ lineHeight: '2.0' }}>
+            {a.title}
+          </h2>
+        </div>
+      </Link>
     </article>
   )
 }
 
 function CardMedium({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
   return (
-    <article className="group overflow-hidden rounded-xl bg-white shadow-md hover:shadow-xl transition-all duration-300">
-      <div className="relative aspect-[16/9] w-full overflow-hidden">
-        {a.coverImage?.url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img 
-            src={a.coverImage.url} 
-            alt={a.title} 
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" 
-            loading="lazy"
-          />
-        ) : (
-          <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
-        )}
-      </div>
-      <Link 
-        href={toHref(articleHref(tenantSlug, a.slug || a.id))} 
-        className="block p-4 text-base font-bold leading-snug hover:text-red-600 transition-colors line-clamp-2"
-      >
-        {a.title}
+    <article className="group overflow-hidden rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow border border-zinc-100">
+      <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="block">
+        <div className="relative aspect-video w-full overflow-hidden bg-zinc-100">
+          {a.coverImage?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img 
+              src={a.coverImage.url} 
+              alt={a.title} 
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" 
+              loading="lazy"
+            />
+          ) : (
+            <PlaceholderImg className="h-full w-full object-cover" />
+          )}
+        </div>
+        <div className="p-3">
+          <h3 className="text-sm font-bold text-zinc-900 group-hover:text-red-600 transition-colors line-clamp-2" style={{ lineHeight: '2.0' }}>
+            {a.title}
+          </h3>
+        </div>
       </Link>
     </article>
   )
@@ -140,9 +134,9 @@ function Section({ title, children, noShadow, flushBody, viewMoreHref, bodyClass
   return (
     <section className={`mb-8 rounded-xl bg-white border border-zinc-100 ${noShadow ? '' : 'shadow-sm'}`}>
       {hasTitle && (
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 bg-gradient-to-r from-zinc-50 to-white">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 bg-linear-to-r from-zinc-50 to-white">
           <div className="inline-flex items-center gap-2">
-            <span className="inline-block h-6 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500 shadow-sm" />
+            <span className="inline-block h-6 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500 shadow-sm" />
             <span className="text-sm font-bold uppercase tracking-wide text-zinc-900">{title}</span>
           </div>
           {viewMoreHref ? (
@@ -239,7 +233,7 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
       <section className="mb-8 rounded-xl bg-white">
         <div className="flex items-center justify-between px-4 py-2">
           <div className="inline-flex items-center gap-2">
-            <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
+            <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
             <span className="text-sm font-bold uppercase tracking-wide">{category.name}</span>
           </div>
         </div>
@@ -255,7 +249,7 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
       <section className="mb-8 rounded-xl bg-white">
         <div className="flex items-center justify-between px-4 py-2">
           <div className="inline-flex items-center gap-2">
-            <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
+            <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
             <span className="text-sm font-bold uppercase tracking-wide">{category.name}</span>
           </div>
         </div>
@@ -281,7 +275,7 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
     <section className="mb-8 rounded-xl bg-white">
       <div className="flex items-center justify-between px-4 py-2">
         <div className="inline-flex items-center gap-2">
-          <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
+          <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
           {href ? (
             <a href={href} className="text-sm font-bold uppercase tracking-wide hover:text-red-600">
               {title}
@@ -308,7 +302,7 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
             >
               {a.title}
             </a>
-            <div className="h-[4.25rem] w-[6.25rem] overflow-hidden rounded">
+            <div className="h-17 w-25 overflow-hidden rounded">
               {a.coverImage?.url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={a.coverImage.url} alt={a.title} className="h-full w-full object-cover" />
@@ -325,27 +319,29 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
 
 function ListRow({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
   return (
-    <div className="group grid grid-cols-[1fr_auto] items-center gap-4 rounded-lg bg-white p-3 hover:bg-zinc-50 transition-colors">
+    <article className="group border-b border-zinc-100 last:border-0">
       <Link 
-        href={toHref(articleHref(tenantSlug, a.slug || a.id))} 
-        className="line-clamp-2 text-sm font-semibold leading-tight hover:text-red-600 transition-colors"
+        href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+        className="grid grid-cols-[1fr_auto] items-center gap-3 py-2.5 hover:bg-zinc-50 transition-colors"
       >
-        {a.title}
+        <h4 className="text-sm font-semibold text-zinc-800 group-hover:text-red-600 transition-colors line-clamp-2" style={{ lineHeight: '2.0' }}>
+          {a.title}
+        </h4>
+        <div className="h-14 w-20 overflow-hidden rounded shrink-0 bg-zinc-100">
+          {a.coverImage?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img 
+              src={a.coverImage.url} 
+              alt={a.title} 
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" 
+              loading="lazy"
+            />
+          ) : (
+            <PlaceholderImg className="h-full w-full object-cover" />
+          )}
+        </div>
       </Link>
-      <div className="h-16 w-24 overflow-hidden rounded-lg flex-shrink-0">
-        {a.coverImage?.url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img 
-            src={a.coverImage.url} 
-            alt={a.title} 
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" 
-            loading="lazy"
-          />
-        ) : (
-          <PlaceholderImg className="h-full w-full object-cover" />
-        )}
-      </div>
-    </div>
+    </article>
   )
 }
 
@@ -451,7 +447,7 @@ export async function ThemeHome({
                 {/* Most Read Section */}
                 <section className="rounded-xl bg-white p-4">
                   <h3 className="mb-3 text-sm font-bold uppercase tracking-wide flex items-center gap-2">
-                    <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
+                    <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
                     Most Read
                   </h3>
                   <div className="grid grid-cols-1 gap-3">
@@ -742,7 +738,7 @@ export async function ThemeArticle({ tenantSlug, title, article }: { tenantSlug:
             {article.coverImage?.url && (
               <figure className="mb-8">
                 <div className="overflow-hidden rounded-2xl shadow-xl">
-                  <div className="relative aspect-[16/9] w-full">
+                  <div className="relative aspect-video w-full">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src={article.coverImage.url} 
@@ -768,9 +764,9 @@ export async function ThemeArticle({ tenantSlug, title, article }: { tenantSlug:
 
             {/* Article Excerpt/Summary */}
             {article.excerpt ? (
-              <div className="mb-8 rounded-2xl bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 border-l-4 border-red-600 p-6 shadow-sm">
+              <div className="mb-8 rounded-2xl bg-linear-to-r from-red-50 via-orange-50 to-yellow-50 border-l-4 border-red-600 p-6 shadow-sm">
                 <div className="flex items-start gap-3">
-                  <svg className="h-6 w-6 text-red-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-6 w-6 text-red-600 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
@@ -840,7 +836,7 @@ export async function ThemeArticle({ tenantSlug, title, article }: { tenantSlug:
             <div className="mt-12">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-zinc-900 flex items-center gap-3">
-                  <span className="inline-block h-8 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
+                  <span className="inline-block h-8 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
                   Related Articles
                 </h2>
               </div>
@@ -896,7 +892,7 @@ function HorizontalInlineAd() {
         </div>
         
         {/* Ad Container */}
-        <div className="overflow-hidden rounded-2xl shadow-md bg-gradient-to-br from-zinc-50 to-white border border-zinc-200">
+        <div className="overflow-hidden rounded-2xl shadow-md bg-linear-to-br from-zinc-50 to-white border border-zinc-200">
           <AdBanner variant="horizontal" />
         </div>
       </div>
@@ -972,7 +968,7 @@ async function MustReadSection({ tenantSlug, currentArticleId }: { tenantSlug: s
     <section id="must-read" className="mb-12 scroll-mt-24">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-zinc-900 flex items-center gap-3">
-          <span className="inline-block h-8 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
+          <span className="inline-block h-8 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
           Must Read
         </h2>
         <p className="mt-2 text-zinc-600">Don&apos;t miss these trending stories</p>
@@ -984,7 +980,7 @@ async function MustReadSection({ tenantSlug, currentArticleId }: { tenantSlug: s
             href={articleHref(tenantSlug, a.slug || a.id)} 
             className="group block overflow-hidden rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow"
           >
-            <div className="relative aspect-[16/9] w-full overflow-hidden">
+            <div className="relative aspect-video w-full overflow-hidden">
               {a.coverImage?.url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img 
@@ -1022,8 +1018,8 @@ async function MustReadSection({ tenantSlug, currentArticleId }: { tenantSlug: s
 function ReporterSection({ reporter }: { reporter: { name: string; photo: string; designation: string; bio: string } }) {
   return (
     <section id="author" className="mb-12 scroll-mt-24">
-      <div className="rounded-2xl bg-gradient-to-br from-zinc-50 to-white border border-zinc-200 shadow-sm overflow-hidden">
-        <div className="bg-gradient-to-r from-red-600 to-red-500 px-6 py-4">
+      <div className="rounded-2xl bg-linear-to-br from-zinc-50 to-white border border-zinc-200 shadow-sm overflow-hidden">
+        <div className="bg-linear-to-r from-red-600 to-red-500 px-6 py-4">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -1034,7 +1030,7 @@ function ReporterSection({ reporter }: { reporter: { name: string; photo: string
         <div className="p-6">
           <div className="flex flex-col sm:flex-row gap-6 items-start">
             {/* Reporter Photo */}
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               {reporter.photo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img 
@@ -1044,7 +1040,7 @@ function ReporterSection({ reporter }: { reporter: { name: string; photo: string
                   loading="lazy"
                 />
               ) : (
-                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-red-600 to-red-500 flex items-center justify-center border-4 border-white shadow-lg">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-linear-to-br from-red-600 to-red-500 flex items-center justify-center border-4 border-white shadow-lg">
                   <span className="text-white text-3xl sm:text-4xl font-bold">
                     {reporter.name.charAt(0).toUpperCase()}
                   </span>
@@ -1053,7 +1049,7 @@ function ReporterSection({ reporter }: { reporter: { name: string; photo: string
             </div>
             
             {/* Reporter Info */}
-            <div className="flex-grow">
+            <div className="grow">
               <h3 className="text-xl sm:text-2xl font-bold text-zinc-900 mb-1">
                 {reporter.name}
               </h3>
@@ -1129,7 +1125,7 @@ async function RelatedArticles({ tenantSlug, article }: { tenantSlug: string; ar
     <>
       {show.map((a) => (
         <a key={a.id} href={articleHref(tenantSlug, a.slug || a.id)} className="group block overflow-hidden rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow">
-          <div className="relative aspect-[16/9] w-full overflow-hidden">
+          <div className="relative aspect-video w-full overflow-hidden">
             {a.coverImage?.url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={a.coverImage.url} alt={a.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.05]" loading="lazy" />
@@ -1162,7 +1158,7 @@ async function MostReadSidebar({ tenantSlug, currentArticleId }: { tenantSlug: s
 
   return (
     <div className="rounded-xl bg-white shadow-lg overflow-hidden border border-zinc-100">
-      <div className="bg-gradient-to-r from-red-600 via-red-500 to-pink-600 px-5 py-4">
+      <div className="bg-linear-to-r from-red-600 via-red-500 to-pink-600 px-5 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
             <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1181,13 +1177,13 @@ async function MostReadSidebar({ tenantSlug, currentArticleId }: { tenantSlug: s
           <a 
             key={a.id} 
             href={articleHref(tenantSlug, a.slug || a.id)} 
-            className="group flex gap-3 p-4 hover:bg-gradient-to-r hover:from-red-50 hover:to-transparent transition-all"
+            className="group flex gap-3 p-4 hover:bg-linear-to-r hover:from-red-50 hover:to-transparent transition-all"
           >
             {/* Rank Number */}
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <div className={`flex h-8 w-8 items-center justify-center rounded-lg font-bold text-sm ${
                 index < 3 
-                  ? 'bg-gradient-to-br from-red-600 to-red-500 text-white shadow-md' 
+                  ? 'bg-linear-to-br from-red-600 to-red-500 text-white shadow-md' 
                   : 'bg-zinc-100 text-zinc-600 group-hover:bg-red-100 group-hover:text-red-600'
               }`}>
                 {index + 1}
@@ -1196,7 +1192,7 @@ async function MostReadSidebar({ tenantSlug, currentArticleId }: { tenantSlug: s
             
             {/* Article Info */}
             <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-semibold leading-tight line-clamp-3 text-zinc-900 group-hover:text-red-600 transition-colors mb-2">
+              <h4 className="text-sm font-semibold line-clamp-3 text-zinc-900 group-hover:text-red-600 transition-colors mb-2" style={{ lineHeight: '2.0' }}>
                 {a.title}
               </h4>
               <div className="flex items-center gap-2 text-xs text-zinc-500">
@@ -1227,7 +1223,7 @@ async function MostReadSidebar({ tenantSlug, currentArticleId }: { tenantSlug: s
             </div>
             
             {/* Thumbnail */}
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <div className="h-16 w-20 overflow-hidden rounded-lg shadow-sm group-hover:shadow-md transition-shadow">
                 {a.coverImage?.url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -1291,7 +1287,7 @@ async function CategoryColumns({ tenantSlug }: { tenantSlug: string }) {
         <section key={c.id} className="rounded-xl bg-white">
           <div className="flex items-center justify-between border-b px-4 py-2">
             <Link href={toHref(categoryHref(tenantSlug, c.slug))} className="inline-flex items-center gap-2">
-              <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
+              <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
               <span className="text-sm font-bold uppercase tracking-wide hover:text-red-600">{c.name}</span>
             </Link>
             <Link
@@ -1305,7 +1301,7 @@ async function CategoryColumns({ tenantSlug }: { tenantSlug: string }) {
             {/* Featured item at top with 16:9 image and 2-line title */}
             {items[0] && (
               <div className="space-y-2">
-                <div className="relative aspect-[16/9] w-full overflow-hidden rounded">
+                <div className="relative aspect-video w-full overflow-hidden rounded">
                   {items[0].coverImage?.url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={items[0].coverImage.url} alt={items[0].title} className="h-full w-full object-cover" />
@@ -1362,7 +1358,7 @@ async function CategoryColumns({ tenantSlug }: { tenantSlug: string }) {
     <section className="mb-8 rounded-xl bg-white">
       <div className="flex items-center justify-between border-b px-4 py-2">
         <div className="inline-flex items-center gap-2">
-          <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
+          <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
           {href ? (
             <a href={href} className="text-sm font-bold uppercase tracking-wide hover:text-red-600">
               {title}
@@ -1404,21 +1400,32 @@ async function WebStoriesArea({ tenantSlug }: { tenantSlug: string }) {
     ? cats.find((c) => c.slug.toLowerCase() === preferred || c.name.toLowerCase() === preferred) || cats[0]
     : cats[0]
   const items = category ? (await getArticlesByCategory('na', category.slug)).slice(0, 8) : []
-  void items
   const moreHref = category ? categoryHref(tenantSlug, category.slug) : undefined
+
+  const storyItems = items
+    .filter((a) => a.coverImage?.url)
+    .map((a) => ({
+      url: articleHref(tenantSlug, a.slug || a.id),
+      title: a.title,
+      poster: a.coverImage?.url || '',
+    }))
+
+  const showWebStories = process.env.NEXT_PUBLIC_WEBSTORIES_ENABLED === 'true' && storyItems.length > 0
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
       {/* Left column: Web Stories then HG block */}
       <div className="space-y-6">
-        <Section title="Web Stories" noShadow viewMoreHref={moreHref}
-        >
-          <WebStoriesGrid />
-          {/* Inline player demo for instant playback */}
-          <div className="mt-6">
-            <WebStoriesPlayer height={560} />
-          </div>
-        </Section>
+        {showWebStories && (
+          <Section title="Web Stories" noShadow viewMoreHref={moreHref}
+          >
+            <WebStoriesGrid items={storyItems} />
+            {/* Inline player demo for instant playback */}
+            <div className="mt-6">
+              <WebStoriesPlayer height={560} />
+            </div>
+          </Section>
+        )}
 
         {/* HG block below stories */}
         <HGBlock tenantSlug={tenantSlug} />
@@ -1465,7 +1472,7 @@ async function HGBlock({ tenantSlug }: { tenantSlug: string }) {
         <div key={c.id} className={idx > 0 ? 'mt-6' : ''}>
           <div className="flex items-center justify-between px-3 py-2">
             <a href={categoryHref(tenantSlug, c.slug)} className="inline-flex items-center gap-2 text-base font-bold">
-              <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
+              <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
               <span className="hover:text-red-600">{c.name}</span>
             </a>
             <a
@@ -1484,7 +1491,7 @@ async function HGBlock({ tenantSlug }: { tenantSlug: string }) {
                 <div className="grid grid-cols-2 gap-4 p-3 md:grid-cols-4">
                   {rest.map((a) => (
                     <a key={a.id} href={articleHref(tenantSlug, a.slug || a.id)} className="group block">
-                      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md">
+                      <div className="relative aspect-video w-full overflow-hidden rounded-md">
                         {a.coverImage?.url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={a.coverImage.url} alt={a.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
@@ -1502,14 +1509,14 @@ async function HGBlock({ tenantSlug }: { tenantSlug: string }) {
               <div className="grid gap-4 p-3 md:grid-cols-5">
                 {/* Featured big card */}
                 <a href={articleHref(tenantSlug, featured.slug || featured.id)} className="group relative md:col-span-3">
-                  <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl">
+                  <div className="relative aspect-video w-full overflow-hidden rounded-xl">
                     {featured.coverImage?.url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={featured.coverImage.url} alt={featured.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
                     ) : (
                       <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/10 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-4">
                       <h3 className="text-white text-lg font-extrabold leading-snug line-clamp-2 drop-shadow-md">{featured.title}</h3>
                     </div>
@@ -1520,7 +1527,7 @@ async function HGBlock({ tenantSlug }: { tenantSlug: string }) {
                 <div className="md:col-span-2 grid grid-cols-2 gap-4">
                   {rest.map((a) => (
                     <a key={a.id} href={articleHref(tenantSlug, a.slug || a.id)} className="group block">
-                      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg">
+                      <div className="relative aspect-video w-full overflow-hidden rounded-lg">
                         {a.coverImage?.url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={a.coverImage.url} alt={a.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />

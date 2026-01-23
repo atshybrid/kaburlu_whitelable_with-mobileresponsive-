@@ -110,11 +110,12 @@ export async function Navbar({
               group-data-[collapsed=true]:max-h-0 group-data-[collapsed=true]:opacity-0 group-data-[collapsed=true]:py-0"
           >
             <Link href={toHref(homeHref(tenantSlug))} className="flex items-center justify-center gap-3">
-              {logoUrl && (
+              {logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoUrl} alt={title} className="h-12 w-auto sm:h-14" />
+              ) : (
+                <div className="text-2xl font-medium tracking-tight text-black">{title}</div>
               )}
-              <div className="text-2xl font-medium tracking-tight text-black">{title}</div>
             </Link>
           </div>
 
@@ -125,11 +126,12 @@ export async function Navbar({
               group-data-[collapsed=true]:max-h-14 group-data-[collapsed=true]:opacity-100 group-data-[collapsed=true]:h-12"
           >
             <Link href={toHref(homeHref(tenantSlug))} className="flex items-center gap-2">
-              {logoUrl && (
+              {logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoUrl} alt={title} className="h-8 w-auto" />
+              ) : (
+                <div className="text-lg font-medium text-black">{title}</div>
               )}
-              <div className="text-lg font-medium text-black">{title}</div>
             </Link>
           </div>
 
@@ -151,11 +153,12 @@ export async function Navbar({
         {/* Top bar with logo and title */}
         <div className="flex h-16 items-center justify-between sm:h-20">
           <Link href={toHref(homeHref(tenantSlug))} className="flex items-center gap-3">
-            {logoUrl && (
+            {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logoUrl} alt={title} className="h-10 w-auto sm:h-12" />
+            ) : (
+              <div className="text-xl sm:text-2xl font-medium text-zinc-900">{title}</div>
             )}
-            <div className="text-xl sm:text-2xl font-medium text-zinc-900">{title}</div>
           </Link>
         </div>
         {/* Navigation row */}

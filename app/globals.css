@@ -48,19 +48,75 @@ h1, h2, h3, h4, h5, h6,
 
 /* === LANGUAGE-SPECIFIC FONT MAPPINGS === */
 
-/* Telugu Language Support */
+/* Telugu Language Support - Professional News Typography */
 html[data-lang='te'],
 html[data-lang='telugu'] {
-  --font-sans: var(--font-telugu);
-  --font-serif: var(--font-telugu);
-  --font-display: var(--font-telugu);
+  --font-sans: var(--font-telugu-sans);
+  --font-serif: var(--font-telugu-sans);
+  --font-display: var(--font-telugu-serif);
   --font-size-adjust: 1.08;
-  --line-height-adjust: 1.75;
+  --line-height-adjust: 1.7;
 }
 
 html[data-lang='te'] body,
 html[data-lang='telugu'] body {
-  font-family: var(--font-telugu), 'Nirmala UI', sans-serif;
+  font-family: var(--font-telugu-sans), 'Nirmala UI', sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+/* Telugu Headlines - Noto Serif Telugu for authority */
+html[data-lang='te'] h1,
+html[data-lang='te'] h2,
+html[data-lang='te'] h3,
+html[data-lang='te'] .title,
+html[data-lang='te'] .heading,
+html[data-lang='te'] .article-title,
+html[data-lang='telugu'] h1,
+html[data-lang='telugu'] h2,
+html[data-lang='telugu'] h3,
+html[data-lang='telugu'] .title,
+html[data-lang='telugu'] .heading,
+html[data-lang='telugu'] .article-title {
+  font-family: var(--font-telugu-serif), 'Nirmala UI', serif;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+/* Telugu Body Text - Noto Sans Telugu for readability */
+html[data-lang='te'] .article-content,
+html[data-lang='te'] .body-text,
+html[data-lang='te'] p,
+html[data-lang='telugu'] .article-content,
+html[data-lang='telugu'] .body-text,
+html[data-lang='telugu'] p {
+  font-family: var(--font-telugu-sans), 'Nirmala UI', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.75;
+  letter-spacing: 0.01em;
+}
+
+/* Telugu Subtitles */
+html[data-lang='te'] .subtitle,
+html[data-lang='te'] .deck,
+html[data-lang='telugu'] .subtitle,
+html[data-lang='telugu'] .deck {
+  font-family: var(--font-telugu-sans), 'Nirmala UI', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Telugu Highlights/Key Points */
+html[data-lang='te'] .highlight,
+html[data-lang='te'] .key-point,
+html[data-lang='telugu'] .highlight,
+html[data-lang='telugu'] .key-point {
+  font-family: var(--font-telugu-sans), 'Nirmala UI', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 /* Hindi Language Support (Devanagari) */

@@ -95,9 +95,17 @@ function normalizeItem(u: unknown): Article {
     const ci = o.coverImage as Record<string, unknown>
     if (typeof ci.url === 'string') coverUrl = ci.url
   }
+  if (!coverUrl && typeof o.image === 'string') coverUrl = o.image
+  if (!coverUrl && o.image && typeof o.image === 'object') {
+    const img = o.image as Record<string, unknown>
+    if (typeof img.url === 'string') coverUrl = img.url
+    if (!coverUrl && typeof img.src === 'string') coverUrl = img.src
+  }
   if (!coverUrl && typeof o.imageUrl === 'string') coverUrl = o.imageUrl
   if (!coverUrl && typeof o.featuredImage === 'string') coverUrl = o.featuredImage
-  return { id, slug, title, excerpt: excerpt ?? null, content: content ?? null, coverImage: coverUrl ? { url: coverUrl } : undefined }
+  if (!coverUrl && typeof o.thumbnail === 'string') coverUrl = o.thumbnail
+  const normalizedCoverUrl = normalizeMediaUrl(coverUrl)
+  return { id, slug, title, excerpt: excerpt ?? null, content: content ?? null, coverImage: normalizedCoverUrl ? { url: normalizedCoverUrl } : undefined }
 }
 
 function normalizeList(u: unknown): Article[] {
@@ -132,6 +140,25 @@ function cryptoRandom() {
     if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID()
   } catch {}
   return Math.random().toString(36).slice(2)
+}
+
+function normalizeMediaUrl(url?: string | null) {
+  if (!url) return undefined
+  const trimmed = String(url).trim()
+  if (!trimmed) return undefined
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
+  if (trimmed.startsWith('//')) return `https:${trimmed}`
+
+  const base = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || ''
+  if (!base) return trimmed.startsWith('/') ? `https://app.kaburlumedia.com${trimmed}` : `https://app.kaburlumedia.com/${trimmed}`
+
+  try {
+    const origin = new URL(base).origin
+    const path = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+    return `${origin}${path}`
+  } catch {
+    return trimmed
+  }
 }
 
 async function currentDomain() {

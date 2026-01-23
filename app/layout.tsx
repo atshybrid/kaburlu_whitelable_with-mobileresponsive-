@@ -11,7 +11,8 @@ import "@/themes/toi/theme.css";
 // Import Google Fonts for multi-language support
 import { 
   Inter, 
-  Noto_Sans_Telugu, 
+  Noto_Sans_Telugu,
+  Noto_Serif_Telugu,
   Noto_Sans_Devanagari, 
   Noto_Sans_Tamil,
   Noto_Sans_Kannada,
@@ -46,11 +47,19 @@ const playfair = Playfair_Display({
   display: 'swap',
 });
 
-// Telugu
+// Telugu - Sans for body text
 const notoSansTelugu = Noto_Sans_Telugu({
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
   subsets: ['telugu'],
-  variable: '--font-telugu',
+  variable: '--font-telugu-sans',
+  display: 'swap',
+});
+
+// Telugu - Serif for headlines
+const notoSerifTelugu = Noto_Serif_Telugu({
+  weight: ['600', '700'],
+  subsets: ['telugu'],
+  variable: '--font-telugu-serif',
   display: 'swap',
 });
 
@@ -185,6 +194,7 @@ async function RootLayoutInner({
     merriweather.variable,
     playfair.variable,
     notoSansTelugu.variable,
+    notoSerifTelugu.variable,
     notoSansDevanagari.variable,
     notoSansTamil.variable,
     notoSansKannada.variable,

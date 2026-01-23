@@ -28,6 +28,7 @@ export type HomepageFeedItem = {
   title: string
   excerpt?: string | null
   content?: string | null
+  image?: string | null
   coverImage?: string | null
   coverImageUrl?: string | null
   publishedAt?: string | null
@@ -237,7 +238,7 @@ const _getPublicHomepageStyle2Shape = reactCache(async (tenantDomainOverride?: s
 // ---- Helper to convert feed items to Article format ----
 
 export function feedItemToArticle(item: HomepageFeedItem): Article {
-  const coverUrl = item.coverImageUrl || item.coverImage || undefined
+  const coverUrl = item.image || item.coverImageUrl || item.coverImage || undefined
   return {
     id: item.id,
     slug: item.slug || item.id,
