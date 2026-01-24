@@ -365,27 +365,26 @@ export async function ThemeHome({
   settings?: EffectiveSettings
   tenantDomain?: string
 }) {
-  // If no articles provided, show technical issues
-  if (!articles || articles.length === 0) {
-    return (
-      <div className="theme-style1">
-        <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} />
-        <div className="bg-zinc-50">
-          <div className="mx-auto max-w-7xl px-4 py-8">
-            <TechnicalIssues 
-              title="Technical Issues"
-              message="We're experiencing technical difficulties with our content delivery. Please contact Kaburlu Media support."
-            />
-          </div>
-        </div>
-        <Footer settings={settings} tenantSlug={tenantSlug} />
-      </div>
-    )
-  }
+  const baseArticles: Article[] = Array.isArray(articles) ? articles : []
 
   // Determine the API version based on theme setting
   const themeKey = settings?.theme?.theme || settings?.theme?.key || 'style1'
   const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'te'
+
+  // Helper to convert shaped articles to Article format
+  const shapedToArticle = (item: HomepageShapedArticle): Article => ({
+    id: item.id,
+    slug: item.slug || item.id,
+    title: item.title,
+    excerpt: item.excerpt || '',
+    coverImage: item.coverImageUrl ? { url: item.coverImageUrl } : undefined,
+    publishedAt: item.publishedAt || new Date().toISOString(),
+    categories: item.category
+      ? [{ category: { slug: item.category.slug, name: item.category.name } }]
+      : undefined,
+    author: { name: 'కబుర్లు డెస్క్' },
+    content: '',
+  })
 
   // Fetch shaped homepage with structured sections
   let shapedHomepage: HomepageShapedResponse | null = null
@@ -421,20 +420,33 @@ export async function ThemeHome({
   const mostReadItems = feeds.mostRead?.items ? feedItemsToArticles(feeds.mostRead.items).slice(0, 3) : []
   
   // Use ticker from API or fallback to articles
-  const tickerData = tickerItems.length > 0 ? tickerItems : articles.slice(0, 10)
-  const mostReadData = mostReadItems.length > 0 ? mostReadItems : articles.slice(0, 3)
+  const shapedFallbackFeed: Article[] = shapedHomepage
+    ? [...(shapedHomepage.hero || []), ...(shapedHomepage.topStories || [])].map(shapedToArticle)
+    : []
 
-  // Helper to convert shaped articles to Article format
-  const shapedToArticle = (item: HomepageShapedArticle): Article => ({
-    id: item.id,
-    slug: item.slug || item.id,
-    title: item.title,
-    excerpt: item.excerpt,
-    coverImage: item.coverImageUrl ? { url: item.coverImageUrl } : undefined,
-    imageUrl: item.coverImageUrl,
-    publishedAt: item.publishedAt,
-    category: item.category,
-  } as Article)
+  const fallbackFeed = baseArticles.length > 0 ? baseArticles : shapedFallbackFeed
+  const tickerData = tickerItems.length > 0 ? tickerItems : fallbackFeed.slice(0, 10)
+  const mostReadData = mostReadItems.length > 0 ? mostReadItems : fallbackFeed.slice(0, 3)
+
+  // If absolutely nothing is available, show a clear technical issue.
+  if (fallbackFeed.length === 0 && (!shapedHomepage || ((shapedHomepage.sections || []).length === 0))) {
+    return (
+      <div className="theme-style1">
+        <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} />
+        <div className="bg-zinc-50">
+          <div className="mx-auto max-w-7xl px-4 py-8">
+            <TechnicalIssues
+              title="Technical Issues"
+              message="We're experiencing technical difficulties with our content delivery. Please contact Kaburlu Media support."
+            />
+          </div>
+        </div>
+        <Footer settings={settings} tenantSlug={tenantSlug} />
+      </div>
+    )
+  }
+
+  // (shapedToArticle helper is defined above)
 
   const layout = await readHomeLayout(tenantSlug, 'style1')
 
