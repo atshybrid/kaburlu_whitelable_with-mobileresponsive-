@@ -5,6 +5,8 @@ import { getEffectiveSettings } from './settings'
 export interface Category {
   id: string
   name: string
+  nameDefault?: string
+  nameLocalized?: string
   slug: string
   parentId?: string | null
   iconUrl?: string | null
@@ -53,7 +55,11 @@ export async function getCategoriesForNav(): Promise<Category[]> {
       revalidateSeconds: Number(process.env.REMOTE_CATEGORIES_REVALIDATE_SECONDS || '300'),
       tags: [`categories:${domain}:${languageCode}`],
     })
-    categories = Array.isArray(res) ? res : []
+    // Map nameLocalized to name for display
+    categories = Array.isArray(res) ? res.map(cat => ({
+      ...cat,
+      name: cat.nameLocalized || cat.nameDefault || cat.name || cat.slug
+    })) : []
   } catch {
     categories = []
   }
