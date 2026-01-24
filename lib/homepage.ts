@@ -400,29 +400,33 @@ async function createFallbackHomepageResponse(lang: string, themeKey: string): P
   const categories = await getFallbackCategories()
 
   // Create feeds with fallback data - fill ALL sections completely
-  const latestItems = articles.slice(0, 20).map(a => ({
-    id: a.id,
-    slug: a.slug,
-    title: a.title,
-    excerpt: a.excerpt,
-    content: a.content,
-    image: a.imageUrl,
-    coverImageUrl: a.imageUrl,
-    publishedAt: a.publishedAt,
+  const latestItems: HomepageFeedItem[] = articles.slice(0, 20).map(a => ({
+    id: String(a.id),
+    slug: String(a.slug || a.id),
+    title: String(a.title || ''),
+    excerpt: typeof a.excerpt === 'string' ? a.excerpt : null,
+    content: typeof a.content === 'string' ? a.content : null,
+    image: typeof a.imageUrl === 'string' ? a.imageUrl : null,
+    coverImageUrl: typeof a.imageUrl === 'string' ? a.imageUrl : null,
+    publishedAt: typeof a.publishedAt === 'string' ? a.publishedAt : null,
     category: a.category,
   }))
 
   // Create ticker items
-  const tickerItems = articles.slice(0, 8).map(a => ({
-    id: a.id,
-    slug: a.slug,
-    title: a.title,
+  const tickerItems: HomepageFeedItem[] = articles.slice(0, 8).map(a => ({
+    id: String(a.id),
+    slug: String(a.slug || a.id),
+    title: String(a.title || ''),
   }))
 
   // Create category feeds with MORE articles per category
-  const categoryFeeds = categories.slice(0, 8).map(cat => {
+  const categoryFeeds: HomepageCategoryFeedItem[] = categories.slice(0, 8).map(cat => {
     // Get articles for this category, or use general articles if none found
-    const categoryArticles = articles.filter(a => a.category?.slug === cat.slug)
+    // Type guard: check if category is an object with slug property
+    const categoryArticles = articles.filter(a => {
+      const cat_data = a.category as { slug?: string } | undefined
+      return cat_data && typeof cat_data === 'object' && cat_data.slug === cat.slug
+    })
     const articlesToUse = categoryArticles.length > 0 ? categoryArticles : articles
     
     return {
@@ -432,25 +436,25 @@ async function createFallbackHomepageResponse(lang: string, themeKey: string): P
         href: `/category/${cat.slug}`,
       },
       items: articlesToUse.slice(0, 8).map(a => ({
-        id: a.id,
-        slug: a.slug,
-        title: a.title,
-        excerpt: a.excerpt,
-        image: a.imageUrl,
-        publishedAt: a.publishedAt,
+        id: String(a.id),
+        slug: String(a.slug || a.id),
+        title: String(a.title || ''),
+        excerpt: typeof a.excerpt === 'string' ? a.excerpt : null,
+        image: typeof a.imageUrl === 'string' ? a.imageUrl : null,
+        publishedAt: typeof a.publishedAt === 'string' ? a.publishedAt : null,
         category: a.category,
       })),
     }
   })
 
   // Create mostRead items
-  const mostReadItems = articles.slice(0, 6).map(a => ({
-    id: a.id,
-    slug: a.slug,
-    title: a.title,
-    excerpt: a.excerpt,
-    image: a.imageUrl,
-    publishedAt: a.publishedAt,
+  const mostReadItems: HomepageFeedItem[] = articles.slice(0, 6).map(a => ({
+    id: String(a.id),
+    slug: String(a.slug || a.id),
+    title: String(a.title || ''),
+    excerpt: typeof a.excerpt === 'string' ? a.excerpt : null,
+    image: typeof a.imageUrl === 'string' ? a.imageUrl : null,
+    publishedAt: typeof a.publishedAt === 'string' ? a.publishedAt : null,
   }))
 
   return {
@@ -483,21 +487,24 @@ async function createFallbackShapedHomepage(lang: string, themeKey: string): Pro
   const categories = await getFallbackCategories()
 
   // Convert fallback articles to shaped format
-  const shapedArticles: HomepageShapedArticle[] = articles.map(a => ({
-    id: a.id,
-    slug: a.slug,
-    title: a.title,
-    excerpt: a.excerpt,
-    coverImageUrl: a.imageUrl,
-    publishedAt: a.publishedAt,
-    category: a.category ? {
-      id: a.category.id,
-      slug: a.category.slug,
-      name: a.category.name,
-    } : undefined,
-    tags: [], // Fallback articles don't have tags
-    languageCode: lang,
-  }))
+  const shapedArticles: HomepageShapedArticle[] = articles.map(a => {
+    const cat = a.category as { id?: string; slug?: string; name?: string } | undefined
+    return {
+      id: String(a.id),
+      slug: String(a.slug || a.id),
+      title: String(a.title || ''),
+      excerpt: typeof a.excerpt === 'string' ? a.excerpt : null,
+      coverImageUrl: typeof a.imageUrl === 'string' ? a.imageUrl : null,
+      publishedAt: typeof a.publishedAt === 'string' ? a.publishedAt : null,
+      category: cat && typeof cat === 'object' ? {
+        id: String(cat.id || ''),
+        slug: String(cat.slug || ''),
+        name: String(cat.name || ''),
+      } : undefined,
+      tags: [], // Fallback articles don't have tags
+      languageCode: lang,
+    }
+  })
 
   // Hero: 1 article
   const hero = shapedArticles.slice(0, 1)
