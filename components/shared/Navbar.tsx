@@ -3,8 +3,12 @@ import type { UrlObject } from 'url'
 import { getCategoriesForNav } from '@/lib/categories'
 import { basePathForTenant, homeHref, categoryHref } from '@/lib/url'
 import { getEffectiveSettings } from '@/lib/settings'
+import { getConfig } from '@/lib/config'
 import NavbarMenuClient from './NavbarMenuClient'
 import HeaderCollapseOnScrollClient from './HeaderCollapseOnScrollClient'
+import { MobileMenu } from './MobileMenu'
+import { SearchBar } from './SearchBar'
+import { isWrongTenantLogo } from '@/lib/fallback-data'
 
 function toHref(pathname: string): UrlObject {
   return { pathname }
@@ -21,9 +25,18 @@ export async function Navbar({
   logoUrl?: string
   variant?: 'default' | 'style2'
 }) {
+  // 🎯 PRIMARY: Use /public/config API for branding
+  const config = await getConfig()
+  
+  // Override with config if available
+  const finalTitle = config?.branding.siteName || title
+  const finalLogoUrl = config?.branding.logoUrl || logoUrl
+  
   const [cats, settings] = await Promise.all([getCategoriesForNav(), getEffectiveSettings()])
 
-  const langRaw = String(settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'en')
+  const langRaw = config 
+    ? config.content.defaultLanguage 
+    : String(settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'en')
   const primaryLang = (langRaw.toLowerCase() === 'telugu' ? 'te' : langRaw.toLowerCase().split('-')[0]) || 'en'
 
   const categoryBySlug = new Map(cats.map((c) => [String(c.slug || ''), c]))
@@ -110,11 +123,11 @@ export async function Navbar({
               group-data-[collapsed=true]:max-h-0 group-data-[collapsed=true]:opacity-0 group-data-[collapsed=true]:py-0"
           >
             <Link href={toHref(homeHref(tenantSlug))} className="flex items-center justify-center gap-3">
-              {logoUrl ? (
+              {finalLogoUrl && !isWrongTenantLogo(finalLogoUrl) ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoUrl} alt={title} className="h-12 w-auto sm:h-14" />
+                <img src={finalLogoUrl} alt={finalTitle} className="h-12 w-auto sm:h-14" />
               ) : (
-                <div className="text-2xl font-medium tracking-tight text-black">{title}</div>
+                <div className="text-2xl font-medium tracking-tight text-black">{finalTitle}</div>
               )}
             </Link>
           </div>
@@ -126,11 +139,11 @@ export async function Navbar({
               group-data-[collapsed=true]:max-h-14 group-data-[collapsed=true]:opacity-100 group-data-[collapsed=true]:h-12"
           >
             <Link href={toHref(homeHref(tenantSlug))} className="flex items-center gap-2">
-              {logoUrl ? (
+              {finalLogoUrl && !isWrongTenantLogo(finalLogoUrl) ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoUrl} alt={title} className="h-8 w-auto" />
+                <img src={finalLogoUrl} alt={finalTitle} className="h-8 w-auto" />
               ) : (
-                <div className="text-lg font-medium text-black">{title}</div>
+                <div className="text-lg font-medium text-black">{finalTitle}</div>
               )}
             </Link>
           </div>
@@ -153,13 +166,19 @@ export async function Navbar({
         {/* Top bar with logo and title */}
         <div className="flex h-16 items-center justify-between sm:h-20">
           <Link href={toHref(homeHref(tenantSlug))} className="flex items-center gap-3">
-            {logoUrl ? (
+            {finalLogoUrl && !isWrongTenantLogo(finalLogoUrl) ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt={title} className="h-10 w-auto sm:h-12" />
+              <img src={finalLogoUrl} alt={finalTitle} className="h-10 w-auto sm:h-12" />
             ) : (
-              <div className="text-xl sm:text-2xl font-medium text-zinc-900">{title}</div>
+              <div className="text-xl sm:text-2xl font-medium text-zinc-900">{finalTitle}</div>
             )}
           </Link>
+          
+          {/* Right side controls */}
+          <div className="flex items-center gap-2">
+            <SearchBar tenantSlug={tenantSlug} />
+            <MobileMenu items={items} homeHref={homeHref(tenantSlug)} />
+          </div>
         </div>
         {/* Navigation row */}
         <div className="hidden pb-2 sm:block">

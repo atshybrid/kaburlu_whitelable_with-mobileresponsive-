@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { getEffectiveSettings } from "@/lib/settings";
+import { getConfig, getDefaultLanguage, getDefaultLanguageDirection } from "@/lib/config";
 import "./globals.css";
+import { OfflineDetector } from "@/components/shared/OfflineDetector";
 // Load theme styles globally so root pages can apply theme-specific classes
 import "@/themes/style1/theme.css";
 import "@/themes/style2/theme.css";
@@ -137,6 +139,42 @@ const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
+    // 🎯 PRIMARY: Use /public/config API (SINGLE SOURCE OF TRUTH)
+    const config = await getConfig()
+    
+    if (config) {
+      return {
+        title: config.seo.meta.title,
+        description: config.seo.meta.description,
+        keywords: config.seo.meta.keywords || undefined,
+        openGraph: {
+          title: config.seo.openGraph.title,
+          description: config.seo.openGraph.description,
+          url: config.seo.openGraph.url,
+          siteName: config.seo.openGraph.siteName,
+          images: config.seo.openGraph.imageUrl ? [{ url: config.seo.openGraph.imageUrl }] : undefined,
+          type: 'website',
+        },
+        twitter: {
+          card: config.seo.twitter.card,
+          title: config.seo.twitter.title,
+          description: config.seo.twitter.description,
+          images: config.seo.twitter.imageUrl ? [config.seo.twitter.imageUrl] : undefined,
+          creator: config.seo.twitter.handle || undefined,
+        },
+        icons: config.branding.faviconUrl ? {
+          icon: [{ url: config.branding.faviconUrl }],
+          shortcut: [{ url: config.branding.faviconUrl }],
+          apple: [{ url: config.branding.faviconUrl }],
+        } : { icon: [{ url: '/favicon.ico' }] },
+        robots: {
+          index: true,
+          follow: true,
+        },
+      }
+    }
+
+    // FALLBACK: Legacy settings API
     const s = await getEffectiveSettings()
     const title = s?.settings?.seo?.defaultMetaTitle || s?.seo?.defaultMetaTitle || process.env.SITE_NAME || 'Kaburlu News'
     const description = s?.settings?.seo?.defaultMetaDescription || s?.seo?.defaultMetaDescription || process.env.SITE_DESCRIPTION || 'Multi-tenant news platform'
@@ -176,17 +214,27 @@ async function RootLayoutInner({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  let languageCodeRaw = 'en'
-  try {
-    const s = await getEffectiveSettings()
-    languageCodeRaw = String(
-      s?.content?.defaultLanguage || s?.settings?.content?.defaultLanguage || 'en'
-    ).toLowerCase()
-  } catch {
-    // ignore
+  // 🎯 PRIMARY: Use /public/config API for language
+  const config = await getConfig()
+  
+  let languageCode = 'te'
+  let langDirection: 'ltr' | 'rtl' = 'ltr'
+  
+  if (config) {
+    languageCode = getDefaultLanguage(config)
+    langDirection = getDefaultLanguageDirection(config)
+  } else {
+    // FALLBACK: Legacy settings API
+    try {
+      const s = await getEffectiveSettings()
+      const languageCodeRaw = String(
+        s?.content?.defaultLanguage || s?.settings?.content?.defaultLanguage || 'te'
+      ).toLowerCase()
+      languageCode = (languageCodeRaw === 'telugu' ? 'te' : languageCodeRaw.split('-')[0]) || 'te'
+    } catch {
+      // ignore
+    }
   }
-
-  const primaryLang = (languageCodeRaw === 'telugu' ? 'te' : languageCodeRaw.split('-')[0]) || 'en'
 
   // Build font class string based on language
   const fontClasses = [
@@ -207,11 +255,16 @@ async function RootLayoutInner({
   ].join(' ');
 
   return (
-    <html lang={primaryLang} data-lang={primaryLang} className={fontClasses}>
+    <html lang={languageCode} dir={langDirection} data-lang={languageCode} className={fontClasses}>
       <body
         className={"antialiased"}
       >
+        {/* Skip to main content for accessibility */}
+        <a href="#main-content" className="sr-only focus:not-sr-only">
+          Skip to main content
+        </a>
         {children}
+        <OfflineDetector />
       </body>
     </html>
   );

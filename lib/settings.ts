@@ -1,6 +1,7 @@
 import { headers } from 'next/headers'
 import { getDomainSettings, normalizeTenantDomain, type EffectiveSettings } from './remote'
 import { cache as reactCache } from 'react'
+import { isWrongTenantData } from './fallback-data'
 
 export type SettingsResult = {
   settings: EffectiveSettings
@@ -56,6 +57,17 @@ const _getSettingsResult = reactCache(async (domainOverride?: string): Promise<S
   
   try {
     const res = await getDomainSettings(domain)
+    
+    // Check if settings belong to wrong tenant (e.g., Crown Human Rights)
+    if (isWrongTenantData(res)) {
+      console.log('🚫 Wrong tenant settings detected, returning empty settings')
+      result.settings = {}
+      // Don't mark as isDomainNotLinked - we want to show fallback articles, not "coming soon"
+      result.isDomainNotLinked = false
+      result.isApiError = false
+      return result
+    }
+    
     result.settings = res.effective || {}
     // Only cache successful results
     cache.set(key, { value: result, expires: now + TTL_MS })

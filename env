@@ -1,6 +1,6 @@
 # Multitenancy
 # NOTE: for production, keep this stable; for local testing override via .env.local
-NEXT_PUBLIC_DEFAULT_TENANT="localhost"
+NEXT_PUBLIC_DEFAULT_TENANT="demo"
 MULTITENANT_MODE="path" # allowed: path | subdomain
 # BASE_DOMAIN is not used by the app logic; API_BASE_URL is used below
 # BASE_DOMAIN="your-base-domain.example.com"
@@ -10,6 +10,8 @@ DATA_SOURCE="remote" # remote | local
 API_BASE_URL="https://app.kaburlumedia.com/api/v1"
 HOST="kaburlutoday.com"
 NEXT_PUBLIC_HOST="kaburlutoday.com"
+# NOTE: localhost testing with kaburlutoday.com domain for backend API
+# If backend returns wrong/empty data, will use public/data.json as fallback
 
 # Site metadata defaults
 SITE_NAME="Kaburlu News"

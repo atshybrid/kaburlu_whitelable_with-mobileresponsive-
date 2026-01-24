@@ -1,0 +1,383 @@
+// Fallback Telugu sample data for local development when API fails or returns wrong tenant data
+
+interface NewsArticle {
+  article_id?: string
+  title?: string
+  description?: string
+  content?: string
+  image_url?: string
+  category?: string[]
+  creator?: string[]
+  pubDate?: string
+  [key: string]: unknown
+}
+
+// Load articles from public/data.json or public/news/*.json
+let cachedArticles: NewsArticle[] | null = null
+const cachedCategoryArticles: Record<string, NewsArticle[]> = {}
+
+async function loadPublicData() {
+  if (cachedArticles) return cachedArticles
+  
+  try {
+    // In server-side context, read from file system
+    // Skip in Edge Runtime - check for process.cwd availability
+    if (typeof window === 'undefined' && typeof process !== 'undefined' && process.cwd) {
+      const fs = await import('fs/promises')
+      const path = await import('path')
+      const filePath = path.join(process.cwd(), 'public', 'data.json')
+      const fileContent = await fs.readFile(filePath, 'utf-8')
+      cachedArticles = JSON.parse(fileContent)
+      if (cachedArticles && cachedArticles.length > 0) {
+        console.log(`✅ Loaded ${cachedArticles.length} articles from public/data.json`)
+      }
+      return cachedArticles
+    }
+  } catch (error) {
+    console.error('❌ Failed to load public/data.json:', error)
+  }
+  
+  return []
+}
+
+async function loadCategoryData(category: string) {
+  if (cachedCategoryArticles[category]) return cachedCategoryArticles[category]
+  
+  try {
+    if (typeof window === 'undefined' && typeof process !== 'undefined' && process.cwd) {
+      const fs = await import('fs/promises')
+      const path = await import('path')
+      const filePath = path.join(process.cwd(), 'public', 'news', `${category}.json`)
+      const fileContent = await fs.readFile(filePath, 'utf-8')
+      const articles = JSON.parse(fileContent)
+      cachedCategoryArticles[category] = articles
+      console.log(`✅ Loaded ${articles.length} articles from public/news/${category}.json`)
+      return articles
+    }
+  } catch {
+    console.log(`⚠️ No category file for ${category}, using general articles`)
+  }
+  
+  return []
+}
+
+async function loadAllCategoryData() {
+  const categories = ['latest', 'breaking', 'sports', 'entertainment', 'business', 'political', 'crime', 'lifestyle', 'health', 'education', 'world']
+  const allArticles: NewsArticle[] = []
+  
+  for (const category of categories) {
+    const articles = await loadCategoryData(category)
+    if (articles && articles.length > 0) {
+      allArticles.push(...articles)
+    }
+  }
+  
+  return allArticles
+}
+
+// Transform public data.json format to our article format
+function transformPublicArticle(item: NewsArticle, index: number) {
+  const categoryName = Array.isArray(item.category) && item.category[0] 
+    ? getCategoryNameInTelugu(item.category[0])
+    : 'సాధారణ'
+    
+  return {
+    id: item.article_id || `article-${index}`,
+    title: item.title || 'శీర్షిక లేదు',
+    slug: item.article_id || `article-${index}`,
+    excerpt: item.description || item.content?.substring(0, 150) || '',
+    content: item.content || item.description || '',
+    imageUrl: item.image_url || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800',
+    category: { 
+      id: item.category?.[0] || 'general',
+      name: categoryName,
+      slug: item.category?.[0] || 'general'
+    },
+    author: { 
+      name: Array.isArray(item.creator) && item.creator[0] 
+        ? item.creator[0] 
+        : 'కబుర్లు డెస్క్'
+    },
+    publishedAt: item.pubDate || new Date().toISOString(),
+    featured: index < 5,
+  }
+}
+
+// Map English category names to Telugu
+function getCategoryNameInTelugu(category: string): string {
+  const categoryMap: Record<string, string> = {
+    'top': 'ముఖ్యాంశాలు',
+    'sports': 'క్రీడలు',
+    'entertainment': 'వినోదం',
+    'lifestyle': 'జీవనశైలి',
+    'politics': 'రాజకీయాలు',
+    'business': 'వ్యాపారం',
+    'technology': 'సాంకేతికం',
+    'health': 'ఆరోగ్యం',
+    'education': 'విద్య',
+    'national': 'జాతీయం',
+    'international': 'అంతర్జాతీయం',
+    'state': 'రాష్ట్రం',
+  }
+  return categoryMap[category.toLowerCase()] || category
+}
+
+export async function getFallbackArticles() {
+  // First try loading all category-wise data from public/news/*.json
+  const categoryArticles = await loadAllCategoryData()
+  if (categoryArticles && categoryArticles.length > 0) {
+    console.log(`✅ Total ${categoryArticles.length} articles loaded from all categories`)
+    return categoryArticles.map(transformPublicArticle)
+  }
+  
+  // Fallback to public/data.json
+  const publicData = await loadPublicData()
+  if (publicData && publicData.length > 0) {
+    return publicData.slice(0, 50).map(transformPublicArticle)
+  }
+  
+  // Ultimate fallback - static data
+  return STATIC_FALLBACK_ARTICLES
+}
+
+export async function getFallbackCategories() {
+  // First try to get categories from news folder
+  const categoryArticles = await loadAllCategoryData()
+  if (categoryArticles && categoryArticles.length > 0) {
+    // Extract unique categories from articles
+    const categorySet = new Set<string>()
+    const categoryMap = new Map<string, string>()
+    
+    categoryArticles.forEach((item: NewsArticle) => {
+      if (Array.isArray(item.category)) {
+        item.category.forEach((cat: string) => {
+          categorySet.add(cat)
+          categoryMap.set(cat, getCategoryNameInTelugu(cat))
+        })
+      }
+    })
+    
+    return Array.from(categorySet).slice(0, 12).map((slug, index) => ({
+      id: `cat-${index + 1}`,
+      name: categoryMap.get(slug) || slug,
+      slug: slug,
+      description: `${categoryMap.get(slug)} వార్తలు`
+    }))
+  }
+  
+  // Fallback to extracting from public/data.json
+  const publicData = await loadPublicData()
+  if (publicData && publicData.length > 0) {
+    const categorySet = new Set<string>()
+    const categoryMap = new Map<string, string>()
+    
+    publicData.forEach((item: NewsArticle) => {
+      if (Array.isArray(item.category)) {
+        item.category.forEach((cat: string) => {
+          categorySet.add(cat)
+          categoryMap.set(cat, getCategoryNameInTelugu(cat))
+        })
+      }
+    })
+    
+    return Array.from(categorySet).slice(0, 8).map((slug, index) => ({
+      id: `cat-${index + 1}`,
+      name: categoryMap.get(slug) || slug,
+      slug: slug,
+      description: `${categoryMap.get(slug)} వార్తలు`
+    }))
+  }
+  
+  return STATIC_FALLBACK_CATEGORIES
+}
+
+// Static fallback data (used only if public/data.json fails)
+const STATIC_FALLBACK_ARTICLES = [
+  {
+    id: 'sample-1',
+    title: 'తెలంగాణ రాష్ట్రంలో నేడు భారీ వర్షాలు',
+    slug: 'telangana-heavy-rains',
+    excerpt: 'తెలంగాణ రాష్ట్రంలోని వివిధ జిల్లాల్లో నేడు భారీ వర్షాలు కురిసాయి. హైదరాబాద్‌లో కూడా ఉదయం నుంచి వర్షం కురుస్తోంది.',
+    content: 'తెలంగాణ రాష్ట్రంలోని వివిధ జిల్లాల్లో నేడు భారీ వర్షాలు కురిసాయి...',
+    imageUrl: 'https://images.unsplash.com/photo-1527482937786-6608bdd5c7d4?w=800',
+    category: { id: 'cat-1', name: 'రాష్ట్రం', slug: 'state' },
+    author: { name: 'కబుర్లు డెస్క్' },
+    publishedAt: new Date().toISOString(),
+    featured: true,
+  },
+  {
+    id: 'sample-2',
+    title: 'టెక్నాలజీ రంగంలో భారత్ అభివృద్ధి',
+    slug: 'india-tech-growth',
+    excerpt: 'టెక్నాలజీ రంగంలో భారత్ గణనీయంగా ముందుకు సాగుతోంది. కృత్రిమ మేధస్సు, క్లౌడ్ కంప్యూటింగ్‌లో భారీ పెట్టుబడులు.',
+    content: 'టెక్నాలజీ రంగంలో భారత్ గణనీయంగా ముందుకు సాగుతోంది...',
+    imageUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800',
+    category: { id: 'cat-2', name: 'సాంకేతికం', slug: 'technology' },
+    author: { name: 'టెక్ బ్యూరో' },
+    publishedAt: new Date(Date.now() - 3600000).toISOString(),
+    featured: true,
+  },
+  {
+    id: 'sample-3',
+    title: 'క్రికెట్: భారత్ vs ఆస్ట్రేలియా మ్యాచ్ నేడు',
+    slug: 'india-vs-australia-cricket',
+    excerpt: 'భారత్-ఆస్ట్రేలియా మధ్య క్రికెట్ మ్యాచ్ నేడు జరగనుంది. టీమ్ ఇండియా గెలుపు కోసం సిద్ధం.',
+    content: 'భారత్-ఆస్ట్రేలియా మధ్య క్రికెట్ మ్యాచ్ నేడు జరగనుంది...',
+    imageUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800',
+    category: { id: 'cat-3', name: 'క్రీడలు', slug: 'sports' },
+    author: { name: 'స్పోర్ట్స్ డెస్క్' },
+    publishedAt: new Date(Date.now() - 7200000).toISOString(),
+    featured: false,
+  },
+  {
+    id: 'sample-4',
+    title: 'ఆర్థిక రంగంలో కొత్త సంస్కరణలు',
+    slug: 'economic-reforms',
+    excerpt: 'కేంద్ర ప్రభుత్వం ఆర్థిక రంగంలో కొత్త సంస్కరణలను ప్రకటించింది. వ్యాపారాలకు పన్ను తగ్గింపులు.',
+    content: 'కేంద్ర ప్రభుత్వం ఆర్థిక రంగంలో కొత్త సంస్కరణలను ప్రకటించింది...',
+    imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800',
+    category: { id: 'cat-4', name: 'ఆర్థికం', slug: 'business' },
+    author: { name: 'బిజినెస్ బ్యూరో' },
+    publishedAt: new Date(Date.now() - 10800000).toISOString(),
+    featured: false,
+  },
+  {
+    id: 'sample-5',
+    title: 'వినోదం: కొత్త చిత్రం విడుదల',
+    slug: 'new-movie-release',
+    excerpt: 'టాలీవుడ్ స్టార్ హీరో కొత్త చిత్రం ఈ వారాంతం విడుదల అవుతోంది. అభిమానులలో భారీ ఆసక్తి.',
+    content: 'టాలీవుడ్ స్టార్ హీరో కొత్త చిత్రం ఈ వారాంతం విడుదల అవుతోంది...',
+    imageUrl: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800',
+    category: { id: 'cat-5', name: 'వినోదం', slug: 'entertainment' },
+    author: { name: 'ఎంటర్‌టైన్‌మెంట్ డెస్క్' },
+    publishedAt: new Date(Date.now() - 14400000).toISOString(),
+    featured: false,
+  },
+  {
+    id: 'sample-6',
+    title: 'ఆరోగ్యం: వేసవిలో జాగ్రత్తలు',
+    slug: 'summer-health-tips',
+    excerpt: 'వేసవి కాలంలో ఆరోగ్యంగా ఉండటానికి తీసుకోవాల్సిన జాగ్రత్తలు. నీరు ఎక్కువగా త్రాగాలి.',
+    content: 'వేసవి కాలంలో ఆరోగ్యంగా ఉండటానికి తీసుకోవాల్సిన జాగ్రత్తలు...',
+    imageUrl: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800',
+    category: { id: 'cat-6', name: 'ఆరోగ్యం', slug: 'health' },
+    author: { name: 'హెల్త్ బ్యూరో' },
+    publishedAt: new Date(Date.now() - 18000000).toISOString(),
+    featured: false,
+  },
+  {
+    id: 'sample-7',
+    title: 'విద్య: కొత్త విద్యా విధానం',
+    slug: 'new-education-policy',
+    excerpt: 'కొత్త విద్యా విధానం అమలులోకి వచ్చింది. విద్యార్థులకు ఎక్కువ ఎంపికలు.',
+    content: 'కొత్త విద్యా విధానం అమలులోకి వచ్చింది...',
+    imageUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800',
+    category: { id: 'cat-7', name: 'విద్య', slug: 'education' },
+    author: { name: 'విద్యా బ్యూరో' },
+    publishedAt: new Date(Date.now() - 21600000).toISOString(),
+    featured: false,
+  },
+  {
+    id: 'sample-8',
+    title: 'రైతుల కోసం కొత్త పథకం',
+    slug: 'farmer-scheme',
+    excerpt: 'రైతులకు అనుకూలంగా కొత్త పథకం ప్రకటించింది ప్రభుత్వం. ఉచిత విద్యుత్, నీటి సౌకర్యాలు.',
+    content: 'రైతులకు అనుకూలంగా కొత్త పథకం ప్రకటించింది ప్రభుత్వం...',
+    imageUrl: 'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=800',
+    category: { id: 'cat-8', name: 'వ్యవసాయం', slug: 'agriculture' },
+    author: { name: 'రూరల్ బ్యూరో' },
+    publishedAt: new Date(Date.now() - 25200000).toISOString(),
+    featured: false,
+  },
+]
+
+const STATIC_FALLBACK_CATEGORIES = [
+  { id: 'cat-1', name: 'రాష్ట్రం', slug: 'state', description: 'రాష్ట్ర వార్తలు' },
+  { id: 'cat-2', name: 'సాంకేతికం', slug: 'technology', description: 'టెక్నాలజీ వార్తలు' },
+  { id: 'cat-3', name: 'క్రీడలు', slug: 'sports', description: 'క్రీడా వార్తలు' },
+  { id: 'cat-4', name: 'ఆర్థికం', slug: 'business', description: 'వ్యాపార వార్తలు' },
+  { id: 'cat-5', name: 'వినోదం', slug: 'entertainment', description: 'వినోద వార్తలు' },
+  { id: 'cat-6', name: 'ఆరోగ్యం', slug: 'health', description: 'ఆరోగ్య వార్తలు' },
+  { id: 'cat-7', name: 'విద్య', slug: 'education', description: 'విద్యా వార్తలు' },
+  { id: 'cat-8', name: 'వ్యవసాయం', slug: 'agriculture', description: 'వ్యవసాయ వార్తలు' },
+]
+
+const FALLBACK_TICKER_ITEMS = [
+  'తెలంగాణలో నేడు భారీ వర్షాలు - ప్రజలు జాగ్రత్తగా ఉండాలి',
+  'టెక్నాలజీ రంగంలో భారత్ అభివృద్ధి - కొత్త స్టార్టప్‌లకు మద్దతు',
+  'క్రికెట్: భారత్ vs ఆస్ట్రేలియా మ్యాచ్ నేడు - టీమ్ ఇండియా సిద్ధం',
+  'ఆర్థిక రంగంలో కొత్త సంస్కరణలు - వ్యాపారాలకు పన్ను తగ్గింపు',
+  'కొత్త చిత్రం ఈ వారాంతం విడుదల - అభిమానుల ఆసక్తి',
+]
+
+export function getFallbackTickerItems() {
+  return FALLBACK_TICKER_ITEMS
+}
+
+export async function getFallbackTickerItemsAsync() {
+  const articles = await getFallbackArticles()
+  return articles.slice(0, 5).map((a) => a.title)
+}
+
+// Check if logo URL belongs to wrong tenant
+export function isWrongTenantLogo(logoUrl?: string | null): boolean {
+  if (!logoUrl) return false
+  
+  const url = logoUrl.toLowerCase()
+  const wrongPatterns = [
+    'crown',
+    'humanrights',
+    'human-rights',
+    'crownhumanrights'
+  ]
+  
+  for (const pattern of wrongPatterns) {
+    if (url.includes(pattern)) {
+      console.log(`🚫 Detected wrong tenant logo: ${logoUrl}`)
+      return true
+    }
+  }
+  
+  return false
+}
+
+// Check if data looks like wrong tenant (e.g., Crown Human Rights)
+export function isWrongTenantData(data: unknown): boolean {
+  if (!data) return true
+  
+  const dataString = JSON.stringify(data).toLowerCase()
+  
+  // Check for Crown Human Rights or similar unwanted tenant patterns
+  const wrongTenantPatterns = [
+    'crown human rights',
+    'crown',
+    'human rights',
+    'humanrights',
+    'crownhumanrights'
+  ]
+  
+  for (const pattern of wrongTenantPatterns) {
+    if (dataString.includes(pattern)) {
+      console.log(`🚫 Detected wrong tenant pattern: "${pattern}"`)
+      return true
+    }
+  }
+  
+  // Check if tenant name/slug doesn't match expected Telugu news patterns
+  if (data && typeof data === 'object' && 'tenant' in data) {
+    const tenant = (data as { tenant?: { name?: string; slug?: string } }).tenant
+    if (tenant) {
+      const tenantName = (tenant.name || '').toLowerCase()
+      const tenantSlug = (tenant.slug || '').toLowerCase()
+    
+      // If it contains English news org names that aren't ours
+      if (tenantName.includes('crown') || tenantSlug.includes('crown')) {
+        console.log(`🚫 Wrong tenant name detected: ${tenantName} / ${tenantSlug}`)
+        return true  
+      }
+    }
+  }
+  
+  return false
+}
+

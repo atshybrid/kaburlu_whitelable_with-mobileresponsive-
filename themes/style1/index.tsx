@@ -1,4 +1,4 @@
-import { Footer, TechnicalIssues, SectionError, EmptyState } from '@/components/shared'
+import { Footer, TechnicalIssues, SectionError, EmptyState, ShareButtons, Breadcrumbs, ReadingProgress } from '@/components/shared'
 import { Navbar } from '@/components/shared/Navbar'
 import type { Article } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
@@ -11,11 +11,19 @@ import { articleHref, categoryHref } from '@/lib/url'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
 import { getEffectiveSettings } from '@/lib/settings'
+import { getConfig } from '@/lib/config'
 import { WebStoriesPlayer } from '@/components/shared/WebStoriesPlayer'
 import { WebStoriesGrid } from '@/components/shared/WebStoriesGrid'
 import MobileBottomNav from '@/components/shared/MobileBottomNav'
 import { readHomeLayout, type HomeSection, type HomeBlock } from '@/lib/home-layout'
-import { getPublicHomepage, type NewHomepageResponse, feedItemsToArticles } from '@/lib/homepage'
+import { 
+  getPublicHomepage, 
+  getHomepageShaped,
+  type NewHomepageResponse, 
+  type HomepageShapedResponse,
+  type HomepageShapedArticle,
+  feedItemsToArticles 
+} from '@/lib/homepage'
 
 function toHref(pathname: string): UrlObject {
   return { pathname }
@@ -92,7 +100,7 @@ function HeroLead({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
           )}
         </div>
         <div className="p-4">
-          <h2 className="text-lg font-bold text-zinc-900 group-hover:text-red-600 transition-colors line-clamp-3" style={{ lineHeight: '2.0' }}>
+          <h2 className="text-lg font-bold text-zinc-900 group-hover:text-red-600 transition-colors line-clamp-3">
             {a.title}
           </h2>
         </div>
@@ -119,7 +127,7 @@ function CardMedium({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
           )}
         </div>
         <div className="p-3">
-          <h3 className="text-sm font-bold text-zinc-900 group-hover:text-red-600 transition-colors line-clamp-2" style={{ lineHeight: '2.0' }}>
+          <h3 className="text-sm font-bold text-zinc-900 group-hover:text-red-600 transition-colors line-clamp-2">
             {a.title}
           </h3>
         </div>
@@ -324,7 +332,7 @@ function ListRow({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
         href={toHref(articleHref(tenantSlug, a.slug || a.id))}
         className="grid grid-cols-[1fr_auto] items-center gap-3 py-2.5 hover:bg-zinc-50 transition-colors"
       >
-        <h4 className="text-sm font-semibold text-zinc-800 group-hover:text-red-600 transition-colors line-clamp-2" style={{ lineHeight: '2.0' }}>
+        <h4 className="text-sm font-semibold text-zinc-800 group-hover:text-red-600 transition-colors line-clamp-2">
           {a.title}
         </h4>
         <div className="h-14 w-20 overflow-hidden rounded shrink-0 bg-zinc-100">
@@ -377,11 +385,27 @@ export async function ThemeHome({
 
   // Determine the API version based on theme setting
   const themeKey = settings?.theme?.theme || settings?.theme?.key || 'style1'
-  const apiVersion = themeKey === 'style2' ? '2' : '1'
+  const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'te'
 
+  // Fetch shaped homepage with structured sections
+  let shapedHomepage: HomepageShapedResponse | null = null
+  try {
+    shapedHomepage = await getHomepageShaped({ themeKey, lang })
+    console.log('✅ Shaped homepage loaded:', {
+      hasHero: !!shapedHomepage?.hero,
+      hasTopStories: !!shapedHomepage?.topStories,
+      sectionsCount: shapedHomepage?.sections?.length || 0,
+      dataKeys: Object.keys(shapedHomepage?.data || {}),
+    })
+  } catch (error) {
+    console.error('❌ Shaped homepage failed:', error)
+    shapedHomepage = null
+  }
+
+  // Also fetch legacy homepage for ticker and tenant info
   let homepage: NewHomepageResponse | null = null
   try {
-    const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'en'
+    const apiVersion = themeKey === 'style2' ? '2' : '1'
     homepage = await getPublicHomepage({ v: apiVersion, themeKey, lang })
   } catch {
     homepage = null
@@ -391,26 +415,63 @@ export async function ThemeHome({
   // so links go to the correct tenant path.
   const tenantSlugForLinks = homepage?.tenant?.slug || tenantSlug
 
-  // Extract feeds from the new API structure
+  // Extract feeds from the legacy API for ticker and mostRead
   const feeds = homepage?.feeds || {}
-  
-  // Smart section data extraction using feeds
-  const latestItems = feeds.latest?.items ? feedItemsToArticles(feeds.latest.items) : []
   const tickerItems = feeds.ticker?.items ? feedItemsToArticles(feeds.ticker.items) : []
   const mostReadItems = feeds.mostRead?.items ? feedItemsToArticles(feeds.mostRead.items).slice(0, 3) : []
   
-  // Use smart API data with fallbacks
+  // Use ticker from API or fallback to articles
   const tickerData = tickerItems.length > 0 ? tickerItems : articles.slice(0, 10)
-  const latestData = latestItems.length > 0 ? latestItems : articles
   const mostReadData = mostReadItems.length > 0 ? mostReadItems : articles.slice(0, 3)
+
+  // Helper to convert shaped articles to Article format
+  const shapedToArticle = (item: HomepageShapedArticle): Article => ({
+    id: item.id,
+    slug: item.slug || item.id,
+    title: item.title,
+    excerpt: item.excerpt,
+    coverImage: item.coverImageUrl ? { url: item.coverImageUrl } : undefined,
+    imageUrl: item.coverImageUrl,
+    publishedAt: item.publishedAt,
+    category: item.category,
+  } as Article)
 
   const layout = await readHomeLayout(tenantSlug, 'style1')
 
-  // Hero section: Use latest data
-  const heroSource = latestData
-  const lead = heroSource[0]
-  const medium = heroSource.slice(1, 3)
-  const small = heroSource.slice(3, 9)
+  // Hero section: Use shaped homepage hero or fallback to articles
+  let lead: Article | undefined
+  let medium: Article[]
+  let small: Article[]
+
+  if (shapedHomepage?.hero && shapedHomepage.hero.length > 0) {
+    // Use hero from shaped API
+    lead = shapedToArticle(shapedHomepage.hero[0])
+    
+    // Use topStories for medium and small cards
+    const topStories = (shapedHomepage.topStories || []).map(shapedToArticle)
+    medium = topStories.slice(0, 2)
+    small = topStories.slice(2, 8)
+  } else {
+    // Fallback to legacy data
+    const latestItems = feeds.latest?.items ? feedItemsToArticles(feeds.latest.items) : []
+    const latestData = latestItems.length > 0 ? latestItems : articles
+    lead = latestData[0]
+    medium = latestData.slice(1, 3)
+    small = latestData.slice(3, 9)
+  }
+
+  // Extract sections data from shaped homepage
+  const sectionDataMap: Record<string, Article[]> = {}
+  if (shapedHomepage?.sections) {
+    shapedHomepage.sections.forEach(section => {
+      sectionDataMap[section.key] = section.items.map(shapedToArticle)
+    })
+  } else if (shapedHomepage?.data) {
+    // Use data object if sections not available
+    Object.entries(shapedHomepage.data).forEach(([key, items]) => {
+      sectionDataMap[key] = items.map(shapedToArticle)
+    })
+  }
 
   const activeSections = (layout.sections || [])
     .filter((s) => s && s.isActive)
@@ -501,7 +562,7 @@ export async function ThemeHome({
         return (
           <div key={block.id} className="mt-8">
             <Section title="" noShadow bodyClassName="grid grid-cols-1 gap-6 lg:grid-cols-4">
-              <CategoryColumns tenantSlug={tenantSlugForLinks} />
+              <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} />
             </Section>
           </div>
         )
@@ -596,7 +657,7 @@ export async function ThemeHome({
   function flushMain() {
     if (mainChunk.length === 0) return
     rendered.push(
-      <main key={`main-${mainKey++}`} className="mx-auto max-w-7xl px-4 py-3">
+      <main id="main-content" key={`main-${mainKey++}`} className="mx-auto max-w-7xl px-4 py-3">
         {mainChunk}
       </main>,
     )
@@ -613,9 +674,14 @@ export async function ThemeHome({
   }
   flushMain()
 
+  // 🎯 Get config for branding (logo, favicon, etc.)
+  const config = await getConfig()
+  const logoUrl = config?.branding.logoUrl || settings?.branding?.logoUrl
+  const siteName = config?.branding.siteName || title
+
   return (
     <div className="theme-style1">
-      <Navbar tenantSlug={tenantSlugForLinks} title={title} logoUrl={settings?.branding?.logoUrl} />
+      <Navbar tenantSlug={tenantSlugForLinks} title={siteName} logoUrl={logoUrl} />
       {rendered}
       <MobileBottomNav tenantSlug={tenantSlugForLinks} />
       <Footer settings={settings} tenantSlug={tenantSlugForLinks} />
@@ -652,21 +718,23 @@ export async function ThemeArticle({ tenantSlug, title, article }: { tenantSlug:
 
   return (
     <div className="theme-style1">
+      <ReadingProgress />
       <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} />
       <main className="mx-auto max-w-7xl px-4 py-6">
         {/* Breadcrumbs */}
-        <nav aria-label="Breadcrumb" className="mb-6 text-sm text-zinc-600">
-          <a href={"/"} className="hover:text-red-600 transition-colors">Home</a>
-          <span className="mx-2 text-zinc-400">/</span>
-          <span className="text-zinc-900 font-medium">Article</span>
-        </nav>
+        <Breadcrumbs
+          items={[
+            { label: 'Home', href: `/${tenantSlug ? `t/${tenantSlug}` : ''}` },
+            { label: 'Article' }
+          ]}
+        />
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
           {/* Main Article Content */}
           <article className="min-w-0">
             {/* Article Header */}
             <header className="mb-8">
-              <h1 className="article-title mb-4 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-zinc-900">
+              <h1 className="mb-4 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-zinc-900">
                 {article.title}
               </h1>
               
@@ -695,42 +763,11 @@ export async function ThemeArticle({ tenantSlug, title, article }: { tenantSlug:
               </div>
 
               {/* Social Share Buttons */}
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <span className="text-sm font-medium text-zinc-700">Share:</span>
-                <div className="flex gap-2">
-                  <button 
-                    className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                    aria-label="Share on Facebook"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                    </svg>
-                  </button>
-                  <button 
-                    className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-sky-500 text-white hover:bg-sky-600 transition-colors"
-                    aria-label="Share on Twitter"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                    </svg>
-                  </button>
-                  <button 
-                    className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors"
-                    aria-label="Share on WhatsApp"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                    </svg>
-                  </button>
-                  <button 
-                    className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-zinc-700 text-white hover:bg-zinc-800 transition-colors"
-                    aria-label="Copy link"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                </div>
+              <div className="mt-4">
+                <ShareButtons 
+                  url={articleHref(tenantSlug, article.slug || article.id)}
+                  title={article.title}
+                />
               </div>
             </header>
 
@@ -872,9 +909,9 @@ export async function ThemeArticle({ tenantSlug, title, article }: { tenantSlug:
 }
 
 function getAdEveryN() {
-  const raw = Number(process.env.NEXT_PUBLIC_ARTICLE_AD_EVERY_N_PARAGRAPHS || '3')
-  if (Number.isFinite(raw) && raw >= 1) return Math.floor(raw)
-  return 3
+  const raw = Number(process.env.NEXT_PUBLIC_ARTICLE_AD_EVERY_N_PARAGRAPHS || '6')
+  if (Number.isFinite(raw) && raw >= 1) return Math.max(5, Math.floor(raw))
+  return 6
 }
 
 function HorizontalInlineAd() {
@@ -1258,9 +1295,30 @@ async function MostReadSidebar({ tenantSlug, currentArticleId }: { tenantSlug: s
   )
 }
 
-async function CategoryColumns({ tenantSlug }: { tenantSlug: string }) {
+async function CategoryColumns({ 
+  tenantSlug, 
+  sectionDataMap = {} 
+}: { 
+  tenantSlug: string
+  sectionDataMap?: Record<string, Article[]>
+}) {
   const cats: Category[] = await getCategoriesForNav()
-  const chosen = cats.slice(0, 4)
+  
+  // Define specific categories for each column
+  // Col 1: latest, Col 2: entertainment, Col 3: politics, Col 4: breaking
+  const categoryMap = {
+    latest: cats.find(c => c.slug === 'latest') || cats[0],
+    entertainment: cats.find(c => c.slug === 'entertainment') || cats[1],
+    politics: cats.find(c => c.slug === 'political' || c.slug === 'politics') || cats[2],
+    breaking: cats.find(c => c.slug === 'breaking') || cats[3]
+  }
+
+  const chosen = [
+    categoryMap.latest,
+    categoryMap.entertainment,
+    categoryMap.politics,
+    categoryMap.breaking
+  ].filter(Boolean) // Remove nulls
 
   const fillToCount = (primary: Article[], feed: Article[], target: number) => {
     const out = primary.slice(0, target)
@@ -1275,11 +1333,24 @@ async function CategoryColumns({ tenantSlug }: { tenantSlug: string }) {
   }
 
   const feed = await getHomeFeed('na')
+  
+  // Build lists: prefer sectionDataMap, fallback to category fetch
   const lists = await Promise.all(
-    chosen.map(async (c) => ({
-      category: c,
-      items: fillToCount(await getArticlesByCategory('na', c.slug), feed, 5),
-    }))
+    chosen.map(async (c) => {
+      // Try to get from sectionDataMap first
+      let items = sectionDataMap[c.slug] || []
+      
+      // If not enough items, fetch from category API
+      if (items.length < 5) {
+        const categoryArticles = await getArticlesByCategory('na', c.slug)
+        items = fillToCount(items.length > 0 ? items : categoryArticles, feed, 5)
+      }
+      
+      return {
+        category: c,
+        items: items.slice(0, 5), // Ensure max 5 items
+      }
+    })
   )
   return (
     <>

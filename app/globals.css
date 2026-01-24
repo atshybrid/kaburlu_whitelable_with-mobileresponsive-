@@ -32,18 +32,49 @@ body {
   line-height: var(--line-height-adjust);
 }
 
-/* Typography Hierarchy */
+/* Typography Hierarchy - OPTIMIZED FOR READABILITY */
 h1, h2, h3, h4, h5, h6,
 .title, .heading {
   font-family: var(--font-display);
   font-weight: 700;
+  line-height: 1.3; /* Changed from 1.2 for better readability */
+}
+
+h1 {
   line-height: 1.2;
+}
+
+h2 {
+  line-height: 1.3;
+}
+
+h3, h4, h5, h6 {
+  line-height: 1.4;
+}
+
+.article-title {
+  line-height: 1.3 !important;
 }
 
 .article-content,
 .body-text {
   font-family: var(--font-serif);
-  line-height: var(--line-height-adjust);
+  line-height: 1.7; /* Changed from var(--line-height-adjust) for optimal reading */
+}
+
+.article-content p {
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+}
+
+.article-paragraph {
+  line-height: 1.7;
+}
+
+/* Card and list item text */
+.line-clamp-2,
+.line-clamp-3 {
+  line-height: 1.5; /* Optimal for multi-line clamp */
 }
 
 /* === LANGUAGE-SPECIFIC FONT MAPPINGS === */
@@ -313,4 +344,54 @@ h6 {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Custom scrollbar for sidebar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Skip to main content (accessibility) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only:focus {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  width: auto;
+  height: auto;
+  padding: 1rem 1.5rem;
+  margin: 1rem;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  background: #000;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 0.5rem;
 }
