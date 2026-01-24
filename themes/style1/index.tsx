@@ -1303,22 +1303,28 @@ async function CategoryColumns({
   sectionDataMap?: Record<string, Article[]>
 }) {
   const cats: Category[] = await getCategoriesForNav()
-  
-  // Define specific categories for each column
-  // Col 1: latest, Col 2: entertainment, Col 3: politics, Col 4: breaking
-  const categoryMap = {
-    latest: cats.find(c => c.slug === 'latest') || cats[0],
-    entertainment: cats.find(c => c.slug === 'entertainment') || cats[1],
-    politics: cats.find(c => c.slug === 'political' || c.slug === 'politics') || cats[2],
-    breaking: cats.find(c => c.slug === 'breaking') || cats[3]
-  }
 
-  const chosen = [
-    categoryMap.latest,
-    categoryMap.entertainment,
-    categoryMap.politics,
-    categoryMap.breaking
-  ].filter(Boolean) // Remove nulls
+  // Use real backend categories. Some tenants don't have slugs like `latest` or `breaking`.
+  // Prefer common news slugs, then fill from available categories.
+  const preferredSlugs = ['national', 'entertainment', 'politics', 'sports', 'technology', 'business', 'international']
+  const preferred = preferredSlugs
+    .map((slug) => cats.find((c) => c.slug === slug))
+    .filter(Boolean) as Category[]
+
+  const chosen: Category[] = []
+  const seen = new Set<string>()
+  for (const c of preferred) {
+    if (!c || seen.has(c.slug)) continue
+    chosen.push(c)
+    seen.add(c.slug)
+    if (chosen.length >= 4) break
+  }
+  for (const c of cats) {
+    if (!c || seen.has(c.slug)) continue
+    chosen.push(c)
+    seen.add(c.slug)
+    if (chosen.length >= 4) break
+  }
 
   const fillToCount = (primary: Article[], feed: Article[], target: number) => {
     const out = primary.slice(0, target)

@@ -6,19 +6,25 @@ function isMockMode() {
   return v === '1' || v === 'true' || v === 'yes' || v === 'on'
 }
 
+function allowMockFallback() {
+  // Never show mock/demo content in production unless explicitly enabled.
+  if (isMockMode()) return true
+  return process.env.NODE_ENV !== 'production'
+}
+
 export async function getHomeFeed(tenantId: string) {
   void tenantId
   const tenant = await getTenantFromHeaders()
   const ds = getDataSource()
 
-  if (isMockMode()) return makeMockArticles({ count: 12, tenantSlug: tenant.slug })
+  if (allowMockFallback()) return makeMockArticles({ count: 12, tenantSlug: tenant.slug })
 
   try {
     const list = await ds.homeFeed(tenant.slug, tenant.id)
     if (Array.isArray(list) && list.length > 0) return list
-    return makeMockArticles({ count: 12, tenantSlug: tenant.slug })
+    return []
   } catch {
-    return makeMockArticles({ count: 12, tenantSlug: tenant.slug })
+    return []
   }
 }
 
@@ -35,7 +41,7 @@ export async function getArticleBySlug(tenantId: string, slug: string) {
 
   // If the UI is showing mock articles (empty backend / mock mode), avoid 404s when clicking.
   const looksLikeMockSlug = /^sample-\d+$/i.test(slug) || /-sample-\d+$/i.test(slug) || slug.startsWith('dummy-')
-  if (isMockMode() || looksLikeMockSlug) return makeMockArticle({ slug, tenantSlug: tenant.slug })
+  if (allowMockFallback() && looksLikeMockSlug) return makeMockArticle({ slug, tenantSlug: tenant.slug })
   return null
 }
 
@@ -44,14 +50,14 @@ export async function getArticlesByCategory(tenantId: string, categorySlug: stri
   const tenant = await getTenantFromHeaders()
   const ds = getDataSource()
 
-  if (isMockMode()) return makeMockArticles({ count: 12, tenantSlug: tenant.slug, categorySlug })
+  if (allowMockFallback()) return makeMockArticles({ count: 12, tenantSlug: tenant.slug, categorySlug })
 
   try {
     const list = await ds.articlesByCategory(tenant.slug, categorySlug, tenant.id)
     if (Array.isArray(list) && list.length > 0) return list
-    return makeMockArticles({ count: 12, tenantSlug: tenant.slug, categorySlug })
+    return []
   } catch {
-    return makeMockArticles({ count: 12, tenantSlug: tenant.slug, categorySlug })
+    return []
   }
 }
 
