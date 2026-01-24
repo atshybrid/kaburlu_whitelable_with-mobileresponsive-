@@ -40,44 +40,10 @@ async function loadPublicData() {
   return []
 }
 
-async function loadCategoryData(category: string) {
-  if (cachedCategoryArticles[category]) return cachedCategoryArticles[category]
-  
-  try {
-    if (typeof window === 'undefined' && typeof process !== 'undefined' && process.cwd) {
-      const fs = await import('fs/promises')
-      const path = await import('path')
-      const filePath = path.join(process.cwd(), 'public', 'news', `${category}.json`)
-      const fileContent = await fs.readFile(filePath, 'utf-8')
-      const articles = JSON.parse(fileContent)
-      // Transform articles with category slug from filename
-      const transformed = articles.map((item: NewsArticle, index: number) => 
-        transformPublicArticle(item, index, category)
-      )
-      cachedCategoryArticles[category] = transformed
-      console.log(`✅ Loaded ${transformed.length} articles from public/news/${category}.json`)
-      return transformed
-    }
-  } catch {
-    console.log(`⚠️ No category file for ${category}, using general articles`)
-  }
-  
-  return []
-}
+// REMOVED: loadCategoryData - all public/news/*.json are mock data only
+// Backend APIs should be used for real data
 
-async function loadAllCategoryData() {
-  const categories = ['latest', 'breaking', 'sports', 'entertainment', 'business', 'political', 'crime', 'lifestyle', 'health', 'education', 'world']
-  const allArticles: NewsArticle[] = []
-  
-  for (const category of categories) {
-    const articles = await loadCategoryData(category)
-    if (articles && articles.length > 0) {
-      allArticles.push(...articles)
-    }
-  }
-  
-  return allArticles
-}
+// REMOVED: loadAllCategoryData - all public/news/*.json are mock data only
 
 // Get category slug from filename or article category
 function getCategorySlug(item: NewsArticle, filename?: string): string {
@@ -150,50 +116,26 @@ function getCategoryNameInTelugu(category: string): string {
 }
 
 export async function getFallbackArticles() {
-  // First try loading all category-wise data from public/news/*.json
-  const categoryArticles = await loadAllCategoryData()
-  if (categoryArticles && categoryArticles.length > 0) {
-    console.log(`✅ Total ${categoryArticles.length} Telugu articles loaded from all categories`)
-    // Articles already transformed by loadCategoryData
-    return categoryArticles
-  }
+  // NOTE: public/news/*.json files are mock data - do NOT use in production
+  // Only use public/data.json for minimal fallback during development
   
-  // Fallback to public/data.json
   const publicData = await loadPublicData()
   if (publicData && publicData.length > 0) {
+    console.log(`⚠️ Using fallback data from public/data.json (${publicData.length} articles) - backend API should be used`)
     return publicData.slice(0, 50).map((item, index) => transformPublicArticle(item, index))
   }
   
   // Ultimate fallback - static data
+  console.warn('⚠️ Using static fallback articles - backend APIs are required for production')
   return STATIC_FALLBACK_ARTICLES
 }
 
 export async function getFallbackCategories() {
-  // First try to get categories from news folder
-  const categoryArticles = await loadAllCategoryData()
-  if (categoryArticles && categoryArticles.length > 0) {
-    // Extract unique categories from articles
-    const categorySet = new Set<string>()
-    const categoryMap = new Map<string, string>()
-    
-    categoryArticles.forEach((item: NewsArticle) => {
-      if (Array.isArray(item.category)) {
-        item.category.forEach((cat: string) => {
-          categorySet.add(cat)
-          categoryMap.set(cat, getCategoryNameInTelugu(cat))
-        })
-      }
-    })
-    
-    return Array.from(categorySet).slice(0, 12).map((slug, index) => ({
-      id: `cat-${index + 1}`,
-      name: categoryMap.get(slug) || slug,
-      slug: slug,
-      description: `${categoryMap.get(slug)} వార్తలు`
-    }))
-  }
+  // NOTE: public/news/*.json files are mock data - do NOT use
+  // Only fallback to public/data.json for minimal development support
+  console.warn('⚠️ Using fallback categories - backend /public/categories API should be used')
   
-  // Fallback to extracting from public/data.json
+  // Extract from public/data.json
   const publicData = await loadPublicData()
   if (publicData && publicData.length > 0) {
     const categorySet = new Set<string>()
