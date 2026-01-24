@@ -41,12 +41,25 @@ export async function fetchJSON<T>(path: string, init?: FetchJSONInit) {
     ...rest
   } = init ?? {}
 
-  const tenantDomain =
-    tenantDomainFromInit || getDomainFromHost(
-      typeof window === 'undefined' 
-        ? process.env.HOST 
-        : (process.env.NEXT_PUBLIC_HOST || window.location.hostname)
-    )
+  // Get tenant domain: use provided domain, or detect from request headers
+  let tenantDomain = tenantDomainFromInit
+  if (!tenantDomain) {
+    if (typeof window === 'undefined') {
+      // Server-side: get from next/headers to use actual request host
+      try {
+        const { headers } = await import('next/headers')
+        const h = await headers()
+        const host = h.get('host')
+        tenantDomain = getDomainFromHost(host)
+      } catch {
+        // Fallback to env variable if headers not available
+        tenantDomain = getDomainFromHost(process.env.HOST || 'localhost')
+      }
+    } else {
+      // Client-side: use window.location
+      tenantDomain = getDomainFromHost(process.env.NEXT_PUBLIC_HOST || window.location.hostname)
+    }
+  }
 
   const method = String(rest.method || 'GET').toUpperCase()
   const isCacheable = method === 'GET' || method === 'HEAD'
