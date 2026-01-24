@@ -50,9 +50,13 @@ async function loadCategoryData(category: string) {
       const filePath = path.join(process.cwd(), 'public', 'news', `${category}.json`)
       const fileContent = await fs.readFile(filePath, 'utf-8')
       const articles = JSON.parse(fileContent)
-      cachedCategoryArticles[category] = articles
-      console.log(`✅ Loaded ${articles.length} articles from public/news/${category}.json`)
-      return articles
+      // Transform articles with category slug from filename
+      const transformed = articles.map((item: NewsArticle, index: number) => 
+        transformPublicArticle(item, index, category)
+      )
+      cachedCategoryArticles[category] = transformed
+      console.log(`✅ Loaded ${transformed.length} articles from public/news/${category}.json`)
+      return transformed
     }
   } catch {
     console.log(`⚠️ No category file for ${category}, using general articles`)
@@ -75,11 +79,26 @@ async function loadAllCategoryData() {
   return allArticles
 }
 
+// Get category slug from filename or article category
+function getCategorySlug(item: NewsArticle, filename?: string): string {
+  // If loaded from specific category file, use that
+  if (filename) return filename
+  
+  // Otherwise extract from article categories
+  if (Array.isArray(item.category) && item.category.length > 0) {
+    const cat = item.category[0].toLowerCase()
+    // Map common variations to our standard slugs
+    if (cat === 'politics') return 'political'
+    if (cat === 'tech') return 'technology'
+    return cat
+  }
+  return 'latest'
+}
+
 // Transform public data.json format to our article format
-function transformPublicArticle(item: NewsArticle, index: number) {
-  const categoryName = Array.isArray(item.category) && item.category[0] 
-    ? getCategoryNameInTelugu(item.category[0])
-    : 'సాధారణ'
+function transformPublicArticle(item: NewsArticle, index: number, filename?: string) {
+  const categorySlug = getCategorySlug(item, filename)
+  const categoryName = getCategoryNameInTelugu(categorySlug)
     
   return {
     id: item.article_id || `article-${index}`,
@@ -89,9 +108,9 @@ function transformPublicArticle(item: NewsArticle, index: number) {
     content: item.content || item.description || '',
     imageUrl: item.image_url || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800',
     category: { 
-      id: item.category?.[0] || 'general',
+      id: `cat-${categorySlug}`,
       name: categoryName,
-      slug: item.category?.[0] || 'general'
+      slug: categorySlug
     },
     author: { 
       name: Array.isArray(item.creator) && item.creator[0] 
@@ -103,21 +122,29 @@ function transformPublicArticle(item: NewsArticle, index: number) {
   }
 }
 
-// Map English category names to Telugu
+// Map English category names to Telugu - comprehensive mapping
 function getCategoryNameInTelugu(category: string): string {
   const categoryMap: Record<string, string> = {
+    'latest': 'లేటెస్ట్',
+    'breaking': 'బ్రేకింగ్',
     'top': 'ముఖ్యాంశాలు',
     'sports': 'క్రీడలు',
     'entertainment': 'వినోదం',
     'lifestyle': 'జీవనశైలి',
     'politics': 'రాజకీయాలు',
+    'political': 'రాజకీయాలు',
     'business': 'వ్యాపారం',
-    'technology': 'సాంకేతికం',
+    'technology': 'టెక్నాలజీ',
+    'tech': 'టెక్నాలజీ',
     'health': 'ఆరోగ్యం',
     'education': 'విద్య',
     'national': 'జాతీయం',
     'international': 'అంతర్జాతీయం',
+    'world': 'ప్రపంచం',
     'state': 'రాష్ట్రం',
+    'crime': 'నేరాలు',
+    'environment': 'పర్యావరణం',
+    'science': 'సైన్స్',
   }
   return categoryMap[category.toLowerCase()] || category
 }
@@ -126,14 +153,15 @@ export async function getFallbackArticles() {
   // First try loading all category-wise data from public/news/*.json
   const categoryArticles = await loadAllCategoryData()
   if (categoryArticles && categoryArticles.length > 0) {
-    console.log(`✅ Total ${categoryArticles.length} articles loaded from all categories`)
-    return categoryArticles.map(transformPublicArticle)
+    console.log(`✅ Total ${categoryArticles.length} Telugu articles loaded from all categories`)
+    // Articles already transformed by loadCategoryData
+    return categoryArticles
   }
   
   // Fallback to public/data.json
   const publicData = await loadPublicData()
   if (publicData && publicData.length > 0) {
-    return publicData.slice(0, 50).map(transformPublicArticle)
+    return publicData.slice(0, 50).map((item, index) => transformPublicArticle(item, index))
   }
   
   // Ultimate fallback - static data

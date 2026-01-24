@@ -502,23 +502,42 @@ async function createFallbackShapedHomepage(lang: string, themeKey: string): Pro
   // Hero: 1 article
   const hero = shapedArticles.slice(0, 1)
   
-  // Top Stories: 5 articles
+  // Top Stories: 5 articles (skip hero article)
   const topStories = shapedArticles.slice(1, 6)
 
-  // Create sections for specific categories
+  // Create sections for specific categories - USE UNIQUE CATEGORIES ONLY
   const sections: HomepageShapedSection[] = []
   const sectionData: Record<string, HomepageShapedArticle[]> = {}
 
-  // Define priority categories
-  const priorityCategories = ['latest', 'entertainment', 'politics', 'breaking', 'sports', 'business']
+  // Define UNIQUE priority categories for sections (no duplicates!)
+  const priorityCategories = ['latest', 'entertainment', 'political', 'breaking', 'sports', 'business']
+  const usedArticleIds = new Set<string>()
+  
+  // Add hero and topStories IDs to used set
+  hero.forEach(a => usedArticleIds.add(a.id))
+  topStories.forEach(a => usedArticleIds.add(a.id))
   
   priorityCategories.forEach((catSlug, index) => {
-    const category = categories.find(c => c.slug === catSlug)
+    const category = categories.find(c => c.slug === catSlug || (catSlug === 'political' && c.slug === 'politics'))
     if (!category) return
 
-    // Get articles for this category
-    const categoryArticles = shapedArticles.filter(a => a.category?.slug === catSlug)
-    const articlesToUse = categoryArticles.length > 0 ? categoryArticles : shapedArticles.slice(index * 6, (index + 1) * 6)
+    // Get articles for this category (excluding already used articles)
+    const categoryArticles = shapedArticles.filter(a => 
+      a.category?.slug === catSlug && !usedArticleIds.has(a.id)
+    )
+    
+    // Fallback: use any unused articles if category doesn't have enough
+    let articlesToUse: HomepageShapedArticle[] = []
+    if (categoryArticles.length >= 6) {
+      articlesToUse = categoryArticles.slice(0, 6)
+    } else {
+      // Get unused articles
+      const unusedArticles = shapedArticles.filter(a => !usedArticleIds.has(a.id))
+      articlesToUse = [...categoryArticles, ...unusedArticles].slice(0, 6)
+    }
+    
+    // Mark these articles as used
+    articlesToUse.forEach(a => usedArticleIds.add(a.id))
 
     const section: HomepageShapedSection = {
       key: catSlug,
@@ -526,11 +545,11 @@ async function createFallbackShapedHomepage(lang: string, themeKey: string): Pro
       position: index + 1,
       limit: 6,
       categorySlug: catSlug,
-      items: articlesToUse.slice(0, 6),
+      items: articlesToUse,
     }
 
     sections.push(section)
-    sectionData[catSlug] = articlesToUse.slice(0, 6)
+    sectionData[catSlug] = articlesToUse
   })
 
   return {

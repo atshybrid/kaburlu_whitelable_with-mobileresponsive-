@@ -1337,11 +1337,23 @@ async function CategoryColumns({
   // Build lists: prefer sectionDataMap, fallback to category fetch
   const lists = await Promise.all(
     chosen.map(async (c) => {
-      // Try to get from sectionDataMap first
-      let items = sectionDataMap[c.slug] || []
+      // Try to get from sectionDataMap first (check both slugs for politics)
+      const slugsToCheck = c.slug === 'politics' || c.slug === 'political' 
+        ? ['political', 'politics'] 
+        : [c.slug]
+      
+      let items: Article[] = []
+      for (const slug of slugsToCheck) {
+        items = sectionDataMap[slug] || []
+        if (items.length > 0) {
+          console.log(`✅ Using pre-fetched data for ${c.name} (${slug}): ${items.length} items`)
+          break
+        }
+      }
       
       // If not enough items, fetch from category API
       if (items.length < 5) {
+        console.log(`⚠️ Fetching more for ${c.name}...`)
         const categoryArticles = await getArticlesByCategory('na', c.slug)
         items = fillToCount(items.length > 0 ? items : categoryArticles, feed, 5)
       }

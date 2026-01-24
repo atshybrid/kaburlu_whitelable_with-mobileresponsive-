@@ -130,12 +130,19 @@ export async function getCategoriesForNav(): Promise<Category[]> {
 }
 
 function makeMockCategories(): Category[] {
+  // Telugu categories matching public/news/*.json files
   return [
-    { id: 'mock-politics', name: 'Politics', slug: 'politics' },
-    { id: 'mock-business', name: 'Business', slug: 'business' },
-    { id: 'mock-sports', name: 'Sports', slug: 'sports' },
-    { id: 'mock-entertainment', name: 'Entertainment', slug: 'entertainment' },
-    { id: 'mock-tech', name: 'Technology', slug: 'technology' },
-    { id: 'mock-health', name: 'Health', slug: 'health' },
+    { id: 'cat-latest', name: 'లేటెస్ట్', slug: 'latest' },
+    { id: 'cat-breaking', name: 'బ్రేకింగ్', slug: 'breaking' },
+    { id: 'cat-politics', name: 'రాజకీయాలు', slug: 'political' },
+    { id: 'cat-sports', name: 'క్రీడలు', slug: 'sports' },
+    { id: 'cat-entertainment', name: 'వినోదం', slug: 'entertainment' },
+    { id: 'cat-business', name: 'వ్యాపారం', slug: 'business' },
+    { id: 'cat-crime', name: 'నేరాలు', slug: 'crime' },
+    { id: 'cat-lifestyle', name: 'జీవనశైలి', slug: 'lifestyle' },
+    { id: 'cat-health', name: 'ఆరోగ్యం', slug: 'health' },
+    { id: 'cat-education', name: 'విద్య', slug: 'education' },
+    { id: 'cat-world', name: 'ప్రపంచం', slug: 'world' },
+    { id: 'cat-tech', name: 'టెక్నాలజీ', slug: 'technology' },
   ]
 }
