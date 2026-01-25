@@ -463,6 +463,22 @@ export function getThemeCssVars(config: TenantConfig | null): Record<string, str
     vars['--secondary'] = secondary
   }
   
+  // Add header and footer background colors
+  if (config?.theme.colors.headerBg) {
+    vars['--header-bg'] = config.theme.colors.headerBg
+  }
+  if (config?.theme.colors.footerBg) {
+    vars['--footer-bg'] = config.theme.colors.footerBg
+  }
+  
+  // Add font family if available
+  if (config?.theme.typography.fontFamily) {
+    vars['--font-body'] = config.theme.typography.fontFamily
+  }
+  if (config?.theme.typography.fontFamilyHeadings) {
+    vars['--font-heading'] = config.theme.typography.fontFamilyHeadings
+  }
+  
   return vars
 }
 

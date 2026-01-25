@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getEffectiveSettings } from "@/lib/settings";
 import { getConfig, getDefaultLanguage, getDefaultLanguageDirection } from "@/lib/config";
 import { getSEOHomepage, generateJSONLD } from "@/lib/seo";
+import { ThemeColorVars } from "@/components/ConfigLoader";
 import "./globals.css";
 import { OfflineDetector } from "@/components/shared/OfflineDetector";
 // Load theme styles globally so root pages can apply theme-specific classes
@@ -259,6 +260,9 @@ async function RootLayoutInner({
   return (
     <html lang={languageCode} dir={langDirection} data-lang={languageCode} className={fontClasses}>
       <head>
+        {/* 🎯 Dynamic theme colors from backend config */}
+        <ThemeColorVars />
+        
         {/* 🎯 JSON-LD structured data for Google (Schema.org) */}
         {seoData && (
           <script
