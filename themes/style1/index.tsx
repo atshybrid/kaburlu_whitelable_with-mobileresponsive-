@@ -1227,27 +1227,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 </div>
               </header>
 
-              {/* Featured Image */}
-              {article.coverImage?.url && (
-                <figure className="mb-0">
-                  <div className="relative aspect-video w-full">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img 
-                      src={article.coverImage.url} 
-                      alt={article.coverImage.alt || article.title} 
-                      className="w-full h-full object-cover" 
-                      loading="eager"
-                    />
-                  </div>
-                  {article.coverImage.caption && (
-                    <figcaption className="px-6 sm:px-8 lg:px-10 py-3 text-sm text-zinc-600 italic bg-zinc-50">
-                      {article.coverImage.caption}
-                    </figcaption>
-                  )}
-                </figure>
-              )}
-
-              {/* Article Highlights - Shows first */}
+              {/* Article Highlights - Shows before image */}
               {article.highlights && article.highlights.length > 0 && (
                 <div className="px-6 sm:px-8 lg:px-10 pt-8">
                   <div className="rounded-xl bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-l-4 border-blue-600 p-6 shadow-sm">
@@ -1290,6 +1270,26 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* Featured Image - Shows after highlights and excerpt */}
+              {article.coverImage?.url && (
+                <figure className="mt-8">
+                  <div className="relative aspect-video w-full">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src={article.coverImage.url} 
+                      alt={article.coverImage.alt || article.title} 
+                      className="w-full h-full object-cover" 
+                      loading="eager"
+                    />
+                  </div>
+                  {article.coverImage.caption && (
+                    <figcaption className="px-6 sm:px-8 lg:px-10 py-3 text-sm text-zinc-600 italic bg-zinc-50">
+                      {article.coverImage.caption}
+                    </figcaption>
+                  )}
+                </figure>
               )}
 
               {/* Top Ad - Above Content */}
