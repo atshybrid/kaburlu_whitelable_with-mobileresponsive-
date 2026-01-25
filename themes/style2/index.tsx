@@ -916,22 +916,8 @@ export async function ThemeHome({
   settings?: EffectiveSettings
   tenantDomain?: string
 }) {
-  if (!articles || articles.length === 0) {
-    return (
-      <div className="theme-style2">
-        <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} variant="style2" />
-        <div className="bg-zinc-50">
-          <div className="mx-auto max-w-7xl px-4 py-8">
-            <TechnicalIssues 
-              title="సాంకేతిక సమస్యలు"
-              message="మేము కంటెంట్ డెలివరీలో సాంకేతిక సమస్యలను ఎదుర్కొంటున్నాము. దయచేసి Kaburlu Media సపోర్ట్‌ను సంప్రదించండి."
-            />
-          </div>
-        </div>
-        <Footer settings={settings} tenantSlug={tenantSlug} />
-      </div>
-    )
-  }
+  // Style2 fetches its own data internally via getPublicHomepage API
+  // The articles prop is ignored - we always fetch fresh data
 
   // Use smart API integration for style2 with v=2
   const themeKey = settings?.theme?.theme || settings?.theme?.key || 'style2'
@@ -975,10 +961,15 @@ export async function ThemeHome({
   const style2Hero = Array.isArray(style2Home?.hero) ? style2Home!.hero!.map(style2ItemToArticle) : []
 
   // Use smart API data with fallbacks
-  const heroLeftData = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : articles)
-  const heroRightMostRead = mostReadItems.length > 0 ? mostReadItems : (style2Feed.length ? style2Feed.slice(0, 5) : articles.slice(0, 5))
+  // Generate mock data if all API sources are empty (for development/testing)
+  const mockArticles = (latestItems.length === 0 && style2Feed.length === 0 && articles.length === 0)
+    ? await import('@/lib/data').then(m => m.getHomeFeed('mock')).catch(() => [])
+    : []
   
-  const homeFeed = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : articles)
+  const heroLeftData = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : (articles.length ? articles : mockArticles))
+  const heroRightMostRead = mostReadItems.length > 0 ? mostReadItems : (style2Feed.length ? style2Feed.slice(0, 5) : (articles.length ? articles.slice(0, 5) : mockArticles.slice(0, 5)))
+  
+  const homeFeed = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : (articles.length ? articles : mockArticles))
   
   if (homeFeed.length === 0) {
     return (
