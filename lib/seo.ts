@@ -3,9 +3,9 @@
  * Fetches JSON-LD structured data for Google/search engines
  */
 
-import { headers } from 'next/headers'
 import { cache as reactCache } from 'react'
 import { normalizeTenantDomain } from './remote'
+import { getConfig, getCacheTTL } from './config'
 
 const API_BASE_URL = process.env.API_BASE_URL || 'https://app.kaburlumedia.com/api/v1'
 
@@ -61,9 +61,6 @@ export interface SEOResult {
 type CacheEntry = { value: SEOResult; expires: number }
 const cache = new Map<string, CacheEntry>()
 
-// Use same TTL as config (1 hour)
-const SEO_TTL_MS = 3600 * 1000
-
 function getCacheKey(domain: string): string {
   return `seo:homepage:${domain}`
 }
@@ -72,20 +69,14 @@ function getCacheKey(domain: string): string {
 // Domain Detection
 // ============================================================================
 
-function domainFromHeaders(h: Headers): string {
-  const host = h.get('host') || 'localhost'
-  return normalizeTenantDomain(host)
-}
-
 async function getTargetDomain(domainOverride?: string): Promise<string> {
-  // 🎯 SIMPLE: If HOST env is set, use it directly
-  if (process.env.HOST) {
-    return normalizeTenantDomain(process.env.HOST)
+  if (domainOverride) {
+    return normalizeTenantDomain(domainOverride)
   }
   
-  // Otherwise detect from request headers
-  const h = await headers()
-  return normalizeTenantDomain(domainOverride || h.get('host') || 'localhost')
+  // ✅ ONLY read the custom header set by proxy
+  const { getTenantDomain } = await import('@/lib/domain-utils')
+  return getTenantDomain()
 }
 
 // ============================================================================
@@ -142,6 +133,10 @@ const _getSEOResult = reactCache(async (domainOverride?: string): Promise<SEORes
   const now = Date.now()
   const key = getCacheKey(domain)
   
+  // Get dynamic cache TTL from config
+  const config = await getConfig()
+  const seoTTL = getCacheTTL(config, 'homepage') * 1000 // Convert seconds to ms
+  
   // Check memory cache
   const hit = cache.get(key)
   if (hit && hit.expires > now && !hit.value.isError) {
@@ -156,7 +151,7 @@ const _getSEOResult = reactCache(async (domainOverride?: string): Promise<SEORes
   if (!result.isError) {
     cache.set(key, {
       value: result,
-      expires: now + SEO_TTL_MS,
+      expires: now + seoTTL,
     })
   }
 
