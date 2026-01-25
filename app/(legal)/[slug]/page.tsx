@@ -7,6 +7,8 @@ import { getEffectiveSettings, getEffectiveSettingsForDomain } from '@/lib/setti
 import type { EffectiveSettings } from '@/lib/remote'
 import { themeCssVarsFromSettings } from '@/lib/theme-vars'
 
+export const dynamic = 'force-dynamic'
+
 export function generateStaticParams() {
   return LEGAL_PAGE_KEYS.map((slug) => ({ slug }))
 }

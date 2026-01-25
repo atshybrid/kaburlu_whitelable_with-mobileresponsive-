@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { resolveTenant } from '@/lib/tenant'
 import { homeHref } from '@/lib/url'
 
+export const dynamic = 'force-dynamic'
+
 export default async function NotFound() {
   const tenant = await resolveTenant().catch(() => ({ slug: 'demo' } as { slug: string }))
   const href = homeHref(tenant.slug)

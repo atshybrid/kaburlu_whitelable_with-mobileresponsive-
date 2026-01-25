@@ -1,17 +1,26 @@
 # Multitenancy
-# NOTE: for production, keep this stable; for local testing override via .env.local
-NEXT_PUBLIC_DEFAULT_TENANT="demo"
-MULTITENANT_MODE="path" # allowed: path | subdomain
-# BASE_DOMAIN is not used by the app logic; API_BASE_URL is used below
-# BASE_DOMAIN="your-base-domain.example.com"
+# NOTE: Multi-domain production automatically detects tenant from domain
+# These settings are for legacy path-based mode (/t/tenant) only
+
+# NEXT_PUBLIC_DEFAULT_TENANT - Only for path-based mode fallback (not used in production)
+# NEXT_PUBLIC_DEFAULT_TENANT="kaburlutoday"
+
+# MULTITENANT_MODE - Legacy setting (path-based vs subdomain)
+# Production uses direct domain detection, not path or subdomain mode
+# MULTITENANT_MODE="path"
 
 # Data source and remote API
 DATA_SOURCE="remote" # remote | local
 API_BASE_URL="https://app.kaburlumedia.com/api/v1"
-HOST="kaburlutoday.com"
-NEXT_PUBLIC_HOST="kaburlutoday.com"
-# NOTE: localhost testing with kaburlutoday.com domain for backend API
-# If backend returns wrong/empty data, will use public/data.json as fallback
+
+# ⚠️ PRODUCTION: DO NOT SET HOST or NEXT_PUBLIC_HOST
+# Let Vercel automatically detect domain from request headers
+# Each domain (kaburlutoday.com, m4news.in, prashnaayudham.com, daxintimes.com)
+# will automatically load its tenant-specific data
+
+# For localhost testing only, override these in .env.local:
+# HOST="kaburlutoday.com"
+# NEXT_PUBLIC_HOST="kaburlutoday.com"
 
 # Site metadata defaults
 SITE_NAME="Kaburlu News"

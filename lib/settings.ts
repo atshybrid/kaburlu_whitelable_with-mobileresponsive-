@@ -14,6 +14,10 @@ const cache = new Map<string, CacheEntry>()
 const TTL_MS = Number(process.env.REMOTE_SETTINGS_MEMORY_TTL_SECONDS || '300') * 1000
 
 function domainFromHeaders(h: Headers) {
+  // 🎯 SIMPLE: If HOST env is set, use it directly
+  if (process.env.HOST) {
+    return normalizeTenantDomain(process.env.HOST)
+  }
   const host = h.get('host') || 'localhost'
   return normalizeTenantDomain(host)
 }

@@ -30,7 +30,7 @@ export async function Navbar({
   
   // Override with config if available
   const finalTitle = config?.branding.siteName || title
-  const finalLogoUrl = config?.branding.logoUrl || logoUrl
+  const finalLogoUrl = config?.branding.logo || logoUrl
   
   const [cats, settings] = await Promise.all([getCategoriesForNav(), getEffectiveSettings()])
 

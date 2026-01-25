@@ -41,22 +41,23 @@ export async function fetchJSON<T>(path: string, init?: FetchJSONInit) {
     ...rest
   } = init ?? {}
 
-  // Get tenant domain: use provided domain, or detect from request headers
+  // Get tenant domain: use provided domain, or ENV HOST, or detect from request
   let tenantDomain = tenantDomainFromInit
   if (!tenantDomain) {
-    if (typeof window === 'undefined') {
-      // Server-side: get from next/headers to use actual request host
+    // 🎯 SIMPLE: If HOST env is set, use it directly
+    if (process.env.HOST) {
+      tenantDomain = getDomainFromHost(process.env.HOST)
+    } else if (typeof window === 'undefined') {
+      // Server-side: detect from request headers
       try {
         const { headers } = await import('next/headers')
         const h = await headers()
-        const host = h.get('host')
-        tenantDomain = getDomainFromHost(host)
+        tenantDomain = getDomainFromHost(h.get('host'))
       } catch {
-        // Fallback to env variable if headers not available
-        tenantDomain = getDomainFromHost(process.env.HOST || 'localhost')
+        tenantDomain = 'localhost'
       }
     } else {
-      // Client-side: use window.location
+      // Client-side: use NEXT_PUBLIC_HOST or window.location
       tenantDomain = getDomainFromHost(process.env.NEXT_PUBLIC_HOST || window.location.hostname)
     }
   }
@@ -70,6 +71,8 @@ export async function fetchJSON<T>(path: string, init?: FetchJSONInit) {
   const next: NextFetchOptions | undefined =
     nextFromInit ?? (shouldUseRevalidation ? { revalidate: revalidateSeconds ?? DEFAULT_REVALIDATE_SECONDS, tags } : (tags ? { tags } : undefined))
 
+  console.log(`🌐 [API Call] ${method} ${url} | X-Tenant-Domain: ${tenantDomain}`)
+  
   const res = await fetch(url, {
     ...rest,
     headers: {

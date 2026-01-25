@@ -1,12 +1,12 @@
 /**
- * 🎯 SINGLE SOURCE OF TRUTH: /public/config API Integration
+ * 🎯 SINGLE SOURCE OF TRUTH: /public/config API Integration (v2.0)
  * 
  * This module fetches and manages tenant configuration from the backend.
- * It provides branding, SEO, language, integrations, and layout settings.
+ * It provides branding, SEO, language, integrations, theme, and layout settings.
  * 
  * Architecture:
  * - Fetched once per request (React Cache)
- * - Cached in memory with TTL
+ * - Cached in memory with TTL from cacheControl.config
  * - Fallback to safe defaults when API fails
  * - Type-safe access to all config values
  */
@@ -16,33 +16,68 @@ import { cache as reactCache } from 'react'
 import { normalizeTenantDomain } from './remote'
 
 const API_BASE_URL = process.env.API_BASE_URL || 'https://app.kaburlumedia.com/api/v1'
-const CONFIG_TTL_MS = Number(process.env.CONFIG_CACHE_TTL_SECONDS || '300') * 1000
 
 // ============================================================================
-// Types (matching backend response exactly)
+// Types (matching backend v2.0 response)
 // ============================================================================
 
 export interface TenantConfig {
+  version: string
+  timestamp: string
+  
   tenant: {
     id: string
     slug: string
     name: string
     displayName: string
+    nativeName: string
+    timezone: string
+    locale: string
   }
+  
   domain: {
     id: string
     domain: string
+    baseUrl: string
     kind: 'NEWS' | 'MAGAZINE' | 'BLOG'
     status: 'ACTIVE' | 'INACTIVE'
+    environment: string
   }
+  
   branding: {
-    logoUrl: string | null
-    faviconUrl: string | null
-    primaryColor: string | null
-    secondaryColor: string | null
     siteName: string
-    fontFamily: string | null
+    siteTagline: string | null
+    logo: string
+    favicon: string
+    appleTouchIcon: string
   }
+  
+  theme: {
+    colors: {
+      primary: string
+      secondary: string
+      headerBg: string
+      footerBg: string
+    }
+    typography: {
+      fontFamily: string
+      fontFamilyHeadings: string | null
+    }
+    assets: {
+      logo: string
+      favicon: string
+      headerHtml: string | null
+      footerHtml: string | null
+    }
+    layout: {
+      style: string
+      headerStyle: string
+      footerStyle: string
+      containerWidth: number
+      homepageConfig: Record<string, unknown>
+    }
+  }
+  
   seo: {
     meta: {
       title: string
@@ -63,13 +98,20 @@ export interface TenantConfig {
       description: string
       imageUrl: string | null
     }
+    jsonLd: {
+      organizationUrl: string
+      websiteUrl: string
+    }
     urls: {
       robotsTxt: string
       sitemapXml: string
+      rssFeed: string
     }
   }
+  
   content: {
     defaultLanguage: string
+    supportedLanguages: string[]
     languages: Array<{
       code: string
       name: string
@@ -77,26 +119,119 @@ export interface TenantConfig {
       direction: 'ltr' | 'rtl'
       defaultForTenant: boolean
     }>
+    dateFormat: string
+    timeFormat: string
   }
+  
   integrations: {
     analytics: {
-      googleAnalyticsId: string | null
-      gtmId: string | null
+      googleAnalytics: string | null
+      googleTagManager: string | null
+      enabled: boolean
     }
     ads: {
-      adsenseClientId: string | null
+      adsense: string | null
+      enabled: boolean
     }
     push: {
       vapidPublicKey: string | null
+      enabled: boolean
+    }
+    social: {
+      facebookAppId: string | null
+      twitterHandle: string | null
     }
   }
-  layout: {
-    showTicker: boolean | null
-    showTopBar: boolean | null
+  
+  features: {
+    darkMode: boolean
+    pwaPushNotifications: boolean
+    commenting: boolean
+    bookmarking: boolean
+    sharing: boolean
+    liveUpdates: boolean
+    newsletter: boolean
+    ePaper: boolean
+    mobileApp: boolean
   }
-  tenantAdmin: {
+  
+  navigation: {
+    header: {
+      primaryMenu: Array<{
+        label: string
+        href: string
+        icon: string | null
+      }>
+      utilityMenu: Record<string, unknown>[]
+      showSearch: boolean
+      showLanguageSwitcher: boolean
+      sticky: {
+        enabled: boolean
+        offsetPx: number
+      }
+    }
+    footer: {
+      sections: Array<{
+        title: string
+        links: Array<{
+          label: string
+          href: string
+        }>
+      }>
+      copyrightText: string
+      showSocialLinks: boolean
+    }
+    mobile: {
+      bottomNav: Array<{
+        label: string
+        href: string
+        icon: string
+      }>
+      quickActions: Record<string, unknown>[]
+    }
+  }
+  
+  social: {
+    facebook: string | null
+    twitter: string | null
+    instagram: string | null
+    youtube: string | null
+    telegram: string | null
+    linkedin: string | null
+    whatsapp: string | null
+  }
+  
+  contact: {
+    email: string | null
+    phone: string | null
+    address: {
+      street: string | null
+      city: string | null
+      state: string | null
+      country: string
+      postalCode: string | null
+    }
+  }
+  
+  layout: {
+    showTicker: boolean
+    showTopBar: boolean
+    showBreadcrumbs: boolean
+    showReadingProgress: boolean
+    articlesPerPage: number
+  }
+  
+  admin: {
     name: string
     mobile: string
+  }
+  
+  cacheControl: {
+    config: number
+    homepage: number
+    article: number
+    category: number
+    staticPages: number
   }
 }
 
@@ -113,6 +248,9 @@ export interface ConfigResult {
 type CacheEntry = { value: ConfigResult; expires: number }
 const cache = new Map<string, CacheEntry>()
 
+// Use cacheControl.config from API response, fallback to 1 hour
+let CONFIG_TTL_MS = 3600 * 1000
+
 function getCacheKey(domain: string): string {
   return `config:${domain}`
 }
@@ -127,16 +265,14 @@ function domainFromHeaders(h: Headers): string {
 }
 
 async function getTargetDomain(domainOverride?: string): Promise<string> {
-  const h = await headers()
-  const headerDomain = normalizeTenantDomain(h.get('x-tenant-domain') || '')
+  // 🎯 SIMPLE: If HOST env is set, use it directly
+  if (process.env.HOST) {
+    return normalizeTenantDomain(process.env.HOST)
+  }
   
-  return normalizeTenantDomain(
-    domainOverride || 
-    headerDomain || 
-    domainFromHeaders(h) ||
-    process.env.HOST ||
-    'localhost'
-  )
+  // Otherwise detect from request headers
+  const h = await headers()
+  return normalizeTenantDomain(domainOverride || h.get('host') || 'localhost')
 }
 
 // ============================================================================
@@ -145,6 +281,8 @@ async function getTargetDomain(domainOverride?: string): Promise<string> {
 
 async function fetchConfig(tenantDomain: string): Promise<ConfigResult> {
   const url = `${API_BASE_URL}/public/config`
+  
+  console.log(`🎯 [1st API] Calling ${url} | X-Tenant-Domain: ${tenantDomain}`)
   
   try {
     const res = await fetch(url, {
@@ -166,7 +304,12 @@ async function fetchConfig(tenantDomain: string): Promise<ConfigResult> {
     }
 
     const config = await res.json() as TenantConfig
-    console.log(`✅ Config loaded for ${tenantDomain}:`, config.branding.siteName)
+    console.log(`✅ Config v${config.version} loaded for ${tenantDomain}:`, config.branding.siteName)
+    
+    // Update cache TTL from config
+    if (config.cacheControl?.config) {
+      CONFIG_TTL_MS = config.cacheControl.config * 1000
+    }
     
     return {
       config,
@@ -255,16 +398,16 @@ export async function getConfigResultForDomain(tenantDomain: string): Promise<Co
  * Get primary color in HSL format for CSS variables
  */
 export function getPrimaryColorHSL(config: TenantConfig | null): string | null {
-  if (!config?.branding.primaryColor) return null
-  return hexToHslTriplet(config.branding.primaryColor)
+  if (!config?.theme.colors.primary) return null
+  return hexToHslTriplet(config.theme.colors.primary)
 }
 
 /**
  * Get secondary color in HSL format for CSS variables
  */
 export function getSecondaryColorHSL(config: TenantConfig | null): string | null {
-  if (!config?.branding.secondaryColor) return null
-  return hexToHslTriplet(config.branding.secondaryColor)
+  if (!config?.theme.colors.secondary) return null
+  return hexToHslTriplet(config.theme.colors.secondary)
 }
 
 /**
@@ -334,14 +477,14 @@ export function getThemeCssVars(config: TenantConfig | null): Record<string, str
  * Check if analytics should be loaded
  */
 export function shouldLoadAnalytics(config: TenantConfig | null): boolean {
-  return !!(config?.integrations.analytics.googleAnalyticsId || config?.integrations.analytics.gtmId)
+  return !!(config?.integrations.analytics.googleAnalytics || config?.integrations.analytics.googleTagManager)
 }
 
 /**
  * Check if ads should be loaded
  */
 export function shouldLoadAds(config: TenantConfig | null): boolean {
-  return !!config?.integrations.ads.adsenseClientId
+  return !!config?.integrations.ads.adsense
 }
 
 /**

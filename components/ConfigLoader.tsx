@@ -15,9 +15,9 @@ export async function ConfigBasedScripts() {
     return null
   }
 
-  const gaId = config.integrations.analytics.googleAnalyticsId
-  const gtmId = config.integrations.analytics.gtmId
-  const adsenseId = config.integrations.ads.adsenseClientId
+  const gaId = config.integrations.analytics.googleAnalytics
+  const gtmId = config.integrations.analytics.googleTagManager
+  const adsenseId = config.integrations.ads.adsense
 
   return (
     <>

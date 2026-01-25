@@ -14,7 +14,20 @@ interface NewsArticle {
 
 // Load articles from public/data.json or public/news/*.json
 let cachedArticles: NewsArticle[] | null = null
-const cachedCategoryArticles: Record<string, NewsArticle[]> = {}
+const categoryFileMap: Record<string, string> = {
+  'latest': 'latest.json',
+  'breaking': 'breaking.json',
+  'sports': 'sports.json',
+  'entertainment': 'entertainment.json',
+  'business': 'business.json',
+  'political': 'political.json',
+  'politics': 'political.json',
+  'crime': 'crime.json',
+  'health': 'health.json',
+  'education': 'education.json',
+  'lifestyle': 'lifestyle.json',
+  'world': 'world.json',
+}
 
 async function loadPublicData() {
   if (cachedArticles) return cachedArticles
@@ -25,8 +38,39 @@ async function loadPublicData() {
     if (typeof window === 'undefined' && typeof process !== 'undefined' && process.cwd) {
       const fs = await import('fs/promises')
       const path = await import('path')
-      const filePath = path.join(process.cwd(), 'public', 'data.json')
-      const fileContent = await fs.readFile(filePath, 'utf-8')
+      
+      // Load all category JSON files and combine them
+      const allArticles: NewsArticle[] = []
+      
+      for (const [categorySlug, filename] of Object.entries(categoryFileMap)) {
+        try {
+          const filePath = path.join(process.cwd(), 'public', 'news', filename)
+          const fileContent = await fs.readFile(filePath, 'utf-8')
+          const articles = JSON.parse(fileContent) as NewsArticle[]
+          
+          // Tag articles with category
+          articles.forEach(article => {
+            if (!article.category || article.category.length === 0) {
+              article.category = [categorySlug]
+            }
+          })
+          
+          allArticles.push(...articles)
+        } catch (err) {
+          // Skip if file doesn't exist
+        }
+      }
+      
+      // If category files loaded, use them
+      if (allArticles.length > 0) {
+        cachedArticles = allArticles
+        console.log(`✅ Loaded ${cachedArticles.length} articles from public/news/*.json`)
+        return cachedArticles
+      }
+      
+      // Fallback to data.json
+      const dataFilePath = path.join(process.cwd(), 'public', 'data.json')
+      const fileContent = await fs.readFile(dataFilePath, 'utf-8')
       cachedArticles = JSON.parse(fileContent)
       if (cachedArticles && cachedArticles.length > 0) {
         console.log(`✅ Loaded ${cachedArticles.length} articles from public/data.json`)
@@ -34,7 +78,7 @@ async function loadPublicData() {
       return cachedArticles
     }
   } catch (error) {
-    console.error('❌ Failed to load public/data.json:', error)
+    console.error('❌ Failed to load public data:', error)
   }
   
   return []
@@ -116,13 +160,11 @@ function getCategoryNameInTelugu(category: string): string {
 }
 
 export async function getFallbackArticles() {
-  // NOTE: public/news/*.json files are mock data - do NOT use in production
-  // Only use public/data.json for minimal fallback during development
-  
+  // Load from public/news/*.json category files for development
   const publicData = await loadPublicData()
   if (publicData && publicData.length > 0) {
-    console.log(`⚠️ Using fallback data from public/data.json (${publicData.length} articles) - backend API should be used`)
-    return publicData.slice(0, 50).map((item, index) => transformPublicArticle(item, index))
+    console.log(`⚠️ Using fallback data from public/news/*.json (${publicData.length} articles) - backend API should be used`)
+    return publicData.slice(0, 100).map((item, index) => transformPublicArticle(item, index))
   }
   
   // Ultimate fallback - static data
@@ -131,11 +173,10 @@ export async function getFallbackArticles() {
 }
 
 export async function getFallbackCategories() {
-  // NOTE: public/news/*.json files are mock data - do NOT use
-  // Only fallback to public/data.json for minimal development support
+  // Extract categories from loaded public/news/*.json files
   console.warn('⚠️ Using fallback categories - backend /public/categories API should be used')
   
-  // Extract from public/data.json
+  // Extract from public data
   const publicData = await loadPublicData()
   if (publicData && publicData.length > 0) {
     const categorySet = new Set<string>()
@@ -144,15 +185,18 @@ export async function getFallbackCategories() {
     publicData.forEach((item: NewsArticle) => {
       if (Array.isArray(item.category)) {
         item.category.forEach((cat: string) => {
-          categorySet.add(cat)
-          categoryMap.set(cat, getCategoryNameInTelugu(cat))
+          const normalized = cat.toLowerCase()
+          categorySet.add(normalized)
+          categoryMap.set(normalized, getCategoryNameInTelugu(normalized))
         })
       }
     })
     
-    return Array.from(categorySet).slice(0, 8).map((slug, index) => ({
+    // Return all unique categories found
+    return Array.from(categorySet).map((slug, index) => ({
       id: `cat-${index + 1}`,
       name: categoryMap.get(slug) || slug,
+      nameLocalized: categoryMap.get(slug) || slug, // Telugu name for navbar
       slug: slug,
       description: `${categoryMap.get(slug)} వార్తలు`
     }))

@@ -688,7 +688,7 @@ export async function ThemeHome({
 
   // 🎯 Get config for branding (logo, favicon, etc.)
   const config = await getConfig()
-  const logoUrl = config?.branding.logoUrl || settings?.branding?.logoUrl
+  const logoUrl = config?.branding.logo || settings?.branding?.logoUrl
   const siteName = config?.branding.siteName || title
 
   return (

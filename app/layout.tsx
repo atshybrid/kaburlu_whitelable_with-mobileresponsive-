@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getEffectiveSettings } from "@/lib/settings";
 import { getConfig, getDefaultLanguage, getDefaultLanguageDirection } from "@/lib/config";
+import { getSEOHomepage, generateJSONLD } from "@/lib/seo";
 import "./globals.css";
 import { OfflineDetector } from "@/components/shared/OfflineDetector";
 // Load theme styles globally so root pages can apply theme-specific classes
@@ -139,7 +140,7 @@ const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
-    // 🎯 PRIMARY: Use /public/config API (SINGLE SOURCE OF TRUTH)
+    // 🎯 PRIMARY: Use /public/config API v2.0 (SINGLE SOURCE OF TRUTH)
     const config = await getConfig()
     
     if (config) {
@@ -162,11 +163,11 @@ export async function generateMetadata(): Promise<Metadata> {
           images: config.seo.twitter.imageUrl ? [config.seo.twitter.imageUrl] : undefined,
           creator: config.seo.twitter.handle || undefined,
         },
-        icons: config.branding.faviconUrl ? {
-          icon: [{ url: config.branding.faviconUrl }],
-          shortcut: [{ url: config.branding.faviconUrl }],
-          apple: [{ url: config.branding.faviconUrl }],
-        } : { icon: [{ url: '/favicon.ico' }] },
+        icons: {
+          icon: config.branding.faviconUrl ? [{ url: config.branding.faviconUrl }] : undefined,
+          shortcut: config.branding.faviconUrl ? [{ url: config.branding.faviconUrl }] : undefined,
+          apple: config.branding.appleTouchIcon || config.branding.logo ? [{ url: config.branding.appleTouchIcon || config.branding.logo }] : undefined,
+        },
         robots: {
           index: true,
           follow: true,
@@ -214,8 +215,9 @@ async function RootLayoutInner({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // 🎯 PRIMARY: Use /public/config API for language
+  // 🎯 API FLOW v2.0: 1) config → 2) seo/homepage → 3) categories
   const config = await getConfig()
+  const seoData = await getSEOHomepage()
   
   let languageCode = 'te'
   let langDirection: 'ltr' | 'rtl' = 'ltr'
@@ -256,6 +258,15 @@ async function RootLayoutInner({
 
   return (
     <html lang={languageCode} dir={langDirection} data-lang={languageCode} className={fontClasses}>
+      <head>
+        {/* 🎯 JSON-LD structured data for Google (Schema.org) */}
+        {seoData && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: generateJSONLD(seoData) }}
+          />
+        )}
+      </head>
       <body
         className={"antialiased"}
       >

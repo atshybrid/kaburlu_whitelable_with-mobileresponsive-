@@ -178,6 +178,10 @@ function normalizeStyle2HomepageResponse(u: unknown): Style2HomepageResponse {
 }
 
 function domainFromHost(host: string | null) {
+  // 🎯 SIMPLE: If HOST env is set, use it directly
+  if (process.env.HOST) {
+    return process.env.HOST.split(':')[0]
+  }
   const h = (host || 'localhost').split(':')[0]
   return h || 'localhost'
 }

@@ -28,6 +28,10 @@ const cache = new Map<string, CacheEntry>()
 const TTL_MS = 60 * 1000
 
 function getDomain(h: Headers) {
+  // 🎯 SIMPLE: If HOST env is set, use it directly
+  if (process.env.HOST) {
+    return process.env.HOST.split(':')[0]
+  }
   const host = h.get('host') || 'localhost'
   return host.split(':')[0]
 }
@@ -55,7 +59,7 @@ export async function getCategoriesForNav(): Promise<Category[]> {
       revalidateSeconds: Number(process.env.REMOTE_CATEGORIES_REVALIDATE_SECONDS || '300'),
       tags: [`categories:${domain}:${languageCode}`],
     })
-    // Map nameLocalized to name for display
+    // Map nameLocalized to name for display (nameLocalized is Telugu name)
     categories = Array.isArray(res) ? res.map(cat => ({
       ...cat,
       name: cat.nameLocalized || cat.nameDefault || cat.name || cat.slug

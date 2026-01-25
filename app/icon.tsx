@@ -21,9 +21,11 @@ function isWrongTenantDataSimple(data: unknown): boolean {
   return dataString.includes('crown human rights') || dataString.includes('crown')
 }
 
-// Fetch config API for favicon
-async function getFaviconUrl(domain: string): Promise<string | null> {
+// Fetch config API for favicon with full config
+async function getTenantConfig(domain: string): Promise<{ faviconUrl: string | null; primaryColor: string | null; name: string | null }> {
   try {
+    console.log(`[Icon] Fetching config for domain: ${domain}`)
+    
     const response = await fetch(`${API_BASE_URL}/public/config`, {
       headers: {
         'accept': 'application/json',
@@ -33,19 +35,28 @@ async function getFaviconUrl(domain: string): Promise<string | null> {
     })
 
     if (!response.ok) {
-      return null
+      console.log(`[Icon] Config API failed: ${response.status}`)
+      return { faviconUrl: null, primaryColor: null, name: null }
     }
 
     const config = await response.json()
     
     // Check if it's wrong tenant data
     if (isWrongTenantDataSimple(config)) {
-      return null
+      console.log(`[Icon] Wrong tenant data detected, using fallback`)
+      return { faviconUrl: null, primaryColor: null, name: null }
     }
 
-    return config?.branding?.faviconUrl || null
-  } catch {
-    return null
+    console.log(`[Icon] Config loaded: ${config?.branding?.name || 'unknown'}`)
+    
+    return {
+      faviconUrl: config?.branding?.faviconUrl || null,
+      primaryColor: config?.branding?.primaryColor || null,
+      name: config?.branding?.name || null,
+    }
+  } catch (error) {
+    console.error(`[Icon] Error fetching config:`, error)
+    return { faviconUrl: null, primaryColor: null, name: null }
   }
 }
 
@@ -59,42 +70,29 @@ export default async function Icon() {
     const host = h.get('host') || 'localhost'
     const domain = normalizeTenantDomain(host)
     
-    // Try to get favicon URL from config API first
-    const faviconUrl = await getFaviconUrl(domain)
+    console.log(`[Icon] Generating icon for domain: ${domain}`)
     
-    // If we have a valid favicon URL, redirect to it
-    if (faviconUrl && !faviconUrl.includes('crown')) {
-      // Return redirect to actual favicon
-      // Note: We can't directly redirect in icon.tsx, so we'll generate based on config
-      const tenant = await resolveTenant()
-      tenantName = (tenant.name || tenant.slug || 'K').charAt(0).toUpperCase()
-      
-      // Try to get accent color from config
-      try {
-        const response = await fetch(`${API_BASE_URL}/public/config`, {
-          headers: {
-            'accept': 'application/json',
-            'X-Tenant-Domain': domain,
-          },
-          cache: 'no-store',
-        })
-        
-        if (response.ok) {
-          const config = await response.json()
-          if (config?.branding?.primaryColor && !isWrongTenantDataSimple(config)) {
-            accentColor = config.branding.primaryColor
-          }
-        }
-      } catch {
-        // Use default color
-      }
+    // Get full tenant config
+    const config = await getTenantConfig(domain)
+    
+    // Set tenant name from API response
+    if (config.name && !config.name.toLowerCase().includes('crown')) {
+      tenantName = config.name.charAt(0).toUpperCase()
     } else {
-      // Fallback - use Telugu letter for Kaburlu
-      tenantName = 'క' // Telugu letter Ka
+      // Use first letter of domain as fallback
+      tenantName = domain.charAt(0).toUpperCase()
     }
+    
+    // Set accent color from API response
+    if (config.primaryColor) {
+      accentColor = config.primaryColor
+    }
+    
+    console.log(`[Icon] Generated: name="${tenantName}", color="${accentColor}"`)
+    
   } catch (error) {
-    console.error('Error loading tenant for icon:', error)
-    tenantName = 'క'
+    console.error('[Icon] Error loading tenant for icon:', error)
+    tenantName = 'K'
   }
 
   return new ImageResponse(
