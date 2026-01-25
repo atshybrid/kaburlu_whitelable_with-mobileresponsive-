@@ -16,13 +16,14 @@ import type { NextRequest } from 'next/server'
  */
 
 // Domain to tenant slug mapping
+// ⚠️ CRITICAL: These MUST match backend tenant.slug exactly!
 const DOMAIN_TO_TENANT: Record<string, string> = {
   'kaburlutoday.com': 'kaburlu-today',
-  'm4news.in': 'm4-news',
-  'prashnaayudham.com': 'prashnaayudham',
+  'm4news.in': 'manoranjani-telugu-times',
+  'prashnaayudham.com': 'prashna-ayudham',
   'daxintimes.com': 'daxin-times',
-  'kurnoolnews.com': 'kurnool-news',
-  'chrnews.com': 'chr-news',
+  'kurnoolnews.com': 'kurnool-news', // Verify if this tenant exists in backend
+  'chrnews.com': 'crown-human-rights',
 }
 
 /**
