@@ -5,10 +5,12 @@ export interface Article {
   id: string
   slug?: string
   title: string
+  subtitle?: string | null
   excerpt?: string | null
   content?: string | null
   contentHtml?: string | null
   plainText?: string | null
+  highlights?: string[] | null
   coverImage?: { url?: string | null; alt?: string | null; caption?: string | null } | null
   publishedAt?: string | null
   authors?: Array<{ id?: string; name?: string; role?: string }> | null
@@ -44,6 +46,74 @@ export interface Article {
     inLanguage?: string
     isAccessibleForFree?: boolean
   }
+  // Reporter information
+  reporter?: {
+    id?: string
+    name?: string
+    photoUrl?: string
+    designation?: string
+    location?: {
+      state?: string
+      district?: string
+      mandal?: string
+    }
+    totalArticles?: number
+    recentArticles?: Array<{
+      id?: string
+      slug?: string
+      title?: string
+      coverImageUrl?: string
+      publishedAt?: string
+      viewCount?: number
+      category?: {
+        slug?: string
+        name?: string
+      }
+    }>
+  } | null
+  // Publisher information
+  publisher?: {
+    id?: string
+    name?: string
+    nativeName?: string
+    publisherName?: string
+    logoUrl?: string
+  } | null
+  // Must read article
+  mustRead?: {
+    id?: string
+    slug?: string
+    title?: string
+    coverImageUrl?: string
+    publishedAt?: string
+    viewCount?: number
+    category?: {
+      slug?: string
+      name?: string
+    }
+  } | null
+  // Trending articles
+  trending?: Array<{
+    id?: string
+    slug?: string
+    title?: string
+    coverImageUrl?: string
+    publishedAt?: string
+    viewCount?: number
+    category?: {
+      slug?: string
+      name?: string
+    }
+  }> | null
+  // Related articles
+  related?: Array<{
+    id?: string
+    slug?: string
+    title?: string
+    coverImageUrl?: string
+    publishedAt?: string
+    viewCount?: number
+  }> | null
   [key: string]: unknown
 }
 

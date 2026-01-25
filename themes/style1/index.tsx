@@ -701,6 +701,373 @@ export async function ThemeHome({
   )
 }
 
+// Reporter Card Component - Enhanced with Recent Articles
+function ReporterCard({ reporter, tenantSlug }: { reporter: NonNullable<Article['reporter']>; tenantSlug: string }) {
+  const locationParts = [
+    reporter.location?.mandal,
+    reporter.location?.district,
+    reporter.location?.state
+  ].filter(Boolean).join(', ')
+
+  return (
+    <div className="px-6 sm:px-8 lg:px-10 py-8 bg-gradient-to-br from-zinc-50 to-white border-t border-zinc-200">
+      <div className="mb-6">
+        <h3 className="text-2xl font-bold text-zinc-900 flex items-center gap-2">
+          <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          రచయిత గురించి
+        </h3>
+      </div>
+
+      <div className="rounded-2xl border-2 border-zinc-200 bg-white shadow-md overflow-hidden">
+        <div className="p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row gap-6 items-start mb-6">
+            {/* Reporter Photo */}
+            <div className="shrink-0">
+              {reporter.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img 
+                  src={reporter.photoUrl} 
+                  alt={reporter.name || 'Reporter'} 
+                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-xl ring-4 ring-red-100"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-red-600 to-orange-500 flex items-center justify-center border-4 border-white shadow-xl ring-4 ring-red-100">
+                  <span className="text-white text-3xl sm:text-4xl font-bold">
+                    {reporter.name?.charAt(0).toUpperCase() || 'R'}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            {/* Reporter Info */}
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h4 className="text-xl sm:text-2xl font-bold text-zinc-900">{reporter.name}</h4>
+                <svg className="w-5 h-5 text-blue-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <p className="text-sm sm:text-base font-semibold text-red-600 mb-2">{reporter.designation}</p>
+              {locationParts && (
+                <p className="text-sm text-zinc-600 flex items-center gap-1 mb-3">
+                  <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {locationParts}
+                </p>
+              )}
+              {reporter.totalArticles && reporter.totalArticles > 0 && (
+                <div className="inline-flex items-center gap-2 bg-red-50 text-red-700 px-4 py-2 rounded-full text-sm font-bold">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  {reporter.totalArticles} ఆర్టికల్స్ రాశారు
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Articles by Reporter */}
+          {reporter.recentArticles && reporter.recentArticles.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-zinc-200">
+              <h5 className="text-lg font-bold text-zinc-900 mb-4">ఇటీవలి ఆర్టికల్స్</h5>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {reporter.recentArticles.slice(0, 3).map((recentArticle) => (
+                  <a 
+                    key={recentArticle.id} 
+                    href={articleHref(tenantSlug, recentArticle.slug || recentArticle.id || '')}
+                    className="group block rounded-lg overflow-hidden bg-zinc-50 hover:bg-red-50 transition-all border border-zinc-200 hover:border-red-300"
+                  >
+                    <div className="relative aspect-video w-full overflow-hidden">
+                      {recentArticle.coverImageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img 
+                          src={recentArticle.coverImageUrl} 
+                          alt={recentArticle.title || ''} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <PlaceholderImg className="w-full h-full object-cover" />
+                      )}
+                      {recentArticle.category && (
+                        <div className="absolute top-2 left-2">
+                          <span className="inline-block bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
+                            {recentArticle.category.name}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <h6 className="text-sm font-semibold text-zinc-900 group-hover:text-red-600 line-clamp-2 leading-snug" style={{ lineHeight: '1.6' }}>
+                        {recentArticle.title}
+                      </h6>
+                      {recentArticle.viewCount && (
+                        <p className="mt-1 text-xs text-zinc-500 flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          {recentArticle.viewCount.toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Publisher Card Component
+function PublisherCard({ publisher }: { publisher: NonNullable<Article['publisher']> }) {
+  return (
+    <div className="px-6 sm:px-8 lg:px-10 py-8 bg-gradient-to-br from-zinc-50 to-white border-t border-zinc-200">
+      <div className="rounded-2xl border-2 border-zinc-200 bg-white shadow-md overflow-hidden">
+        <div className="p-6 sm:p-8">
+          <div className="flex items-center gap-4 mb-4">
+            {publisher.logoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img 
+                src={publisher.logoUrl} 
+                alt={publisher.name || ''} 
+                className="w-16 h-16 object-contain"
+                loading="lazy"
+              />
+            )}
+            <div>
+              <h3 className="text-xl font-bold text-zinc-900">{publisher.nativeName || publisher.name}</h3>
+              <p className="text-sm text-zinc-600">{publisher.publisherName}</p>
+            </div>
+          </div>
+          <p className="text-sm text-zinc-700 leading-relaxed" style={{ lineHeight: '1.8' }}>
+            {publisher.nativeName} నుండి నాణ్యమైన వార్తలు మరియు సమాచారం. మీరు నమ్మదగిన వార్తా మూలం.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Trending Articles Sidebar Component
+function TrendingArticlesSidebar({ trending, tenantSlug }: { trending: NonNullable<Article['trending']>; tenantSlug: string }) {
+  if (!trending || trending.length === 0) return null
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 px-6 py-4">
+        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+          ట్రెండింగ్
+        </h3>
+      </div>
+      <div className="divide-y divide-zinc-100 max-h-[500px] overflow-y-auto">
+        {trending.slice(0, 5).map((trendingArticle, index) => (
+          <a 
+            key={trendingArticle.id} 
+            href={articleHref(tenantSlug, trendingArticle.slug || trendingArticle.id || '')}
+            className="group flex gap-3 p-4 hover:bg-gradient-to-r hover:from-red-50 hover:to-transparent transition-all"
+          >
+            {/* Trending Badge */}
+            <div className="shrink-0">
+              <div className={`flex h-8 w-8 items-center justify-center rounded-lg font-bold text-sm ${
+                index < 3 
+                  ? 'bg-gradient-to-br from-purple-600 to-pink-600 text-white shadow-md' 
+                  : 'bg-zinc-100 text-zinc-600 group-hover:bg-red-100 group-hover:text-red-600'
+              }`}>
+                🔥
+              </div>
+            </div>
+            
+            {/* Thumbnail */}
+            {trendingArticle.coverImageUrl && (
+              <div className="shrink-0 w-20 h-20 rounded-lg overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={trendingArticle.coverImageUrl} 
+                  alt={trendingArticle.title || ''} 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                  loading="lazy"
+                />
+              </div>
+            )}
+            
+            {/* Article Info */}
+            <div className="flex-1 min-w-0">
+              {trendingArticle.category && (
+                <span className="inline-block text-xs font-bold text-red-600 mb-1">
+                  {trendingArticle.category.name}
+                </span>
+              )}
+              <h4 className="text-sm font-semibold line-clamp-2 text-zinc-900 group-hover:text-red-600 transition-colors" style={{ lineHeight: '1.6' }}>
+                {trendingArticle.title}
+              </h4>
+              {trendingArticle.viewCount && (
+                <div className="mt-1 flex items-center gap-1 text-xs text-zinc-500">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  {trendingArticle.viewCount.toLocaleString()}
+                </div>
+              )}
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Article Content with Must-Read Card
+function ArticleContentWithMustRead({ html, mustRead, tenantSlug }: { html: string; mustRead: Article['mustRead']; tenantSlug: string }) {
+  if (!html) {
+    return (
+      <div className="px-6 sm:px-8 lg:px-10 py-8">
+        <div className="text-center py-12">
+          <p className="text-zinc-500 text-lg">ఆర్టికల్ కంటెంట్ లోడ్ అవుతోంది...</p>
+        </div>
+      </div>
+    )
+  }
+  
+  const parts = html.split(/<\/p>/i)
+  const nodes: ReactNode[] = []
+  const every = getAdEveryN()
+  let paraIndex = 0
+  let actualParagraphCount = 0
+  let mustReadInserted = false
+  
+  for (let i = 0; i < parts.length; i++) {
+    const chunk = parts[i].trim()
+    if (chunk.length === 0) continue
+    
+    const closed = chunk.endsWith('</p>') ? chunk : chunk + '</p>'
+    
+    // Check if this is the first real paragraph (has substantial text content)
+    const isFirstPara = actualParagraphCount === 0 && chunk.length > 50
+    
+    // Add drop cap styling to first paragraph
+    const paragraphClass = isFirstPara 
+      ? "article-paragraph first-paragraph drop-cap" 
+      : "article-paragraph"
+    
+    nodes.push(
+      <div 
+        key={`p-${i}`} 
+        className={paragraphClass}
+        dangerouslySetInnerHTML={{ __html: closed }} 
+      />
+    )
+    
+    actualParagraphCount++
+    paraIndex++
+    
+    // Insert must-read card after 2-3 paragraphs
+    if (!mustReadInserted && mustRead && actualParagraphCount === 3) {
+      nodes.push(
+        <div key="must-read" className="my-8">
+          <MustReadCard mustRead={mustRead} tenantSlug={tenantSlug} />
+        </div>
+      )
+      mustReadInserted = true
+    }
+    
+    // Insert ad after every N paragraphs, but not at the very end and not right after first paragraph
+    if (paraIndex % every === 0 && i < parts.length - 2 && paraIndex > 2) {
+      nodes.push(
+        <div key={`ad-${i}`} className="my-8">
+          <ConditionalAdBanner variant="horizontal" />
+        </div>
+      )
+    }
+  }
+  
+  return (
+    <div className="article-content-enhanced px-6 sm:px-8 lg:px-10 py-8">
+      {nodes}
+    </div>
+  )
+}
+
+// Must Read Card Component
+function MustReadCard({ mustRead, tenantSlug }: { mustRead: NonNullable<Article['mustRead']>; tenantSlug: string }) {
+  return (
+    <div className="relative group">
+      {/* Must Read Label */}
+      <div className="absolute -top-3 left-4 z-10">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-1.5 text-sm font-bold text-white shadow-lg">
+          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+          తప్పక చదవండి
+        </span>
+      </div>
+      
+      <a 
+        href={articleHref(tenantSlug, mustRead.slug || mustRead.id || '')}
+        className="block overflow-hidden rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 shadow-lg hover:shadow-xl transition-all hover:border-amber-300"
+      >
+        <div className="flex flex-col sm:flex-row gap-4 p-6">
+          {/* Must Read Image */}
+          {mustRead.coverImageUrl && (
+            <div className="shrink-0 w-full sm:w-48 aspect-video sm:aspect-square rounded-lg overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src={mustRead.coverImageUrl} 
+                alt={mustRead.title || ''} 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+              />
+            </div>
+          )}
+          
+          {/* Must Read Content */}
+          <div className="flex-1">
+            {mustRead.category && (
+              <span className="inline-block bg-amber-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-2">
+                {mustRead.category.name}
+              </span>
+            )}
+            <h3 className="text-xl sm:text-2xl font-bold text-zinc-900 group-hover:text-amber-700 leading-snug mb-2" style={{ lineHeight: '1.5' }}>
+              {mustRead.title}
+            </h3>
+            <div className="flex items-center gap-4 text-sm text-zinc-600 mt-3">
+              {mustRead.publishedAt && (
+                <span className="flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {new Date(mustRead.publishedAt).toLocaleDateString('te-IN', { month: 'short', day: 'numeric' })}
+                </span>
+              )}
+              {mustRead.viewCount && (
+                <span className="flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  {mustRead.viewCount.toLocaleString()} చూసినవారు
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  )
+}
+
 export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }: { tenantSlug: string; title: string; article: Article; tenantDomain?: string }) {
   const settings = await getEffectiveSettings()
   
@@ -722,8 +1089,21 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
 
   // Get breadcrumb from categories
   const category = article.categories && article.categories[0]
-  const categoryName = category?.name || 'Article'
+  const categoryName = category?.name || 'ఆర్టికల్'
   const categorySlug = category?.slug
+  
+  // Get reporter info from API
+  const reporter = article.reporter
+  const publisher = article.publisher
+  
+  // Get must-read article
+  const mustRead = article.mustRead
+  
+  // Get trending articles
+  const trending = article.trending || []
+  
+  // Get related articles
+  const related = article.related || []
 
   return (
     <div className="theme-style1 bg-zinc-50">
@@ -782,23 +1162,42 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
 
                 {/* Article Title */}
                 <h1 
-                  className="mb-6 text-3xl sm:text-4xl lg:text-5xl font-black leading-[1.15] text-zinc-900"
+                  className="mb-4 text-3xl sm:text-4xl lg:text-5xl font-black leading-[1.15] text-zinc-900"
                   style={{ fontFamily: 'Noto Serif Telugu, serif', lineHeight: '1.4' }}
                 >
                   {article.title}
                 </h1>
                 
+                {/* Article Subtitle */}
+                {article.subtitle && (
+                  <h2 
+                    className="mb-6 text-xl sm:text-2xl font-medium text-zinc-700 leading-relaxed"
+                    style={{ fontFamily: 'Noto Sans Telugu, sans-serif', lineHeight: '1.8' }}
+                  >
+                    {article.subtitle}
+                  </h2>
+                )}
+                
                 {/* Article Metadata */}
                 <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-600 pb-6 border-b border-zinc-200">
                   <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
+                    {reporter?.photoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img 
+                        src={reporter.photoUrl} 
+                        alt={reporter.name || 'Reporter'} 
+                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                        <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    )}
                     <div>
                       <div className="text-xs text-zinc-500">రచయిత</div>
-                      <div className="font-semibold text-zinc-900">{primaryAuthor.name}</div>
+                      <div className="font-semibold text-zinc-900">{reporter?.name || primaryAuthor.name || 'Staff Reporter'}</div>
                     </div>
                   </div>
                   
@@ -848,6 +1247,32 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 </figure>
               )}
 
+              {/* Article Highlights */}
+              {article.highlights && article.highlights.length > 0 && (
+                <div className="px-6 sm:px-8 lg:px-10 pt-8">
+                  <div className="rounded-xl bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-l-4 border-blue-600 p-6 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <svg className="h-6 w-6 text-blue-600 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                      </svg>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wide mb-3">ముఖ్య విషయాలు</h3>
+                        <ul className="space-y-2">
+                          {article.highlights.map((highlight, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <svg className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              <span className="text-base text-zinc-800 leading-relaxed" style={{ lineHeight: '1.8' }}>{highlight}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Article Summary/Excerpt */}
               {article.excerpt && (
                 <div className="px-6 sm:px-8 lg:px-10 pt-8">
@@ -874,10 +1299,12 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 </div>
               </div>
 
-              {/* Article Content with Drop Caps and Inline Ads */}
-              <div className="article-content-enhanced px-6 sm:px-8 lg:px-10 py-8">
-                <EnhancedArticleContent html={article.contentHtml || article.content || ''} />
-              </div>
+              {/* Article Content with Must-Read Card */}
+              <ArticleContentWithMustRead 
+                html={article.contentHtml || article.content || ''} 
+                mustRead={mustRead}
+                tenantSlug={tenantSlug}
+              />
 
               {/* Additional Images Gallery */}
               {article.media?.images && article.media.images.length > 0 && (
@@ -936,49 +1363,72 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 </div>
               )}
 
-              {/* Author Card */}
-              {primaryAuthor && primaryAuthor.name && (
-                <div className="px-6 sm:px-8 lg:px-10 py-8 bg-gradient-to-br from-zinc-50 to-white">
-                  <div className="flex items-start gap-4 p-6 rounded-xl border-2 border-zinc-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-                    <div className="shrink-0">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-white text-2xl sm:text-3xl font-bold shadow-lg">
-                        {primaryAuthor.name.charAt(0).toUpperCase()}
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-lg sm:text-xl font-bold text-zinc-900">{primaryAuthor.name}</h3>
-                        <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <p className="text-sm text-red-600 font-medium mb-2">{primaryAuthor.role || 'Reporter'}</p>
-                      <p className="text-sm text-zinc-600 leading-relaxed">
-                        {article.jsonLd?.author?.name ? `${article.jsonLd.publisher?.name || 'కబుర్లు'} వార్తా విభాగానికి చెందిన అనుభవజ్ఞుడైన రచయిత. నాణ్యమైన వార్తలను అందించడంలో నిపుణత కలిగిఉన్నారు.` : 'అనుభవజ్ఞుడైన వార్తా రచయిత'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Reporter Card - Enhanced with Recent Articles */}
+              {reporter ? (
+                <ReporterCard reporter={reporter} tenantSlug={tenantSlug} />
+              ) : publisher ? (
+                <PublisherCard publisher={publisher} />
+              ) : null}
             </div>
 
             {/* Related Articles */}
-            <div className="mt-8">
-              <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-8">
-                <h2 className="text-2xl font-bold text-zinc-900 mb-6 flex items-center gap-3">
-                  <span className="inline-block h-8 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-orange-500" />
-                  సంబంధిత వార్తలు
-                </h2>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  <RelatedArticles tenantSlug={tenantSlug} article={article} />
+            {related && related.length > 0 && (
+              <div className="mt-8">
+                <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-8">
+                  <h2 className="text-2xl font-bold text-zinc-900 mb-6 flex items-center gap-3">
+                    <span className="inline-block h-8 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-orange-500" />
+                    సంబంధిత వార్తలు
+                  </h2>
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {related.map((relatedArticle) => (
+                      <a 
+                        key={relatedArticle.id} 
+                        href={articleHref(tenantSlug, relatedArticle.slug || relatedArticle.id || '')} 
+                        className="group block overflow-hidden rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow border border-zinc-100"
+                      >
+                        <div className="relative aspect-video w-full overflow-hidden">
+                          {relatedArticle.coverImageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img 
+                              src={relatedArticle.coverImageUrl} 
+                              alt={relatedArticle.title || ''} 
+                              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.05]" 
+                              loading="lazy" 
+                            />
+                          ) : (
+                            <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <h3 className="text-base font-semibold leading-snug line-clamp-2 group-hover:text-red-600 transition-colors" style={{ lineHeight: '1.8' }}>
+                            {relatedArticle.title}
+                          </h3>
+                          {relatedArticle.viewCount && (
+                            <div className="mt-2 flex items-center gap-1 text-xs text-zinc-500">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              {relatedArticle.viewCount.toLocaleString()} చూసినవారు
+                            </div>
+                          )}
+                        </div>
+                      </a>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </article>
 
           {/* Sidebar */}
           <aside className="hidden lg:block">
             <div className="sticky top-24 space-y-6">
+              {/* Trending Articles */}
+              {trending && trending.length > 0 && (
+                <TrendingArticlesSidebar trending={trending} tenantSlug={tenantSlug} />
+              )}
+              
               {/* Most Read */}
               <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
                 <div className="bg-gradient-to-r from-red-600 to-orange-500 px-6 py-4">
@@ -987,7 +1437,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                       <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
                       <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                    ట్రెండింగ్ వార్తలు
+                    అత్యధికంగా చదివినవి
                   </h3>
                 </div>
                 <div className="p-4">
