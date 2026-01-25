@@ -937,7 +937,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
               )}
 
               {/* Author Card */}
-              {primaryAuthor && (
+              {primaryAuthor && primaryAuthor.name && (
                 <div className="px-6 sm:px-8 lg:px-10 py-8 bg-gradient-to-br from-zinc-50 to-white">
                   <div className="flex items-start gap-4 p-6 rounded-xl border-2 border-zinc-200 bg-white shadow-sm hover:shadow-md transition-shadow">
                     <div className="shrink-0">
@@ -1004,77 +1004,6 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
         </div>
       </main>
       
-      <MobileBottomNav tenantSlug={tenantSlug} />
-      <Footer settings={settings} tenantSlug={tenantSlug} />
-    </div>
-  )
-}
-            {(() => {
-              const tags = article['tags']
-              if (!tags || !Array.isArray(tags) || tags.length === 0) return null
-              return (
-                <div className="mb-8 pb-8 border-b border-zinc-200">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                    {tags.map((tag, idx) => {
-                      const tagStr = typeof tag === 'string' ? tag : String((tag as Record<string, unknown>)?.['name'] || '')
-                      return tagStr ? (
-                        <span 
-                          key={idx} 
-                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors"
-                        >
-                          {tagStr}
-                        </span>
-                      ) : null
-                    })}
-                  </div>
-                </div>
-              )
-            })()}
-
-            {/* Must Read Section */}
-            <MustReadSection tenantSlug={tenantSlug} currentArticleId={article.id} />
-
-            {/* Reporter/Author Section */}
-            {reporterData && (
-              <ReporterSection reporter={reporterData} />
-            )}
-
-            {/* Related articles */}
-            <div className="mt-12">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-zinc-900 flex items-center gap-3">
-                  <span className="inline-block h-8 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
-                  Related Articles
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                <RelatedArticles tenantSlug={tenantSlug} article={article} />
-              </div>
-            </div>
-          </article>
-
-          {/* Sidebar */}
-          <aside className="hidden lg:block">
-            <div className="sticky top-24 space-y-6">
-              {/* Most Read Articles - Sticky Section */}
-              <MostReadSidebar tenantSlug={tenantSlug} currentArticleId={article.id} />
-              
-              {/* Ad Banner - Top */}
-              <div className="rounded-xl overflow-hidden shadow-lg">
-                <AdBanner variant="default" />
-              </div>
-
-              {/* Sticky Ad Unit - Scrolls with user */}
-              <div className="rounded-xl overflow-hidden shadow-lg sticky-ad-unit">
-                <AdBanner variant="tall" />
-              </div>
-            </div>
-          </aside>
-        </div>
-      </main>
       <MobileBottomNav tenantSlug={tenantSlug} />
       <Footer settings={settings} tenantSlug={tenantSlug} />
     </div>

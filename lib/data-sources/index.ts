@@ -15,6 +15,10 @@ export interface Article {
   categories?: Array<{ id?: string; name?: string; slug?: string }> | null
   tags?: string[] | null
   readingTimeMin?: number
+  media?: {
+    images?: Array<{ url?: string; alt?: string; caption?: string }> | null
+    videos?: Array<{ url?: string; title?: string }> | null
+  } | null
   // SEO fields from /articles/public/articles/{slug} API
   meta?: {
     seoTitle?: string
