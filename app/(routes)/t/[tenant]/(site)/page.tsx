@@ -3,6 +3,7 @@ import { resolveTenant } from '@/lib/tenant'
 import { getEffectiveSettingsForDomain, getSettingsResultForDomain } from '@/lib/settings'
 import { DomainNotLinked, TechnicalIssues } from '@/components/shared'
 import type { ThemeModule, ThemeHomeComponent } from '@/lib/theme-types'
+import type { Article } from '@/lib/data-sources'
 
 async function getThemeHome(themeKey: string): Promise<ThemeHomeComponent> {
   let themeModule: ThemeModule
@@ -68,8 +69,16 @@ export default async function TenantHomePage({ params }: { params: Promise<{ ten
     }
   }
   
-  const articles = await getHomeFeed(tenant.id)
   const settings = tenant.domain ? await getEffectiveSettingsForDomain(tenant.domain) : await getEffectiveSettingsForDomain('localhost')
+  
+  // ✅ Fetch data based on theme type
+  // style2, style3, tv9, toi fetch their own data internally
+  // Only style1 needs articles from getHomeFeed
+  let articles: Article[] = []
+  if (tenant.themeKey === 'style1') {
+    articles = await getHomeFeed(tenant.id)
+  }
+  
   const ThemeHomeComp = await getThemeHome(tenant.themeKey)
 
   return (
