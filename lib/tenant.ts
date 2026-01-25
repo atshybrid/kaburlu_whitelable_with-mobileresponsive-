@@ -52,7 +52,8 @@ export async function resolveTenant({ slugOverride }: { slugOverride?: string } 
       return { id: 'na', slug, name, themeKey, domain, isDomainNotLinked: true, isApiError: true }
     }
     
-    const themeKey = local?.themeKey || 'style1' // Theme from config not used yet
+    // ✅ Use theme from backend config API
+    const themeKey = config.theme?.layout?.style || local?.themeKey || 'style1'
     const name = config.tenant.displayName || config.tenant.name || local?.name || slug
     
     return { 
