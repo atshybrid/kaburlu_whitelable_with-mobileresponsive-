@@ -7,7 +7,39 @@ export interface Article {
   title: string
   excerpt?: string | null
   content?: string | null
-  coverImage?: { url?: string | null } | null
+  contentHtml?: string | null
+  plainText?: string | null
+  coverImage?: { url?: string | null; alt?: string | null; caption?: string | null } | null
+  publishedAt?: string | null
+  authors?: Array<{ id?: string; name?: string; role?: string }> | null
+  categories?: Array<{ id?: string; name?: string; slug?: string }> | null
+  tags?: string[] | null
+  readingTimeMin?: number
+  // SEO fields from /articles/public/articles/{slug} API
+  meta?: {
+    seoTitle?: string
+    metaDescription?: string
+  }
+  jsonLd?: {
+    '@context'?: string
+    '@type'?: string
+    headline?: string
+    description?: string
+    image?: { '@type'?: string; url?: string }
+    author?: { '@type'?: string; name?: string }
+    publisher?: {
+      '@type'?: string
+      name?: string
+      logo?: { '@type'?: string; url?: string; width?: number; height?: number }
+    }
+    datePublished?: string
+    dateModified?: string
+    url?: string
+    mainEntityOfPage?: { '@type'?: string; '@id'?: string }
+    keywords?: string[]
+    inLanguage?: string
+    isAccessibleForFree?: boolean
+  }
   [key: string]: unknown
 }
 
@@ -27,24 +59,42 @@ class RemoteDataSource implements DataSource {
   }
   async articleBySlug(_tenantSlug: string, slug: string) {
     void _tenantSlug
-    // Preferred: filter by slug; fallbacks included for flexibility
-    const paths = [
+    const domain = await currentDomain()
+    
+    // 🎯 PRIMARY: Use new detailed article API with SEO support
+    const primaryPath = `/articles/public/articles/${encodeURIComponent(slug)}?domainName=${encodeURIComponent(domain)}`
+    
+    try {
+      const res = await fetchJSON<unknown>(primaryPath, { 
+        tenantDomain: domain,
+        revalidateSeconds: 60, // Cache article for 1 minute
+      })
+      
+      if (res && typeof res === 'object') {
+        return normalizeItem(res)
+      }
+    } catch (error) {
+      console.log(`⚠️ Primary article API failed for slug "${slug}":`, error)
+    }
+    
+    // FALLBACK: Try alternate endpoints
+    const fallbackPaths = [
       `/public/articles?slug=${encodeURIComponent(slug)}&pageSize=1`,
-      `/public/articles/by-slug?slug=${encodeURIComponent(slug)}`,
       `/public/articles/${encodeURIComponent(slug)}`,
-      `/public/article/${encodeURIComponent(slug)}`,
     ]
-    for (const p of paths) {
+    
+    for (const p of fallbackPaths) {
       try {
-        const res = await fetchJSON<unknown>(p, { tenantDomain: await currentDomain() })
+        const res = await fetchJSON<unknown>(p, { tenantDomain: domain })
         const list = normalizeList(res)
         if (list.length) return list[0]
         const obj = pickFirst(res, ['item', 'data', 'article']) ?? res
         return normalizeItem(obj)
       } catch {
-        // continue
+        // continue to next fallback
       }
     }
+    
     return null
   }
   async articlesByCategory(_tenantSlug: string, categorySlug: string) {
@@ -87,14 +137,29 @@ function normalizeItem(u: unknown): Article {
   const id = String(o.id ?? o._id ?? o.slug ?? cryptoRandom())
   const title = String(o.title ?? o.headline ?? 'Untitled')
   const slug = typeof o.slug === 'string' ? o.slug : undefined
-  const excerpt = typeof o.excerpt === 'string' ? o.excerpt : (typeof o.summary === 'string' ? o.summary : undefined)
-  const content = typeof o.content === 'string' ? o.content : undefined
+  
+  // Excerpt/Summary
+  const excerpt = typeof o.excerpt === 'string' ? o.excerpt : (typeof o.summary === 'string' ? o.summary : (typeof o.subtitle === 'string' ? o.subtitle : undefined))
+  
+  // Content - prefer contentHtml, fallback to content or plainText
+  const contentHtml = typeof o.contentHtml === 'string' ? o.contentHtml : undefined
+  const content = typeof o.content === 'string' ? o.content : contentHtml
+  const plainText = typeof o.plainText === 'string' ? o.plainText : undefined
+  
+  // Cover Image - support multiple field names and nested structures
   let coverUrl: string | undefined
-  if (typeof o.coverImage === 'string') coverUrl = o.coverImage
-  if (!coverUrl && o.coverImage && typeof o.coverImage === 'object') {
+  let coverAlt: string | undefined
+  let coverCaption: string | undefined
+  
+  if (typeof o.coverImage === 'string') {
+    coverUrl = o.coverImage
+  } else if (o.coverImage && typeof o.coverImage === 'object') {
     const ci = o.coverImage as Record<string, unknown>
     if (typeof ci.url === 'string') coverUrl = ci.url
+    if (typeof ci.alt === 'string') coverAlt = ci.alt
+    if (typeof ci.caption === 'string') coverCaption = ci.caption
   }
+  
   if (!coverUrl && typeof o.image === 'string') coverUrl = o.image
   if (!coverUrl && o.image && typeof o.image === 'object') {
     const img = o.image as Record<string, unknown>
@@ -104,8 +169,51 @@ function normalizeItem(u: unknown): Article {
   if (!coverUrl && typeof o.imageUrl === 'string') coverUrl = o.imageUrl
   if (!coverUrl && typeof o.featuredImage === 'string') coverUrl = o.featuredImage
   if (!coverUrl && typeof o.thumbnail === 'string') coverUrl = o.thumbnail
+  
   const normalizedCoverUrl = normalizeMediaUrl(coverUrl)
-  return { id, slug, title, excerpt: excerpt ?? null, content: content ?? null, coverImage: normalizedCoverUrl ? { url: normalizedCoverUrl } : undefined }
+  
+  // Published date
+  const publishedAt = typeof o.publishedAt === 'string' ? o.publishedAt : (typeof o.createdAt === 'string' ? o.createdAt : undefined)
+  
+  // Authors
+  const authors = Array.isArray(o.authors) ? o.authors : undefined
+  
+  // Categories
+  const categories = Array.isArray(o.categories) ? o.categories : undefined
+  
+  // Tags
+  const tags = Array.isArray(o.tags) ? o.tags : undefined
+  
+  // Reading time
+  const readingTimeMin = typeof o.readingTimeMin === 'number' ? o.readingTimeMin : undefined
+  
+  // SEO meta
+  const meta = o.meta && typeof o.meta === 'object' ? o.meta as Article['meta'] : undefined
+  
+  // JSON-LD
+  const jsonLd = o.jsonLd && typeof o.jsonLd === 'object' ? o.jsonLd as Article['jsonLd'] : undefined
+  
+  return {
+    id,
+    slug,
+    title,
+    excerpt: excerpt ?? null,
+    content: content ?? null,
+    contentHtml: contentHtml ?? null,
+    plainText: plainText ?? null,
+    coverImage: normalizedCoverUrl ? {
+      url: normalizedCoverUrl,
+      alt: coverAlt ?? null,
+      caption: coverCaption ?? null,
+    } : undefined,
+    publishedAt: publishedAt ?? null,
+    authors: authors ?? null,
+    categories: categories ?? null,
+    tags: tags ?? null,
+    readingTimeMin,
+    meta,
+    jsonLd,
+  }
 }
 
 function normalizeList(u: unknown): Article[] {

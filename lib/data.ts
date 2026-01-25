@@ -114,7 +114,7 @@ function makeMockArticles({
       ...a,
       title: categorySlug ? `Mock ${categorySlug}: ${a.title}` : a.title,
       categories: categorySlug
-        ? [{ category: { slug: categorySlug, name: categorySlug.replace(/-/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase()) } }]
+        ? [{ slug: categorySlug, name: categorySlug.replace(/-/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase()) }]
         : undefined,
     })
   }

@@ -380,7 +380,7 @@ export async function ThemeHome({
     coverImage: item.coverImageUrl ? { url: item.coverImageUrl } : undefined,
     publishedAt: item.publishedAt || new Date().toISOString(),
     categories: item.category
-      ? [{ category: { slug: item.category.slug, name: item.category.name } }]
+      ? [{ slug: item.category.slug, name: item.category.name }]
       : undefined,
     author: { name: 'కబుర్లు డెస్క్' },
     content: '',

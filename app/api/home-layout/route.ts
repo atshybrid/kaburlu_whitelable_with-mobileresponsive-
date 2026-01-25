@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { defaultHomeLayout, readHomeLayout, resetHomeLayout, writeHomeLayout, type HomeLayoutThemeKey } from '@/lib/home-layout'
-import { getDomainSettings } from '@/lib/remote'
+import { getConfigForDomain } from '@/lib/config'
 
 export const runtime = 'nodejs'
 
@@ -14,9 +14,10 @@ function domainFromHost(host: string | null) {
 async function themeKeyForRequest(req: NextRequest): Promise<ThemeKey> {
   const domain = domainFromHost(req.headers.get('host'))
   try {
-    const res = await getDomainSettings(domain)
-    const k = String(res?.effective?.theme?.key || res?.effective?.theme?.theme || 'style1') as ThemeKey
-    return ['style1', 'style2', 'style3', 'tv9'].includes(k) ? k : 'style1'
+    // Use new /public/config API - theme key not in config yet, fallback to style1
+    const config = await getConfigForDomain(domain)
+    // For now, always return style1 until backend adds theme to config API
+    return 'style1'
   } catch {
     return 'style1'
   }

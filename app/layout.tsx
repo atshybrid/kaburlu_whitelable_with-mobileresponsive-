@@ -164,8 +164,8 @@ export async function generateMetadata(): Promise<Metadata> {
           creator: config.seo.twitter.handle || undefined,
         },
         icons: {
-          icon: config.branding.faviconUrl ? [{ url: config.branding.faviconUrl }] : undefined,
-          shortcut: config.branding.faviconUrl ? [{ url: config.branding.faviconUrl }] : undefined,
+          icon: config.branding.favicon ? [{ url: config.branding.favicon }] : undefined,
+          shortcut: config.branding.favicon ? [{ url: config.branding.favicon }] : undefined,
           apple: config.branding.appleTouchIcon || config.branding.logo ? [{ url: config.branding.appleTouchIcon || config.branding.logo }] : undefined,
         },
         robots: {

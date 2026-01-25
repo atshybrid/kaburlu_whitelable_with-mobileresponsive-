@@ -195,17 +195,5 @@ export interface EffectiveSettings {
   }
 }
 
-export type DomainSettingsResponse = {
-  domain: string
-  tenantId: string
-  effective: EffectiveSettings
-}
-
-export async function getDomainSettings(domain: string) {
-  // Use no-store to always check domain status fresh (important for domain linking)
-  return fetchJSON<DomainSettingsResponse>('/public/domain/settings', {
-    tenantDomain: domain,
-    cache: 'no-store', // Always check domain status fresh
-    tags: [`domain-settings:${domain}`],
-  })
-}
+// DEPRECATED: Use getConfig() from lib/config.ts instead
+// Old getDomainSettings removed - /public/domain/settings API no longer used

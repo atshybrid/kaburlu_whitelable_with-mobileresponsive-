@@ -1,5 +1,6 @@
 import { headers } from 'next/headers'
-import { getDomainSettings, normalizeTenantDomain, type EffectiveSettings } from './remote'
+import { normalizeTenantDomain, type EffectiveSettings } from './remote'
+import { getConfigForDomain } from './config'
 import { cache as reactCache } from 'react'
 import { isWrongTenantData } from './fallback-data'
 
@@ -60,22 +61,65 @@ const _getSettingsResult = reactCache(async (domainOverride?: string): Promise<S
   }
   
   try {
-    const res = await getDomainSettings(domain)
+    // 🎯 NEW: Use /public/config API instead of old /public/domain/settings
+    const config = await getConfigForDomain(domain)
     
-    // Check if settings belong to wrong tenant (e.g., Crown Human Rights)
-    if (isWrongTenantData(res)) {
-      console.log('🚫 Wrong tenant settings detected, returning empty settings')
+    if (!config) {
+      console.log('⚠️ No config returned for domain:', domain)
       result.settings = {}
-      // Don't mark as isDomainNotLinked - we want to show fallback articles, not "coming soon"
-      result.isDomainNotLinked = false
-      result.isApiError = false
+      result.isApiError = true
       return result
     }
     
-    result.settings = res.effective || {}
-    // Only cache successful results
+    // Map new config format to old EffectiveSettings format
+    result.settings = {
+      seo: {
+        defaultMetaTitle: config.seo.meta.title,
+        defaultMetaDescription: config.seo.meta.description,
+      },
+      content: {
+        defaultLanguage: config.content.defaultLanguage || 'te',
+      },
+      branding: {
+        logoUrl: (config.branding as any).logoUrl || config.branding.logo,
+        faviconUrl: (config.branding as any).faviconUrl || config.branding.favicon,
+        siteName: config.branding.siteName,
+      },
+      theme: {
+        colors: {
+          primary: (config.branding as any).primaryColor || config.theme?.colors?.primary,
+          secondary: (config.branding as any).secondaryColor || config.theme?.colors?.secondary,
+        },
+        layout: {
+          showTicker: config.layout.showTicker !== false,
+          showTopBar: config.layout.showTopBar !== false,
+        },
+      },
+      ads: {
+        enabled: Boolean((config.integrations.ads as any).adsenseClientId || config.integrations.ads.adsense),
+        googleAdsense: {
+          client: (config.integrations.ads as any).adsenseClientId || config.integrations.ads.adsense || '',
+        },
+      },
+      settings: {
+        seo: {
+          defaultMetaTitle: config.seo.meta.title,
+          defaultMetaDescription: config.seo.meta.description,
+        },
+        content: {
+          defaultLanguage: config.content.defaultLanguage || 'te',
+        },
+        branding: {
+          logoUrl: (config.branding as any).logoUrl || config.branding.logo,
+          siteName: config.branding.siteName,
+        },
+      },
+    }
+    
     cache.set(key, { value: result, expires: now + TTL_MS })
+    return result
   } catch (error) {
+    console.error('⚠️ Error fetching config for settings:', error)
     const errorMessage = String(error).toLowerCase()
     
     // Check if it's a domain not found / not linked error
@@ -96,6 +140,5 @@ const _getSettingsResult = reactCache(async (domainOverride?: string): Promise<S
     result.settings = {}
   }
   
-  return result
   return result
 })

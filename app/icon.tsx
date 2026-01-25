@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { headers } from 'next/headers'
 import { resolveTenant } from '@/lib/tenant'
-import { getDomainSettings, normalizeTenantDomain } from '@/lib/remote'
+import { normalizeTenantDomain } from '@/lib/remote'
 
 export const runtime = 'edge'
 

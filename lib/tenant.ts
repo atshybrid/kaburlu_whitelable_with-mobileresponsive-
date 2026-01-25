@@ -1,5 +1,6 @@
 import { headers } from 'next/headers'
-import { getDomainSettings, normalizeTenantDomain } from './remote'
+import { normalizeTenantDomain } from './remote'
+import { getConfigForDomain } from './config'
 import { DEFAULT_TENANTS } from '@/config/tenants'
 
 export type Tenant = {
@@ -40,12 +41,29 @@ export async function resolveTenant({ slugOverride }: { slugOverride?: string } 
   // If the route param itself looks like a domain, treat it as the tenant domain.
   const slugLooksLikeDomain = slug.includes('.') && !slug.includes('/')
   const domain = normalizeTenantDomain(slugLooksLikeDomain ? slug : (host || 'localhost'))
+  
   try {
-    const res = await getDomainSettings(domain)
-    const remoteThemeKey = res?.effective?.theme?.theme || res?.effective?.theme?.key || 'style1'
-    const themeKey = local?.themeKey || remoteThemeKey
-    const name = local?.name || slug
-    return { id: res.tenantId ?? 'na', slug, name, themeKey, domain: res.domain ?? domain, isDomainNotLinked: false, isApiError: false }
+    // 🎯 NEW: Use /public/config API instead of old /public/domain/settings
+    const config = await getConfigForDomain(domain)
+    
+    if (!config) {
+      const themeKey = local?.themeKey || 'style1'
+      const name = local?.name || slug
+      return { id: 'na', slug, name, themeKey, domain, isDomainNotLinked: true, isApiError: true }
+    }
+    
+    const themeKey = local?.themeKey || 'style1' // Theme from config not used yet
+    const name = config.tenant.displayName || config.tenant.name || local?.name || slug
+    
+    return { 
+      id: config.tenant.id, 
+      slug: config.tenant.slug, 
+      name, 
+      themeKey, 
+      domain: config.domain.domain, 
+      isDomainNotLinked: false, 
+      isApiError: false 
+    }
   } catch (error) {
     const errorMessage = String(error).toLowerCase()
     
