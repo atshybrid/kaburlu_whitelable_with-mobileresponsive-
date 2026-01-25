@@ -30,6 +30,233 @@ function toHref(pathname: string): UrlObject {
   return { pathname }
 }
 
+// ============================================
+// ARTICLE PAGE SKELETON - Animated Loading UI
+// ============================================
+function ArticlePageSkeleton() {
+  return (
+    <div className="theme-style1 bg-zinc-50 min-h-screen animate-pulse">
+      {/* Navbar Skeleton */}
+      <div className="sticky top-0 z-50 bg-white border-b border-zinc-200">
+        <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+          <div className="h-10 w-32 bg-zinc-200 rounded" />
+          <div className="hidden md:flex gap-4">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="h-4 w-16 bg-zinc-200 rounded" />
+            ))}
+          </div>
+          <div className="h-8 w-8 bg-zinc-200 rounded-full" />
+        </div>
+      </div>
+      
+      <main className="mx-auto max-w-7xl px-4 py-6">
+        {/* Breadcrumb Skeleton */}
+        <div className="flex gap-2 mb-6">
+          <div className="h-4 w-12 bg-zinc-200 rounded" />
+          <div className="h-4 w-4 bg-zinc-200 rounded" />
+          <div className="h-4 w-20 bg-zinc-200 rounded" />
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+          {/* Main Content Skeleton */}
+          <article className="min-w-0">
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              {/* Header Skeleton */}
+              <div className="p-6 sm:p-8 lg:p-10">
+                {/* Category Badge */}
+                <div className="h-8 w-24 bg-red-100 rounded-full mb-4" />
+                
+                {/* Title */}
+                <div className="space-y-3 mb-6">
+                  <div className="h-10 w-full bg-zinc-200 rounded-lg" />
+                  <div className="h-10 w-4/5 bg-zinc-200 rounded-lg" />
+                </div>
+                
+                {/* Metadata Bar */}
+                <div className="flex flex-wrap items-center gap-4 pb-6 border-b border-zinc-100">
+                  <div className="flex items-center gap-2">
+                    <div className="h-10 w-10 bg-zinc-200 rounded-full" />
+                    <div className="space-y-1">
+                      <div className="h-3 w-20 bg-zinc-200 rounded" />
+                      <div className="h-3 w-16 bg-zinc-200 rounded" />
+                    </div>
+                  </div>
+                  <div className="h-4 w-24 bg-zinc-200 rounded" />
+                  <div className="h-4 w-20 bg-zinc-200 rounded" />
+                </div>
+                
+                {/* Share Buttons */}
+                <div className="flex items-center gap-3 mt-4">
+                  <div className="h-4 w-12 bg-zinc-200 rounded" />
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="h-9 w-9 bg-zinc-200 rounded-full" />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Featured Image Skeleton */}
+              <div className="relative aspect-[16/9] bg-gradient-to-br from-zinc-200 to-zinc-300 mx-6 sm:mx-8 lg:mx-10 rounded-xl overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <svg className="w-16 h-16 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+              
+              {/* Content Skeleton */}
+              <div className="p-6 sm:p-8 lg:p-10 space-y-6">
+                {/* Paragraphs */}
+                {[1, 2, 3, 4, 5].map(i => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-4 w-full bg-zinc-200 rounded" />
+                    <div className="h-4 w-full bg-zinc-200 rounded" />
+                    <div className="h-4 w-3/4 bg-zinc-200 rounded" />
+                  </div>
+                ))}
+                
+                {/* Ad Placeholder */}
+                <div className="h-24 bg-gradient-to-r from-zinc-100 to-zinc-200 rounded-xl flex items-center justify-center">
+                  <div className="h-6 w-32 bg-zinc-300 rounded" />
+                </div>
+                
+                {/* More Paragraphs */}
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-4 w-full bg-zinc-200 rounded" />
+                    <div className="h-4 w-full bg-zinc-200 rounded" />
+                    <div className="h-4 w-2/3 bg-zinc-200 rounded" />
+                  </div>
+                ))}
+                
+                {/* Tags Skeleton */}
+                <div className="flex flex-wrap gap-2 pt-6 border-t border-zinc-100">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="h-8 w-20 bg-zinc-200 rounded-full" />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Publisher Card Skeleton */}
+              <div className="mx-6 sm:mx-8 lg:mx-10 mb-8 p-6 border-2 border-zinc-200 rounded-2xl bg-gradient-to-br from-zinc-50 to-white">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-zinc-200 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-5 w-32 bg-zinc-200 rounded" />
+                    <div className="h-4 w-24 bg-zinc-200 rounded" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Related Articles Skeleton */}
+            <div className="mt-8 bg-white rounded-2xl shadow-sm p-6 sm:p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-8 w-1.5 bg-red-200 rounded-full" />
+                <div className="h-6 w-40 bg-zinc-200 rounded" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="space-y-3">
+                    <div className="aspect-video bg-zinc-200 rounded-lg" />
+                    <div className="h-4 w-full bg-zinc-200 rounded" />
+                    <div className="h-4 w-3/4 bg-zinc-200 rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Navigation Skeleton */}
+            <div className="mt-8 grid grid-cols-2 gap-4">
+              <div className="p-4 border-2 border-zinc-200 rounded-xl bg-white">
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 bg-zinc-200 rounded-lg" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-16 bg-zinc-200 rounded" />
+                    <div className="h-4 w-full bg-zinc-200 rounded" />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 border-2 border-zinc-200 rounded-xl bg-white">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 space-y-2 text-right">
+                    <div className="h-3 w-16 bg-zinc-200 rounded ml-auto" />
+                    <div className="h-4 w-full bg-zinc-200 rounded" />
+                  </div>
+                  <div className="w-16 h-16 bg-zinc-200 rounded-lg" />
+                </div>
+              </div>
+            </div>
+          </article>
+          
+          {/* Sidebar Skeleton */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-24 space-y-6">
+              {/* Trending Skeleton */}
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div className="bg-gradient-to-r from-purple-100 to-pink-100 px-6 py-4">
+                  <div className="h-6 w-32 bg-purple-200 rounded" />
+                </div>
+                <div className="p-4 space-y-4">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-full bg-zinc-200 rounded" />
+                        <div className="h-3 w-3/4 bg-zinc-200 rounded" />
+                      </div>
+                      <div className="w-14 h-14 bg-zinc-200 rounded-lg flex-shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Ad Skeleton */}
+              <div className="h-[300px] bg-gradient-to-br from-zinc-200 to-zinc-300 rounded-2xl flex items-center justify-center">
+                <div className="h-8 w-24 bg-zinc-400 rounded" />
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+      
+      {/* Footer Skeleton */}
+      <div className="mt-12 bg-zinc-900 py-8">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="flex justify-center gap-8">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-4 w-16 bg-zinc-700 rounded" />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Export the skeleton for use in loading.tsx
+export { ArticlePageSkeleton }
+
+// ============================================
+// SHARED UTILITY: Safe category name extraction
+// ============================================
+function extractCategoryName(val: unknown): string {
+  if (!val) return ''
+  if (typeof val === 'string') return val
+  if (typeof val === 'object') {
+    const obj = val as Record<string, unknown>
+    // If name field exists and is a string, use it
+    if (obj.name && typeof obj.name === 'string') return obj.name
+    // If name is also an object, extract from that
+    if (obj.name && typeof obj.name === 'object') {
+      const nested = obj.name as Record<string, unknown>
+      if (nested.name && typeof nested.name === 'string') return nested.name
+    }
+    // Fallback to slug
+    if (obj.slug && typeof obj.slug === 'string') return obj.slug
+  }
+  return String(val)
+}
+
 function AdBanner({ variant = 'default', className }: { variant?: 'default' | 'tall' | 'square' | 'horizontal'; className?: string }) {
   // Map each variant to a specific gradient for consistent rendering
   const gradientMap = {
@@ -243,7 +470,7 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
         <div className="flex items-center justify-between px-4 py-2">
           <div className="inline-flex items-center gap-2">
             <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
-            <span className="text-sm font-bold uppercase tracking-wide">{category.name}</span>
+            <span className="text-sm font-bold uppercase tracking-wide">{extractCategoryName(category.name)}</span>
           </div>
         </div>
         <div className="p-4">
@@ -259,7 +486,7 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
         <div className="flex items-center justify-between px-4 py-2">
           <div className="inline-flex items-center gap-2">
             <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
-            <span className="text-sm font-bold uppercase tracking-wide">{category.name}</span>
+            <span className="text-sm font-bold uppercase tracking-wide">{extractCategoryName(category.name)}</span>
           </div>
         </div>
         <div className="p-4">
@@ -275,7 +502,7 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
   // Success case
   if (!category) return null
   
-  const title = category.name
+  const title = extractCategoryName(category.name)
   const href = categoryHref(tenantSlug, category.slug)
   // Column 4 shows only 3 items, other columns show 7
   const itemCount = columnKey === 'col-4' ? 3 : 7
@@ -373,19 +600,23 @@ export async function ThemeHome({
   const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'te'
 
   // Helper to convert shaped articles to Article format
-  const shapedToArticle = (item: HomepageShapedArticle): Article => ({
-    id: item.id,
-    slug: item.slug || item.id,
-    title: item.title,
-    excerpt: item.excerpt || '',
-    coverImage: item.coverImageUrl ? { url: item.coverImageUrl } : undefined,
-    publishedAt: item.publishedAt || new Date().toISOString(),
-    categories: item.category
-      ? [{ slug: item.category.slug, name: item.category.name }]
-      : undefined,
-    author: { name: 'కబుర్లు డెస్క్' },
-    content: '',
-  })
+  const shapedToArticle = (item: HomepageShapedArticle): Article => {
+    // Use coverImageUrl first, then fall back to image field
+    const imageUrl = item.coverImageUrl || item.image || null
+    return {
+      id: item.id,
+      slug: item.slug || item.id,
+      title: item.title,
+      excerpt: item.excerpt || '',
+      coverImage: imageUrl ? { url: imageUrl } : undefined,
+      publishedAt: item.publishedAt || new Date().toISOString(),
+      categories: item.category
+        ? [{ slug: item.category.slug || '', name: extractCategoryName(item.category) }]
+        : undefined,
+      author: { name: 'కబుర్లు డెస్క్' },
+      content: '',
+    }
+  }
 
   // Fetch shaped homepage with structured sections
   let shapedHomepage: HomepageShapedResponse | null = null
@@ -510,12 +741,12 @@ export async function ThemeHome({
         )
       case 'smallList':
         // In the 4th column: show Most Read (3 items) from API
-        // Other columns: show 3 articles from latest
+        // Other columns: show articles from latest without labels
         {
           const isCol4 = block.columnKey === 'col-4'
           
           if (isCol4 && mostReadData.length > 0) {
-            // Column 4: Show Most Read items
+            // Column 4: Show Most Read items with label
             return (
               <div key={block.id} className="flex flex-col flex-1 gap-4">
                 {/* Most Read Section */}
@@ -534,6 +765,7 @@ export async function ThemeHome({
             )
           }
           
+          // Column 2 and 3: No label, just articles
           return (
             <div key={block.id} className="grid grid-cols-1 gap-3">
               {small.slice(0, 3).map((a) => (
@@ -798,7 +1030,7 @@ function ReporterCard({ reporter, tenantSlug }: { reporter: NonNullable<Article[
                       {recentArticle.category && (
                         <div className="absolute top-2 left-2">
                           <span className="inline-block bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
-                            {recentArticle.category.name}
+                            {extractCategoryName(recentArticle.category)}
                           </span>
                         </div>
                       )}
@@ -863,68 +1095,85 @@ function TrendingArticlesSidebar({ trending, tenantSlug }: { trending: NonNullab
   if (!trending || trending.length === 0) return null
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-      <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 px-6 py-4">
-        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-          </svg>
-          ట్రెండింగ్
-        </h3>
+    <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-zinc-100">
+      {/* Header with gradient */}
+      <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-white">Most Read</h3>
+            <p className="text-xs text-white/80">Trending Now</p>
+          </div>
+        </div>
       </div>
-      <div className="divide-y divide-zinc-100 max-h-[500px] overflow-y-auto">
-        {trending.slice(0, 5).map((trendingArticle, index) => (
+      
+      {/* Articles List */}
+      <div className="divide-y divide-zinc-100">
+        {trending.slice(0, 7).map((trendingArticle, index) => (
           <a 
             key={trendingArticle.id} 
             href={articleHref(tenantSlug, trendingArticle.slug || trendingArticle.id || '')}
-            className="group flex gap-3 p-4 hover:bg-gradient-to-r hover:from-red-50 hover:to-transparent transition-all"
+            className="group flex gap-4 p-4 hover:bg-gradient-to-r hover:from-purple-50 hover:to-transparent transition-all duration-200"
           >
-            {/* Trending Badge */}
-            <div className="shrink-0">
-              <div className={`flex h-8 w-8 items-center justify-center rounded-lg font-bold text-sm ${
+            {/* Ranking Number */}
+            <div className="shrink-0 flex items-start pt-1">
+              <div className={`flex h-7 w-7 items-center justify-center rounded-lg font-bold text-sm transition-all ${
                 index < 3 
-                  ? 'bg-gradient-to-br from-purple-600 to-pink-600 text-white shadow-md' 
+                  ? 'bg-gradient-to-br from-red-600 to-orange-500 text-white shadow-md group-hover:scale-110' 
                   : 'bg-zinc-100 text-zinc-600 group-hover:bg-red-100 group-hover:text-red-600'
               }`}>
-                🔥
+                {index + 1}
+              </div>
+            </div>
+            
+            {/* Article Info */}
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold line-clamp-2 text-zinc-800 group-hover:text-red-600 transition-colors leading-relaxed">
+                {trendingArticle.title}
+              </h4>
+              <div className="mt-2 flex items-center gap-2 text-xs text-zinc-500">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Recently</span>
               </div>
             </div>
             
             {/* Thumbnail */}
-            {trendingArticle.coverImageUrl && (
-              <div className="shrink-0 w-20 h-20 rounded-lg overflow-hidden">
+            {trendingArticle.coverImageUrl ? (
+              <div className="shrink-0 w-16 h-16 rounded-lg overflow-hidden shadow-sm ring-1 ring-zinc-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src={trendingArticle.coverImageUrl} 
                   alt={trendingArticle.title || ''} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   loading="lazy"
                 />
               </div>
+            ) : (
+              <div className="shrink-0 w-16 h-16 rounded-lg bg-gradient-to-br from-zinc-100 to-zinc-200 flex items-center justify-center shadow-sm">
+                <span className="text-zinc-400 text-xs">Sample</span>
+              </div>
             )}
-            
-            {/* Article Info */}
-            <div className="flex-1 min-w-0">
-              {trendingArticle.category && (
-                <span className="inline-block text-xs font-bold text-red-600 mb-1">
-                  {trendingArticle.category.name}
-                </span>
-              )}
-              <h4 className="text-sm font-semibold line-clamp-2 text-zinc-900 group-hover:text-red-600 transition-colors" style={{ lineHeight: '1.6' }}>
-                {trendingArticle.title}
-              </h4>
-              {trendingArticle.viewCount && (
-                <div className="mt-1 flex items-center gap-1 text-xs text-zinc-500">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  {trendingArticle.viewCount.toLocaleString()}
-                </div>
-              )}
-            </div>
           </a>
         ))}
+      </div>
+      
+      {/* View All Link */}
+      <div className="p-4 bg-gradient-to-r from-zinc-50 to-white border-t border-zinc-100">
+        <a 
+          href={`/t/${tenantSlug}`}
+          className="flex items-center justify-center gap-2 text-sm font-semibold text-red-600 hover:text-red-700 transition-colors"
+        >
+          View All Articles
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </a>
       </div>
     </div>
   )
@@ -1037,7 +1286,7 @@ function MustReadCard({ mustRead, tenantSlug }: { mustRead: NonNullable<Article[
           <div className="flex-1">
             {mustRead.category && (
               <span className="inline-block bg-amber-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-2">
-                {mustRead.category.name}
+                {extractCategoryName(mustRead.category)}
               </span>
             )}
             <h3 className="text-xl sm:text-2xl font-bold text-zinc-900 group-hover:text-amber-700 leading-snug mb-2" style={{ lineHeight: '1.5' }}>
@@ -1090,7 +1339,8 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
 
   // Get breadcrumb from categories
   const category = article.categories && article.categories[0]
-  const categoryName = category?.name || 'ఆర్టికల్'
+  // Use the shared extractCategoryName utility
+  const categoryName = (category?.name ? extractCategoryName(category.name) : '') || 'ఆర్టికల్'
   const categorySlug = category?.slug
   
   // Get reporter info from API
@@ -1105,6 +1355,10 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
   
   // Get related articles
   const related = article.related || []
+  
+  // Get navigation articles
+  const previousArticle = article.previousArticle
+  const nextArticle = article.nextArticle
 
   return (
     <div className="theme-style1 bg-zinc-50">
@@ -1554,26 +1808,10 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
           {/* Sidebar */}
           <aside className="hidden lg:block">
             <div className="sticky top-24 space-y-6">
-              {/* Trending Articles */}
+              {/* Trending Articles - Enhanced Design */}
               {trending && trending.length > 0 && (
                 <TrendingArticlesSidebar trending={trending} tenantSlug={tenantSlug} />
               )}
-              
-              {/* Most Read */}
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <div className="bg-gradient-to-r from-red-600 to-orange-500 px-6 py-4">
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                      <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    అత్యధికంగా చదివినవి
-                  </h3>
-                </div>
-                <div className="p-4">
-                  <MostReadSidebar tenantSlug={tenantSlug} currentArticleId={article.id} />
-                </div>
-              </div>
               
               {/* Sidebar Ad */}
               <div className="rounded-2xl overflow-hidden shadow-sm">
@@ -2133,7 +2371,7 @@ async function CategoryColumns({
           <div className="flex items-center justify-between border-b px-4 py-2">
             <Link href={toHref(categoryHref(tenantSlug, c.slug))} className="inline-flex items-center gap-2">
               <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
-              <span className="text-sm font-bold uppercase tracking-wide hover:text-red-600">{c.name}</span>
+              <span className="text-sm font-bold uppercase tracking-wide hover:text-red-600">{extractCategoryName(c.name)}</span>
             </Link>
             <Link
               href={toHref(categoryHref(tenantSlug, c.slug))}
@@ -2318,7 +2556,7 @@ async function HGBlock({ tenantSlug }: { tenantSlug: string }) {
           <div className="flex items-center justify-between px-3 py-2">
             <a href={categoryHref(tenantSlug, c.slug)} className="inline-flex items-center gap-2 text-base font-bold">
               <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
-              <span className="hover:text-red-600">{c.name}</span>
+              <span className="hover:text-red-600">{extractCategoryName(c.name)}</span>
             </a>
             <a
               href={categoryHref(tenantSlug, c.slug)}

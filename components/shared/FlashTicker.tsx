@@ -28,16 +28,6 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 5000 }: { tenantSl
   const current = list[idx]
   const previous = prevIdx !== null ? list[prevIdx] : null
   const currentHref = articleHref(tenantSlug, current.slug || current.id)
-  
-  const handlePrev = () => {
-    setPrevIdx(idx)
-    setIdx((i) => (i - 1 + list.length) % list.length)
-  }
-  
-  const handleNext = () => {
-    setPrevIdx(idx)
-    setIdx((i) => (i + 1) % list.length)
-  }
 
   return (
     <div 
@@ -49,7 +39,8 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 5000 }: { tenantSl
         Flashnews
       </div>
       
-      {/* Manual controls */}
+      {/* Manual controls - hidden */}
+      {/* 
       <button
         onClick={handlePrev}
         className="hidden sm:flex items-center justify-center w-7 h-7 rounded-full hover:bg-gray-100 transition-colors"
@@ -59,6 +50,7 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 5000 }: { tenantSl
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
       </button>
+      */}
       
       <div className="relative flex-1 overflow-hidden min-h-6 py-0.5">
         {previous && (
@@ -81,7 +73,8 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 5000 }: { tenantSl
         </Link>
       </div>
       
-      {/* Manual controls */}
+      {/* Manual controls - hidden */}
+      {/*
       <button
         onClick={handleNext}
         className="hidden sm:flex items-center justify-center w-7 h-7 rounded-full hover:bg-gray-100 transition-colors"
@@ -91,8 +84,10 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 5000 }: { tenantSl
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
       </button>
+      */}
       
-      {/* Progress indicator */}
+      {/* Progress indicator - hidden */}
+      {/*
       {list.length > 1 && (
         <div className="hidden sm:flex items-center gap-1">
           {list.map((_, i) => (
@@ -105,6 +100,7 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 5000 }: { tenantSl
           ))}
         </div>
       )}
+      */}
     </div>
   )
 }

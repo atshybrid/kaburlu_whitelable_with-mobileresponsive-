@@ -285,7 +285,7 @@ async function CategoryColumnsGrid({ tenantSlug }: { tenantSlug: string }) {
           <CategoryListSection
             key={category.id}
             tenantSlug={tenantSlug}
-            title={category.name}
+            title={typeof category.name === 'string' ? category.name : (category.slug || 'Category')}
             articles={articles}
             viewMoreHref={categoryHref(tenantSlug, category.slug)}
           />

@@ -133,8 +133,9 @@ export default async function Head({
     // Some backends send empty excerpt; fall back to a shorter plainText when available
     typeof a.plainText === 'string' ? a.plainText.slice(0, 220) : undefined,
   )
+  // Priority: coverImageUrl (new API), then coverImage.url (legacy), then other fields
   const image =
-    pickFirstString(pickFrom(a, ['coverImage', 'url']), a.imageUrl, a.featuredImage) || undefined
+    pickFirstString(a.coverImageUrl, pickFrom(a, ['coverImage', 'url']), a.imageUrl, a.featuredImage, a.image) || undefined
 
   const createdAt =
     pickString(a.publishedAt) || pickString(a.createdAt) || pickString(a.datePublished) || undefined

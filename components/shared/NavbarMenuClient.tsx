@@ -66,8 +66,8 @@ export default function NavbarMenuClient({
 }: {
   items: Array<{ href: string; label: string; children?: Array<{ href: string; label: string }> }>
 }) {
-  const visible = items.slice(0, 6)
-  const rest = items.slice(6)
+  const visible = items.slice(0, 10)
+  const rest = items.slice(10)
   const [openMore, setOpenMore] = useState(false)
   const [openItemHref, setOpenItemHref] = useState<string | null>(null)
   const [hoveredChild, setHoveredChild] = useState<string | null>(null)
@@ -373,10 +373,10 @@ export default function NavbarMenuClient({
               onClick={() => setOpenMore((o) => !o)}
               onMouseEnter={() => setOpenMore(true)}
               onFocus={() => setOpenMore(true)}
-              className={`inline-flex items-center gap-2 rounded-xl border-2 px-5 py-2.5 text-[15px] font-bold transition-all shadow-sm ${
+              className={`inline-flex items-center gap-2 px-3 py-2.5 text-[15px] font-medium transition-all rounded-lg ${
                 openMore
-                  ? 'border-[hsl(var(--primary,217_91%_60%))] bg-[hsl(var(--primary,217_91%_60%))] text-white shadow-lg shadow-[hsl(var(--primary,217_91%_60%))]/30'
-                  : 'border-zinc-200 bg-white text-zinc-800 hover:border-[hsl(var(--primary,217_91%_60%))] hover:text-[hsl(var(--primary,217_91%_60%))]'
+                  ? 'text-[hsl(var(--primary,217_91%_60%))] bg-[hsl(var(--primary,217_91%_60%))]/5'
+                  : 'text-zinc-800 hover:text-[hsl(var(--primary,217_91%_60%))]'
               }`}
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">

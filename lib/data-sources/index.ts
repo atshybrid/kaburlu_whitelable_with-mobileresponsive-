@@ -153,8 +153,9 @@ class RemoteDataSource implements DataSource {
     void _tenantSlug
     const domain = await currentDomain()
     
-    // 🎯 PRIMARY: Use new detailed article API with SEO support
-    const primaryPath = `/articles/public/articles/${encodeURIComponent(slug)}?domainName=${encodeURIComponent(domain)}`
+    // 🎯 PRIMARY: Use new detailed article API with all fields (mustRead, trending, related, etc.)
+    // API: /public/articles/{slug}?languageCode=te
+    const primaryPath = `/public/articles/${encodeURIComponent(slug)}?languageCode=te`
     
     try {
       const res = await fetchJSON<unknown>(primaryPath, { 
@@ -171,6 +172,7 @@ class RemoteDataSource implements DataSource {
     
     // FALLBACK: Try alternate endpoints
     const fallbackPaths = [
+      `/articles/public/articles/${encodeURIComponent(slug)}?domainName=${encodeURIComponent(domain)}`,
       `/public/articles?slug=${encodeURIComponent(slug)}&pageSize=1`,
       `/public/articles/${encodeURIComponent(slug)}`,
     ]
@@ -224,6 +226,54 @@ function pickFirst(obj: unknown, keys: string[]) {
   return undefined
 }
 
+// Helper to extract category name from possibly nested object
+function extractCategoryName(val: unknown): string {
+  if (!val) return ''
+  if (typeof val === 'string') return val
+  if (typeof val === 'object') {
+    const obj = val as Record<string, unknown>
+    // If name is a string, return it
+    if (obj.name && typeof obj.name === 'string') return obj.name
+    // If name is itself an object (nested), extract from there
+    if (obj.name && typeof obj.name === 'object') {
+      const nested = obj.name as Record<string, unknown>
+      if (nested.name && typeof nested.name === 'string') return nested.name
+    }
+    // Fallback to slug
+    if (obj.slug && typeof obj.slug === 'string') return obj.slug
+  }
+  return String(val)
+}
+
+// Normalize category object to ensure name is always a string
+function normalizeCategory(cat: unknown): { slug?: string; name?: string } | undefined {
+  if (!cat || typeof cat !== 'object') return undefined
+  const c = cat as Record<string, unknown>
+  return {
+    slug: typeof c.slug === 'string' ? c.slug : undefined,
+    name: extractCategoryName(c.name || c)
+  }
+}
+
+// Normalize nested article objects (mustRead, trending items, related items)
+function normalizeNestedArticle(item: unknown): Record<string, unknown> | null {
+  if (!item || typeof item !== 'object') return null
+  const o = item as Record<string, unknown>
+  const result: Record<string, unknown> = {
+    id: o.id,
+    slug: o.slug,
+    title: o.title,
+    coverImageUrl: o.coverImageUrl || o.image || o.imageUrl,
+    publishedAt: o.publishedAt,
+    viewCount: o.viewCount,
+  }
+  // Normalize category if present
+  if (o.category) {
+    result.category = normalizeCategory(o.category)
+  }
+  return result
+}
+
 function normalizeItem(u: unknown): Article {
   const o = (u ?? {}) as Record<string, unknown>
   const id = String(o.id ?? o._id ?? o.slug ?? cryptoRandom())
@@ -232,6 +282,12 @@ function normalizeItem(u: unknown): Article {
   
   // Excerpt/Summary
   const excerpt = typeof o.excerpt === 'string' ? o.excerpt : (typeof o.summary === 'string' ? o.summary : (typeof o.subtitle === 'string' ? o.subtitle : undefined))
+  
+  // Subtitle
+  const subtitle = typeof o.subtitle === 'string' ? o.subtitle : undefined
+  
+  // Highlights
+  const highlights = Array.isArray(o.highlights) ? o.highlights as string[] : undefined
   
   // Content - prefer contentHtml, fallback to content or plainText
   const contentHtml = typeof o.contentHtml === 'string' ? o.contentHtml : undefined
@@ -243,9 +299,13 @@ function normalizeItem(u: unknown): Article {
   let coverAlt: string | undefined
   let coverCaption: string | undefined
   
-  if (typeof o.coverImage === 'string') {
+  // First check coverImageUrl (used by new API)
+  if (typeof o.coverImageUrl === 'string') coverUrl = o.coverImageUrl
+  
+  // Then check coverImage (string or object)
+  if (!coverUrl && typeof o.coverImage === 'string') {
     coverUrl = o.coverImage
-  } else if (o.coverImage && typeof o.coverImage === 'object') {
+  } else if (!coverUrl && o.coverImage && typeof o.coverImage === 'object') {
     const ci = o.coverImage as Record<string, unknown>
     if (typeof ci.url === 'string') coverUrl = ci.url
     if (typeof ci.alt === 'string') coverAlt = ci.alt
@@ -267,6 +327,11 @@ function normalizeItem(u: unknown): Article {
   // Published date
   const publishedAt = typeof o.publishedAt === 'string' ? o.publishedAt : (typeof o.createdAt === 'string' ? o.createdAt : undefined)
   
+  // Updated date
+  const updatedAt = o.audit && typeof o.audit === 'object' && typeof (o.audit as Record<string, unknown>).updatedAt === 'string'
+    ? (o.audit as Record<string, unknown>).updatedAt as string
+    : (typeof o.updatedAt === 'string' ? o.updatedAt : undefined)
+  
   // Authors
   const authors = Array.isArray(o.authors) ? o.authors : undefined
   
@@ -285,11 +350,49 @@ function normalizeItem(u: unknown): Article {
   // JSON-LD
   const jsonLd = o.jsonLd && typeof o.jsonLd === 'object' ? o.jsonLd as Article['jsonLd'] : undefined
   
+  // Media (images and videos)
+  const media = o.media && typeof o.media === 'object' ? o.media as Article['media'] : undefined
+  
+  // Breaking/Live status
+  const isBreaking = typeof o.isBreaking === 'boolean' ? o.isBreaking : false
+  const isLive = typeof o.isLive === 'boolean' ? o.isLive : false
+  
+  // View and share counts
+  const viewCount = typeof o.viewCount === 'number' ? o.viewCount : 0
+  const shareCount = typeof o.shareCount === 'number' ? o.shareCount : 0
+  
+  // Reporter information
+  const reporter = o.reporter && typeof o.reporter === 'object' ? o.reporter as Article['reporter'] : null
+  
+  // Publisher information
+  const publisher = o.publisher && typeof o.publisher === 'object' ? o.publisher as Article['publisher'] : null
+  
+  // Must read article - normalize to ensure category.name is a string
+  const mustRead = o.mustRead && typeof o.mustRead === 'object' 
+    ? normalizeNestedArticle(o.mustRead) as Article['mustRead'] 
+    : null
+  
+  // Trending articles - normalize each item
+  const trending = Array.isArray(o.trending) 
+    ? o.trending.map(item => normalizeNestedArticle(item)).filter(Boolean) as Article['trending'] 
+    : null
+  
+  // Related articles - normalize each item
+  const related = Array.isArray(o.related) 
+    ? o.related.map(item => normalizeNestedArticle(item)).filter(Boolean) as Article['related'] 
+    : null
+  
+  // Navigation - previous and next articles
+  const previousArticle = o.previousArticle && typeof o.previousArticle === 'object' ? o.previousArticle as Article['previousArticle'] : null
+  const nextArticle = o.nextArticle && typeof o.nextArticle === 'object' ? o.nextArticle as Article['nextArticle'] : null
+  
   return {
     id,
     slug,
     title,
+    subtitle: subtitle ?? null,
     excerpt: excerpt ?? null,
+    highlights: highlights ?? null,
     content: content ?? null,
     contentHtml: contentHtml ?? null,
     plainText: plainText ?? null,
@@ -299,12 +402,25 @@ function normalizeItem(u: unknown): Article {
       caption: coverCaption ?? null,
     } : undefined,
     publishedAt: publishedAt ?? null,
+    updatedAt: updatedAt ?? null,
     authors: authors ?? null,
     categories: categories ?? null,
     tags: tags ?? null,
     readingTimeMin,
     meta,
     jsonLd,
+    media,
+    isBreaking,
+    isLive,
+    viewCount,
+    shareCount,
+    reporter,
+    publisher,
+    mustRead,
+    trending,
+    related,
+    previousArticle,
+    nextArticle,
   }
 }
 

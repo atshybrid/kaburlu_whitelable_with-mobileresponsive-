@@ -2,18 +2,22 @@
 
 import { useState, useEffect } from 'react'
 
+// Get initial font size from localStorage (client-side only)
+function getInitialFontSize(): 'small' | 'medium' | 'large' {
+  if (typeof window === 'undefined') return 'medium'
+  const saved = localStorage.getItem('articleFontSize')
+  return (saved as 'small' | 'medium' | 'large') || 'medium'
+}
+
 // Font Size Control Component
 export function FontSizeControl() {
-  const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium')
-
-  useEffect(() => {
-    const saved = localStorage.getItem('articleFontSize')
-    if (saved) setFontSize(saved as typeof fontSize)
-  }, [])
+  const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>(getInitialFontSize)
 
   const changeFontSize = (size: typeof fontSize) => {
     setFontSize(size)
-    localStorage.setItem('articleFontSize', size)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('articleFontSize', size)
+    }
     
     const article = document.querySelector('.article-content-enhanced')
     if (article) {
@@ -70,9 +74,11 @@ export function CopyLinkButton({ url, title }: { url: string; title: string }) {
 
   const copyLink = async () => {
     try {
-      await navigator.clipboard.writeText(url)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      if (typeof window !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(url)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      }
     } catch (err) {
       console.error('Failed to copy:', err)
     }

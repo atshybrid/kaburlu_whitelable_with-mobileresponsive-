@@ -29,13 +29,29 @@ export async function TOINavbar({
   const langRaw = String(settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'en')
   const primaryLang = (langRaw.toLowerCase() === 'telugu' ? 'te' : langRaw.toLowerCase().split('-')[0]) || 'en'
 
+  // Safe category name extraction
+  const extractCategoryName = (val: unknown): string => {
+    if (!val) return ''
+    if (typeof val === 'string') return val
+    if (typeof val === 'object') {
+      const obj = val as Record<string, unknown>
+      if (obj.name && typeof obj.name === 'string') return obj.name
+      if (obj.name && typeof obj.name === 'object') {
+        const nested = obj.name as Record<string, unknown>
+        if (nested.name && typeof nested.name === 'string') return nested.name
+      }
+      if (obj.slug && typeof obj.slug === 'string') return obj.slug
+    }
+    return String(val)
+  }
+
   const categoryBySlug = new Map(cats.map((c) => [String(c.slug || ''), c]))
   const childrenByParentId = new Map<string, { href: string; label: string }[]>()
   for (const c of cats) {
     const parentId = c.parentId ? String(c.parentId) : ''
     if (!parentId) continue
     const list = childrenByParentId.get(parentId) || []
-    list.push({ href: categoryHref(tenantSlug, c.slug), label: c.name })
+    list.push({ href: categoryHref(tenantSlug, c.slug), label: extractCategoryName(c.name) })
     childrenByParentId.set(parentId, list)
   }
 
@@ -81,8 +97,9 @@ export async function TOINavbar({
           const catSlug = m.categorySlug ? String(m.categorySlug) : ''
           const category = catSlug ? categoryBySlug.get(catSlug) : undefined
           const href = catSlug ? categoryHref(tenantSlug, catSlug) : normalizeHref(String(m.href || ''))
-          const label = (category && category.name && primaryLang === 'en')
-            ? (String(m.label || '').trim() ? String(m.label) : category.name)
+          const catName = category ? extractCategoryName(category.name) : ''
+          const label = (category && catName && primaryLang === 'en')
+            ? (String(m.label || '').trim() ? String(m.label) : catName)
             : pickMenuLabel(m)
           const children = category ? childrenByParentId.get(String(category.id)) : undefined
           return { href, label, children }
@@ -91,7 +108,7 @@ export async function TOINavbar({
     : (() => {
         const top = cats.filter((c) => !c.parentId)
         return ([{ href: homeHref(tenantSlug), label: 'Home', children: undefined }] as MenuItem[]).concat(
-          top.slice(0, 10).map((c) => ({ href: categoryHref(tenantSlug, c.slug), label: c.name, children: childrenByParentId.get(String(c.id)) }))
+          top.slice(0, 10).map((c) => ({ href: categoryHref(tenantSlug, c.slug), label: extractCategoryName(c.name), children: childrenByParentId.get(String(c.id)) }))
         )
       })()
 

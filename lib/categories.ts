@@ -59,10 +59,16 @@ export async function getCategoriesForNav(): Promise<Category[]> {
       revalidateSeconds: Number(process.env.REMOTE_CATEGORIES_REVALIDATE_SECONDS || '300'),
       tags: [`categories:${domain}:${languageCode}`],
     })
+    // Ensure name is always a string (might be an object from API)
+    const extractName = (val: unknown): string => {
+      if (typeof val === 'string') return val
+      if (val && typeof val === 'object' && 'name' in val) return String((val as { name?: unknown }).name || '')
+      return ''
+    }
     // Map nameLocalized to name for display (nameLocalized is Telugu name)
     categories = Array.isArray(res) ? res.map(cat => ({
       ...cat,
-      name: cat.nameLocalized || cat.nameDefault || cat.name || cat.slug
+      name: extractName(cat.nameLocalized) || extractName(cat.nameDefault) || extractName(cat.name) || cat.slug
     })) : []
   } catch {
     categories = []
@@ -86,7 +92,15 @@ export async function getCategoriesForNav(): Promise<Category[]> {
         for (const r of enabled) {
           const slug = String(r.slug || '').trim()
           if (!slug) continue
-          const name = r.hasTranslation && r.translated ? String(r.translated) : String(r.baseName || r.slug)
+          // Handle name that might be an object
+          let name = ''
+          if (r.hasTranslation && r.translated) {
+            name = typeof r.translated === 'string' ? r.translated : String(r.translated || '')
+          } else if (r.baseName) {
+            name = typeof r.baseName === 'string' ? r.baseName : String(r.baseName || '')
+          } else {
+            name = slug
+          }
           if (name) bySlug.set(slug, name)
         }
 

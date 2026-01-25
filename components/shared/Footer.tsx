@@ -386,12 +386,12 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
             {/* Powered By */}
             <div className="flex items-center gap-3">
               <span className="text-xs text-zinc-500">పవర్డ్ బై</span>
-              <a href="https://kaburlu.com" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))]/10 border border-[hsl(var(--primary))]/30 hover:border-[hsl(var(--primary))]/50 transition-all">
+              <a href="https://kaburlumedia.com" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))]/10 border border-[hsl(var(--primary))]/30 hover:border-[hsl(var(--primary))]/50 transition-all">
                 <div className="w-6 h-6 rounded bg-[hsl(var(--primary))] flex items-center justify-center">
                   <span className="text-white text-xs font-bold">K</span>
                 </div>
                 <span className="text-sm font-semibold text-[hsl(var(--primary))] group-hover:opacity-80 transition-all">
-                  Kaburlu Softwares
+                  Kaburlu Media
                 </span>
               </a>
             </div>

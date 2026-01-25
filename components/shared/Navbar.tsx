@@ -39,13 +39,29 @@ export async function Navbar({
     : String(settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'en')
   const primaryLang = (langRaw.toLowerCase() === 'telugu' ? 'te' : langRaw.toLowerCase().split('-')[0]) || 'en'
 
+  // Safe category name extraction
+  const extractCategoryName = (val: unknown): string => {
+    if (!val) return ''
+    if (typeof val === 'string') return val
+    if (typeof val === 'object') {
+      const obj = val as Record<string, unknown>
+      if (obj.name && typeof obj.name === 'string') return obj.name
+      if (obj.name && typeof obj.name === 'object') {
+        const nested = obj.name as Record<string, unknown>
+        if (nested.name && typeof nested.name === 'string') return nested.name
+      }
+      if (obj.slug && typeof obj.slug === 'string') return obj.slug
+    }
+    return String(val)
+  }
+
   const categoryBySlug = new Map(cats.map((c) => [String(c.slug || ''), c]))
   const childrenByParentId = new Map<string, { href: string; label: string }[]>()
   for (const c of cats) {
     const parentId = c.parentId ? String(c.parentId) : ''
     if (!parentId) continue
     const list = childrenByParentId.get(parentId) || []
-    list.push({ href: categoryHref(tenantSlug, c.slug), label: c.name })
+    list.push({ href: categoryHref(tenantSlug, c.slug), label: extractCategoryName(c.name) })
     childrenByParentId.set(parentId, list)
   }
 
@@ -91,17 +107,23 @@ export async function Navbar({
           const categorySlug = m.categorySlug ? String(m.categorySlug) : ''
           const category = categorySlug ? categoryBySlug.get(categorySlug) : undefined
           const href = categorySlug ? categoryHref(tenantSlug, categorySlug) : normalizeHref(String(m.href || ''))
-          const label = (category && category.name && primaryLang === 'en')
-            ? (String(m.label || '').trim() ? String(m.label) : category.name)
+          // Use safe category name extraction
+          const catName = category ? extractCategoryName(category.name) : ''
+          const label = (category && catName && primaryLang === 'en')
+            ? (String(m.label || '').trim() ? String(m.label) : catName)
             : pickMenuLabel(m)
           const children = category ? childrenByParentId.get(String(category.id)) : undefined
-          return { href, label, children }
+          return { href, label: String(label), children }
         })
         .filter((x) => x.href && x.label)
     : (() => {
         const top = cats.filter((c) => !c.parentId)
         return [{ href: homeHref(tenantSlug), label: 'Home' }].concat(
-          top.slice(0, 10).map((c) => ({ href: categoryHref(tenantSlug, c.slug), label: c.name, children: childrenByParentId.get(String(c.id)) }))
+          top.slice(0, 10).map((c) => {
+            // Use safe category name extraction
+            const catName = extractCategoryName(c.name) || c.slug
+            return { href: categoryHref(tenantSlug, c.slug), label: String(catName), children: childrenByParentId.get(String(c.id)) }
+          })
         )
       })()
 
@@ -165,14 +187,17 @@ export async function Navbar({
       <div className="mx-auto max-w-7xl px-4">
         {/* Top bar with logo and title */}
         <div className="flex h-16 items-center justify-between sm:h-20">
-          <Link href={toHref(homeHref(tenantSlug))} className="flex items-center gap-3">
-            {finalLogoUrl && !isWrongTenantLogo(finalLogoUrl) ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={finalLogoUrl} alt={finalTitle} className="h-10 w-auto sm:h-12" />
-            ) : (
-              <div className="text-xl sm:text-2xl font-medium text-zinc-900">{finalTitle}</div>
-            )}
-          </Link>
+          {/* Mobile: Center logo */}
+          <div className="flex-1 flex sm:flex-none sm:block">
+            <Link href={toHref(homeHref(tenantSlug))} className="flex items-center gap-3 mx-auto sm:mx-0">
+              {finalLogoUrl && !isWrongTenantLogo(finalLogoUrl) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={finalLogoUrl} alt={finalTitle} className="h-12 w-auto sm:h-16" />
+              ) : (
+                <div className="text-xl sm:text-2xl font-medium text-zinc-900">{finalTitle}</div>
+              )}
+            </Link>
+          </div>
           
           {/* Right side controls */}
           <div className="flex items-center gap-2">

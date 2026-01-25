@@ -550,9 +550,16 @@ async function createFallbackShapedHomepage(lang: string, themeKey: string): Pro
     // Mark these articles as used
     articlesToUse.forEach(a => usedArticleIds.add(a.id))
 
+    // Safe category name extraction
+    const catName = typeof category.name === 'string' 
+      ? category.name 
+      : (typeof category.name === 'object' && category.name !== null && 'name' in (category.name as object))
+        ? String((category.name as Record<string, unknown>).name || category.slug)
+        : category.slug
+
     const section: HomepageShapedSection = {
       key: catSlug,
-      title: category.name,
+      title: catName,
       position: index + 1,
       limit: 6,
       categorySlug: catSlug,
