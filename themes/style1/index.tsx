@@ -701,153 +701,314 @@ export async function ThemeHome({
   )
 }
 
-export async function ThemeArticle({ tenantSlug, title, article }: { tenantSlug: string; title: string; article: Article }) {
+export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }: { tenantSlug: string; title: string; article: Article; tenantDomain?: string }) {
   const settings = await getEffectiveSettings()
   
-  // Extract reporter/author data from article
-  const reporter = article['reporter'] || article['author']
-  const reporterData = reporter && typeof reporter === 'object' 
-    ? {
-        name: String((reporter as Record<string, unknown>)['name'] || (reporter as Record<string, unknown>)['fullName'] || 'Staff Reporter'),
-        photo: String((reporter as Record<string, unknown>)['photo'] || (reporter as Record<string, unknown>)['avatar'] || ''),
-        designation: String((reporter as Record<string, unknown>)['designation'] || (reporter as Record<string, unknown>)['role'] || 'Reporter'),
-        bio: String((reporter as Record<string, unknown>)['bio'] || (reporter as Record<string, unknown>)['description'] || ''),
-      }
-    : null
-
-  // Calculate reading time (average 200 words per minute)
-  const wordCount = article.content ? article.content.split(/\s+/).length : 0
-  const readingTime = Math.ceil(wordCount / 200)
+  // Extract authors from new API structure
+  const authors = article.authors && Array.isArray(article.authors) ? article.authors : []
+  const primaryAuthor = authors[0] || { name: 'Staff Reporter', role: 'reporter' }
+  
+  // Calculate reading time from API or content
+  const readingTime = article.readingTimeMin || (article.plainText ? Math.ceil(article.plainText.split(/\s+/).length / 200) : 3)
 
   // Format publish date
-  const publishedAt = article['publishedAt'] || article['createdAt']
-  const publishDate = publishedAt ? new Date(String(publishedAt)) : new Date()
-  const formattedDate = publishDate.toLocaleDateString('en-US', { 
+  const publishedAt = article.publishedAt || new Date().toISOString()
+  const publishDate = new Date(publishedAt)
+  const formattedDate = publishDate.toLocaleDateString('te-IN', { 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
   })
 
+  // Get breadcrumb from categories
+  const category = article.categories && article.categories[0]
+  const categoryName = category?.name || 'Article'
+  const categorySlug = category?.slug
+
   return (
-    <div className="theme-style1">
+    <div className="theme-style1 bg-zinc-50">
       <ReadingProgress />
       <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} />
-      <main className="mx-auto max-w-7xl px-4 py-6">
-        {/* Breadcrumbs */}
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: `/${tenantSlug ? `t/${tenantSlug}` : ''}` },
-            { label: 'Article' }
-          ]}
-        />
+      
+      <main className="mx-auto max-w-7xl px-4 py-4 sm:py-6">
+        {/* Enhanced Breadcrumbs */}
+        <nav className="mb-6" aria-label="Breadcrumb">
+          <ol className="flex items-center gap-2 text-sm">
+            <li>
+              <a href={`/${tenantSlug ? `t/${tenantSlug}` : ''}`} className="flex items-center gap-1 text-zinc-600 hover:text-red-600 transition-colors">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
+                హోమ్
+              </a>
+            </li>
+            {categorySlug && (
+              <>
+                <li className="text-zinc-400">/</li>
+                <li>
+                  <a href={`/${tenantSlug ? `t/${tenantSlug}/category/${categorySlug}` : `category/${categorySlug}`}`} className="text-zinc-600 hover:text-red-600 transition-colors">
+                    {categoryName}
+                  </a>
+                </li>
+              </>
+            )}
+            <li className="text-zinc-400">/</li>
+            <li className="text-zinc-900 font-medium truncate max-w-xs" title={article.title}>
+              {article.title.substring(0, 40)}...
+            </li>
+          </ol>
+        </nav>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           {/* Main Article Content */}
           <article className="min-w-0">
-            {/* Article Header */}
-            <header className="mb-8">
-              <h1 className="mb-4 text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-zinc-900">
-                {article.title}
-              </h1>
-              
-              {/* Article Metadata */}
-              <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-600 border-b border-zinc-200 pb-4">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <time dateTime={publishDate.toISOString()}>{formattedDate}</time>
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{readingTime} min read</span>
-                </div>
-                {reporterData && (
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <span>By <strong className="font-semibold text-zinc-900">{reporterData.name}</strong></span>
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              {/* Article Header */}
+              <header className="p-6 sm:p-8 lg:p-10">
+                {/* Category Badge */}
+                {category && (
+                  <div className="mb-4">
+                    <a 
+                      href={`/${tenantSlug ? `t/${tenantSlug}/category/${categorySlug}` : `category/${categorySlug}`}`}
+                      className="inline-flex items-center gap-2 rounded-full bg-red-600 px-4 py-1.5 text-sm font-bold text-white hover:bg-red-700 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                      {categoryName}
+                    </a>
                   </div>
                 )}
-              </div>
 
-              {/* Social Share Buttons */}
-              <div className="mt-4">
-                <ShareButtons 
-                  url={articleHref(tenantSlug, article.slug || article.id)}
-                  title={article.title}
-                />
-              </div>
-            </header>
+                {/* Article Title */}
+                <h1 
+                  className="mb-6 text-3xl sm:text-4xl lg:text-5xl font-black leading-[1.15] text-zinc-900"
+                  style={{ fontFamily: 'Noto Serif Telugu, serif', lineHeight: '1.4' }}
+                >
+                  {article.title}
+                </h1>
+                
+                {/* Article Metadata */}
+                <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-600 pb-6 border-b border-zinc-200">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-xs text-zinc-500">రచయిత</div>
+                      <div className="font-semibold text-zinc-900">{primaryAuthor.name}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="h-8 w-px bg-zinc-300" />
+                  
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <time dateTime={publishDate.toISOString()}>{formattedDate}</time>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{readingTime} నిమిషాల పఠనం</span>
+                  </div>
+                </div>
 
-            {/* Featured Image */}
-            {article.coverImage?.url && (
-              <figure className="mb-8">
-                <div className="overflow-hidden rounded-2xl shadow-xl">
+                {/* Social Share Buttons */}
+                <div className="mt-6">
+                  <ShareButtons 
+                    url={`https://${tenantDomain || 'kaburlutoday.com'}${articleHref(tenantSlug, article.slug || article.id)}`}
+                    title={article.title}
+                  />
+                </div>
+              </header>
+
+              {/* Featured Image */}
+              {article.coverImage?.url && (
+                <figure className="mb-0">
                   <div className="relative aspect-video w-full">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src={article.coverImage.url} 
-                      alt={article.title} 
-                      className="absolute inset-0 h-full w-full object-cover" 
+                      alt={article.coverImage.alt || article.title} 
+                      className="w-full h-full object-cover" 
                       loading="eager"
                     />
                   </div>
-                </div>
-                {(() => {
-                  const caption = article['coverImageCaption']
-                  if (typeof caption === 'string' && caption.trim()) {
-                    return (
-                      <figcaption className="mt-3 text-sm text-zinc-600 text-center italic">
-                        {caption}
-                      </figcaption>
-                    )
-                  }
-                  return null
-                })()}
-              </figure>
-            )}
+                  {article.coverImage.caption && (
+                    <figcaption className="px-6 sm:px-8 lg:px-10 py-3 text-sm text-zinc-600 italic bg-zinc-50">
+                      {article.coverImage.caption}
+                    </figcaption>
+                  )}
+                </figure>
+              )}
 
-            {/* Article Excerpt/Summary */}
-            {article.excerpt ? (
-              <div className="mb-8 rounded-2xl bg-linear-to-r from-red-50 via-orange-50 to-yellow-50 border-l-4 border-red-600 p-6 shadow-sm">
-                <div className="flex items-start gap-3">
-                  <svg className="h-6 w-6 text-red-600 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    <h3 className="text-sm font-bold text-red-600 uppercase tracking-wide mb-2">Article Summary</h3>
-                    <p className="text-lg text-zinc-800 leading-relaxed font-medium">
-                      {article.excerpt}
-                    </p>
+              {/* Article Summary/Excerpt */}
+              {article.excerpt && (
+                <div className="px-6 sm:px-8 lg:px-10 pt-8">
+                  <div className="rounded-xl bg-gradient-to-r from-red-50 via-orange-50 to-amber-50 border-l-4 border-red-600 p-6 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <svg className="h-6 w-6 text-red-600 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <div>
+                        <h3 className="text-sm font-bold text-red-700 uppercase tracking-wide mb-2">సారాంశం</h3>
+                        <p className="text-base sm:text-lg text-zinc-800 leading-relaxed font-medium" style={{ lineHeight: '1.8' }}>
+                          {article.excerpt}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : null}
+              )}
 
-            {/* Top Horizontal Ad - Above Article */}
-            <div className="mb-8">
-              <div className="rounded-xl overflow-hidden shadow-md">
-                <AdBanner variant="horizontal" />
+              {/* Top Ad - Above Content */}
+              <div className="px-6 sm:px-8 lg:px-10 pt-8">
+                <div className="rounded-xl overflow-hidden shadow-sm border border-zinc-200">
+                  <AdBanner variant="horizontal" />
+                </div>
               </div>
+
+              {/* Article Content with Drop Caps and Inline Ads */}
+              <div className="article-content-enhanced px-6 sm:px-8 lg:px-10 py-8">
+                <EnhancedArticleContent html={article.contentHtml || article.content || ''} />
+              </div>
+
+              {/* Additional Images Gallery */}
+              {article.media?.images && article.media.images.length > 0 && (
+                <div className="px-6 sm:px-8 lg:px-10 pb-8">
+                  <h3 className="text-xl font-bold text-zinc-900 mb-4 flex items-center gap-2">
+                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    ఫోటో గ్యాలరీ
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {article.media.images.map((img: any, idx: number) => (
+                      <figure key={idx} className="group cursor-pointer">
+                        <div className="relative aspect-video rounded-lg overflow-hidden">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img 
+                            src={img.url} 
+                            alt={img.alt || img.caption || `Image ${idx + 1}`}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                        {img.caption && (
+                          <figcaption className="mt-2 text-sm text-zinc-600">
+                            {img.caption}
+                          </figcaption>
+                        )}
+                      </figure>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Bottom Ad */}
+              <div className="px-6 sm:px-8 lg:px-10 pb-8">
+                <div className="rounded-xl overflow-hidden shadow-sm border border-zinc-200">
+                  <AdBanner variant="horizontal" />
+                </div>
+              </div>
+
+              {/* Tags */}
+              {article.tags && article.tags.length > 0 && (
+                <div className="px-6 sm:px-8 lg:px-10 pb-8 border-b border-zinc-200">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <svg className="w-5 h-5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    {article.tags.map((tag, idx) => (
+                      <span 
+                        key={idx} 
+                        className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-zinc-100 text-zinc-700 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Author Card */}
+              {primaryAuthor && (
+                <div className="px-6 sm:px-8 lg:px-10 py-8 bg-gradient-to-br from-zinc-50 to-white">
+                  <div className="flex items-start gap-4 p-6 rounded-xl border-2 border-zinc-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+                    <div className="shrink-0">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-white text-2xl sm:text-3xl font-bold shadow-lg">
+                        {primaryAuthor.name.charAt(0).toUpperCase()}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-lg sm:text-xl font-bold text-zinc-900">{primaryAuthor.name}</h3>
+                        <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-red-600 font-medium mb-2">{primaryAuthor.role || 'Reporter'}</p>
+                      <p className="text-sm text-zinc-600 leading-relaxed">
+                        {article.jsonLd?.author?.name ? `${article.jsonLd.publisher?.name || 'కబుర్లు'} వార్తా విభాగానికి చెందిన అనుభవజ్ఞుడైన రచయిత. నాణ్యమైన వార్తలను అందించడంలో నిపుణత కలిగిఉన్నారు.` : 'అనుభవజ్ఞుడైన వార్తా రచయిత'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Article Content with inline ads */}
-            <div className="article-content mb-8">
-              <InterleavedArticle html={article.content ?? ''} />
-            </div>
-
-            {/* Bottom Horizontal Ad - After Article */}
-            <div className="mb-8">
-              <div className="rounded-xl overflow-hidden shadow-md">
-                <AdBanner variant="horizontal" />
+            {/* Related Articles */}
+            <div className="mt-8">
+              <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-8">
+                <h2 className="text-2xl font-bold text-zinc-900 mb-6 flex items-center gap-3">
+                  <span className="inline-block h-8 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-orange-500" />
+                  సంబంధిత వార్తలు
+                </h2>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  <RelatedArticles tenantSlug={tenantSlug} article={article} />
+                </div>
               </div>
             </div>
+          </article>
 
-            {/* Tags */}
+          {/* Sidebar */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-24 space-y-6">
+              {/* Most Read */}
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div className="bg-gradient-to-r from-red-600 to-orange-500 px-6 py-4">
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                      <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    ట్రెండింగ్ వార్తలు
+                  </h3>
+                </div>
+                <div className="p-4">
+                  <MostReadSidebar tenantSlug={tenantSlug} currentArticleId={article.id} />
+                </div>
+              </div>
+              
+              {/* Sidebar Ad */}
+              <div className="rounded-2xl overflow-hidden shadow-sm">
+                <AdBanner variant="tall" />
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+      
+      <MobileBottomNav tenantSlug={tenantSlug} />
+      <Footer settings={settings} tenantSlug={tenantSlug} />
+    </div>
+  )
+}
             {(() => {
               const tags = article['tags']
               if (!tags || !Array.isArray(tags) || tags.length === 0) return null
@@ -945,6 +1106,70 @@ function HorizontalInlineAd() {
           <AdBanner variant="horizontal" />
         </div>
       </div>
+    </div>
+  )
+}
+
+// Enhanced Article Content with Drop Caps and Better Typography for Telugu
+function EnhancedArticleContent({ html }: { html: string }) {
+  if (!html) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-zinc-500 text-lg">ఆర్టికల్ కంటెంట్ లోడ్ అవుతోంది...</p>
+      </div>
+    )
+  }
+  
+  const parts = html.split(/<\/p>/i)
+  const every = getAdEveryN()
+  const nodes: ReactNode[] = []
+  let paraIndex = 0
+  let actualParagraphCount = 0
+  
+  for (let i = 0; i < parts.length; i++) {
+    const chunk = parts[i].trim()
+    if (chunk.length === 0) continue
+    
+    const closed = chunk.endsWith('</p>') ? chunk : chunk + '</p>'
+    
+    // Check if this is the first real paragraph (has substantial text content)
+    const isFirstPara = actualParagraphCount === 0 && chunk.length > 50
+    
+    // Add drop cap styling to first paragraph
+    const paragraphClass = isFirstPara 
+      ? "article-paragraph first-paragraph drop-cap" 
+      : "article-paragraph"
+    
+    nodes.push(
+      <div 
+        key={`p-${i}`} 
+        className={paragraphClass}
+        dangerouslySetInnerHTML={{ __html: closed }} 
+      />
+    )
+    
+    actualParagraphCount++
+    paraIndex++
+    
+    // Insert ad after every N paragraphs, but not at the very end and not right after first paragraph
+    if (paraIndex % every === 0 && i < parts.length - 2 && paraIndex > 2) {
+      nodes.push(
+        <div key={`ad-${i}`} className="my-8">
+          <ConditionalAdBanner variant="horizontal" />
+        </div>
+      )
+    }
+  }
+  
+  return <>{nodes}</>
+}
+
+// Conditional Ad Banner - only shows if ad content exists
+function ConditionalAdBanner({ variant }: { variant: 'horizontal' | 'tall' }) {
+  // This component will be rendered but AdSlot handles showing/hiding based on content
+  return (
+    <div className="rounded-lg overflow-hidden border border-zinc-100 bg-zinc-50">
+      <AdBanner variant={variant} />
     </div>
   )
 }
