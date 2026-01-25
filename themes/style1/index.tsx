@@ -1247,7 +1247,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 </figure>
               )}
 
-              {/* Article Highlights */}
+              {/* Article Highlights - Shows first */}
               {article.highlights && article.highlights.length > 0 && (
                 <div className="px-6 sm:px-8 lg:px-10 pt-8">
                   <div className="rounded-xl bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-l-4 border-blue-600 p-6 shadow-sm">
@@ -1273,7 +1273,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 </div>
               )}
 
-              {/* Article Summary/Excerpt */}
+              {/* Article Summary/Excerpt - Shows after highlights */}
               {article.excerpt && (
                 <div className="px-6 sm:px-8 lg:px-10 pt-8">
                   <div className="rounded-xl bg-gradient-to-r from-red-50 via-orange-50 to-amber-50 border-l-4 border-red-600 p-6 shadow-sm">
