@@ -1,5 +1,4 @@
 import { fetchJSON } from '@/lib/remote'
-import { headers } from 'next/headers'
 
 export interface Article {
   id: string
@@ -478,15 +477,8 @@ function normalizeMediaUrl(url?: string | null) {
 }
 
 async function currentDomain() {
-  // 🎯 SIMPLE: If HOST env is set, use it directly
-  if (process.env.HOST) {
-    return process.env.HOST.split(':')[0]
-  }
-  try {
-    const h = await headers()
-    const host = h.get('host') || 'localhost'
-    return host.split(':')[0]
-  } catch {
-    return 'localhost'
-  }
+  // ✅ ONLY read the custom header set by middleware
+  // ❌ NEVER read Host header directly
+  const { getTenantDomain } = await import('@/lib/domain-utils')
+  return getTenantDomain()
 }

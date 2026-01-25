@@ -11,7 +11,6 @@
  * - Type-safe access to all config values
  */
 
-import { headers } from 'next/headers'
 import { cache as reactCache } from 'react'
 import { normalizeTenantDomain } from './remote'
 
@@ -259,20 +258,14 @@ function getCacheKey(domain: string): string {
 // Domain Detection
 // ============================================================================
 
-function domainFromHeaders(h: Headers): string {
-  const host = h.get('host') || 'localhost'
-  return normalizeTenantDomain(host)
-}
-
 async function getTargetDomain(domainOverride?: string): Promise<string> {
-  // 🎯 SIMPLE: If HOST env is set, use it directly
-  if (process.env.HOST) {
-    return normalizeTenantDomain(process.env.HOST)
+  if (domainOverride) {
+    return normalizeTenantDomain(domainOverride)
   }
   
-  // Otherwise detect from request headers
-  const h = await headers()
-  return normalizeTenantDomain(domainOverride || h.get('host') || 'localhost')
+  // ✅ ONLY read the custom header set by middleware
+  const { getTenantDomain } = await import('@/lib/domain-utils')
+  return getTenantDomain()
 }
 
 // ============================================================================
