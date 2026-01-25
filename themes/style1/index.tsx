@@ -24,6 +24,7 @@ import {
   type HomepageShapedArticle,
   feedItemsToArticles 
 } from '@/lib/homepage'
+import { FontSizeControl, CopyLinkButton, ScrollToTopButton, StickyShareBar, ViewCounter } from '@/components/shared/ArticleEnhancements'
 
 function toHref(pathname: string): UrlObject {
   return { pathname }
@@ -1144,7 +1145,31 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
           <article className="min-w-0">
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               {/* Article Header */}
-              <header className="p-6 sm:p-8 lg:p-10">
+              <header className="p-6 sm:px-8 lg:px-10">
+                {/* Breaking/Live Badge */}
+                {(article.isBreaking || article.isLive) && (
+                  <div className="mb-4">
+                    {article.isBreaking && (
+                      <span className="inline-flex items-center gap-2 rounded-full bg-red-600 px-4 py-1.5 text-sm font-bold text-white animate-pulse shadow-lg">
+                        <span className="relative flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+                        </span>
+                        BREAKING NEWS
+                      </span>
+                    )}
+                    {article.isLive && !article.isBreaking && (
+                      <span className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-4 py-1.5 text-sm font-bold text-white animate-pulse shadow-lg">
+                        <span className="relative flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+                        </span>
+                        🔴 LIVE UPDATES
+                      </span>
+                    )}
+                  </div>
+                )}
+                
                 {/* Category Badge */}
                 {category && (
                   <div className="mb-4">
@@ -1210,20 +1235,50 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                     <time dateTime={publishDate.toISOString()}>{formattedDate}</time>
                   </div>
                   
+                  {/* Updated At - if different from published */}
+                  {article.updatedAt && article.updatedAt !== article.publishedAt && (
+                    <>
+                      <div className="h-8 w-px bg-zinc-300" />
+                      <div className="flex items-center gap-1 text-xs">
+                        <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span className="text-amber-600 font-medium">
+                          Updated: {new Date(article.updatedAt).toLocaleDateString('te-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  
+                  <div className="h-8 w-px bg-zinc-300" />
+                  
                   <div className="flex items-center gap-2">
                     <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>{readingTime} నిమిషాల పఠనం</span>
                   </div>
+                  
+                  {/* View Count with Animation */}
+                  {article.viewCount && article.viewCount > 0 && (
+                    <>
+                      <div className="h-8 w-px bg-zinc-300" />
+                      <ViewCounter viewCount={article.viewCount} />
+                    </>
+                  )}
                 </div>
 
-                {/* Social Share Buttons */}
-                <div className="mt-6">
+                {/* Enhanced Share Section */}
+                <div className="mt-6 flex flex-wrap items-center gap-3">
                   <ShareButtons 
                     url={`https://${tenantDomain || 'kaburlutoday.com'}${articleHref(tenantSlug, article.slug || article.id)}`}
                     title={article.title}
                   />
+                  <CopyLinkButton 
+                    url={`https://${tenantDomain || 'kaburlutoday.com'}${articleHref(tenantSlug, article.slug || article.id)}`}
+                    title="Copy article link"
+                  />
+                  <FontSizeControl />
                 </div>
               </header>
 
@@ -1419,6 +1474,81 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 </div>
               </div>
             )}
+
+            {/* Article Navigation - Previous/Next */}
+            {(article.previousArticle || article.nextArticle) && (
+              <div className="mt-8">
+                <div className="bg-white rounded-2xl shadow-sm p-6 overflow-hidden">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Previous Article */}
+                    {article.previousArticle && (
+                      <a 
+                        href={articleHref(tenantSlug, article.previousArticle.slug || article.previousArticle.id || '')}
+                        className="group flex items-center gap-4 p-4 rounded-xl border-2 border-zinc-200 hover:border-red-300 hover:bg-red-50 transition-all"
+                      >
+                        <div className="shrink-0">
+                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-100 group-hover:bg-red-600 transition-colors">
+                            <svg className="w-5 h-5 text-zinc-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-zinc-500 mb-1">మునుపటి వార్త</p>
+                          <h4 className="text-sm font-semibold text-zinc-900 group-hover:text-red-600 line-clamp-2 transition-colors" style={{ lineHeight: '1.6' }}>
+                            {article.previousArticle.title}
+                          </h4>
+                        </div>
+                        {article.previousArticle.coverImageUrl && (
+                          <div className="shrink-0 w-16 h-16 rounded-lg overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img 
+                              src={article.previousArticle.coverImageUrl} 
+                              alt={article.previousArticle.title || ''} 
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
+                      </a>
+                    )}
+
+                    {/* Next Article */}
+                    {article.nextArticle && (
+                      <a 
+                        href={articleHref(tenantSlug, article.nextArticle.slug || article.nextArticle.id || '')}
+                        className="group flex items-center gap-4 p-4 rounded-xl border-2 border-zinc-200 hover:border-red-300 hover:bg-red-50 transition-all"
+                      >
+                        {article.nextArticle.coverImageUrl && (
+                          <div className="shrink-0 w-16 h-16 rounded-lg overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img 
+                              src={article.nextArticle.coverImageUrl} 
+                              alt={article.nextArticle.title || ''} 
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-zinc-500 mb-1">తరువాతి వార్త</p>
+                          <h4 className="text-sm font-semibold text-zinc-900 group-hover:text-red-600 line-clamp-2 transition-colors" style={{ lineHeight: '1.6' }}>
+                            {article.nextArticle.title}
+                          </h4>
+                        </div>
+                        <div className="shrink-0">
+                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-100 group-hover:bg-red-600 transition-colors">
+                            <svg className="w-5 h-5 text-zinc-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        </div>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </article>
 
           {/* Sidebar */}
@@ -1453,6 +1583,16 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
           </aside>
         </div>
       </main>
+      
+      {/* Sticky Share Bar - Shows on scroll */}
+      <StickyShareBar 
+        url={`https://${tenantDomain || 'kaburlutoday.com'}${articleHref(tenantSlug, article.slug || article.id)}`}
+        title={article.title}
+        visible={true}
+      />
+      
+      {/* Scroll to Top Button */}
+      <ScrollToTopButton />
       
       <MobileBottomNav tenantSlug={tenantSlug} />
       <Footer settings={settings} tenantSlug={tenantSlug} />

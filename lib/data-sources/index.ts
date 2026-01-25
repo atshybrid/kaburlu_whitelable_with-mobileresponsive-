@@ -13,6 +13,11 @@ export interface Article {
   highlights?: string[] | null
   coverImage?: { url?: string | null; alt?: string | null; caption?: string | null } | null
   publishedAt?: string | null
+  updatedAt?: string | null
+  isBreaking?: boolean
+  isLive?: boolean
+  viewCount?: number
+  shareCount?: number
   authors?: Array<{ id?: string; name?: string; role?: string }> | null
   categories?: Array<{ id?: string; name?: string; slug?: string }> | null
   tags?: string[] | null
@@ -114,6 +119,19 @@ export interface Article {
     publishedAt?: string
     viewCount?: number
   }> | null
+  // Navigation
+  previousArticle?: {
+    id?: string
+    slug?: string
+    title?: string
+    coverImageUrl?: string
+  } | null
+  nextArticle?: {
+    id?: string
+    slug?: string
+    title?: string
+    coverImageUrl?: string
+  } | null
   [key: string]: unknown
 }
 

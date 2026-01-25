@@ -53,6 +53,34 @@
   color: #18181b;
 }
 
+/* Font Size Control Classes */
+.theme-style1 .article-content-enhanced.font-small {
+  font-size: 1rem;
+}
+
+.theme-style1 .article-content-enhanced.font-small p,
+.theme-style1 .article-content-enhanced.font-small .article-paragraph p {
+  font-size: 1rem;
+}
+
+.theme-style1 .article-content-enhanced.font-medium {
+  font-size: 1.125rem;
+}
+
+.theme-style1 .article-content-enhanced.font-medium p,
+.theme-style1 .article-content-enhanced.font-medium .article-paragraph p {
+  font-size: 1.125rem;
+}
+
+.theme-style1 .article-content-enhanced.font-large {
+  font-size: 1.25rem;
+}
+
+.theme-style1 .article-content-enhanced.font-large p,
+.theme-style1 .article-content-enhanced.font-large .article-paragraph p {
+  font-size: 1.25rem;
+}
+
 .theme-style1 .article-content-enhanced p,
 .theme-style1 .article-paragraph p {
   margin-bottom: 1.75rem;
