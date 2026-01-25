@@ -92,7 +92,7 @@ export async function fetchJSON<T>(path: string, init?: FetchJSONInit) {
 }
 
 export interface EffectiveSettings {
-  seo?: { ogImageUrl?: string; defaultMetaTitle?: string; defaultMetaDescription?: string; canonicalBaseUrl?: string }
+  seo?: { ogImageUrl?: string; defaultMetaTitle?: string; defaultMetaDescription?: string; defaultMetaKeywords?: string; canonicalBaseUrl?: string }
   ads?: {
     enabled?: boolean
     debug?: boolean
@@ -112,12 +112,12 @@ export interface EffectiveSettings {
     // Backend may send `theme` (current) or `key` (legacy)
     theme?: string
     key?: string
-    colors?: { accent?: string; primary?: string; secondary?: string }
+    colors?: { accent?: string; primary?: string; secondary?: string; headerBg?: string; footerBg?: string }
     typography?: { baseSize?: number; fontFamily?: string }
-    layout?: { footer?: string; header?: string; showTicker?: boolean; showTopBar?: boolean }
+    layout?: { footer?: string; header?: string; showTicker?: boolean; showTopBar?: boolean; showBreadcrumbs?: boolean; showReadingProgress?: boolean; themeStyle?: string }
   }
   content?: { defaultLanguage?: string }
-  branding?: { logoUrl?: string; faviconUrl?: string; siteName?: string }
+  branding?: { logoUrl?: string; faviconUrl?: string; siteName?: string; siteTagline?: string }
   contact?: {
     email?: string
     phone?: string
@@ -128,9 +128,12 @@ export interface EffectiveSettings {
   social?: {
     facebook?: string
     x?: string
+    twitter?: string
     instagram?: string
     youtube?: string
     telegram?: string
+    linkedin?: string
+    whatsapp?: string
   }
   navigation?: {
     menu?: Array<{
@@ -141,9 +144,20 @@ export interface EffectiveSettings {
       labelEn?: string
       labelNative?: string
     }>
+    footer?: {
+      sections?: Array<{
+        title?: string
+        links?: Array<{
+          label?: string
+          href?: string
+        }>
+      }>
+      copyrightText?: string
+      showSocialLinks?: boolean
+    }
   }
   settings?: {
-    seo?: { ogImageUrl?: string; defaultMetaTitle?: string; defaultMetaDescription?: string; canonicalBaseUrl?: string }
+    seo?: { ogImageUrl?: string; defaultMetaTitle?: string; defaultMetaDescription?: string; defaultMetaKeywords?: string; canonicalBaseUrl?: string }
     ads?: {
       enabled?: boolean
       debug?: boolean
@@ -162,12 +176,12 @@ export interface EffectiveSettings {
     theme?: {
       theme?: string
       key?: string
-      colors?: { accent?: string; primary?: string; secondary?: string }
+      colors?: { accent?: string; primary?: string; secondary?: string; headerBg?: string; footerBg?: string }
       typography?: { baseSize?: number; fontFamily?: string }
-      layout?: { footer?: string; header?: string; showTicker?: boolean; showTopBar?: boolean }
+      layout?: { footer?: string; header?: string; showTicker?: boolean; showTopBar?: boolean; showBreadcrumbs?: boolean; showReadingProgress?: boolean; themeStyle?: string }
     }
     content?: { defaultLanguage?: string }
-    branding?: { logoUrl?: string; faviconUrl?: string; siteName?: string }
+    branding?: { logoUrl?: string; faviconUrl?: string; siteName?: string; siteTagline?: string }
     contact?: {
       email?: string
       phone?: string
@@ -178,9 +192,12 @@ export interface EffectiveSettings {
     social?: {
       facebook?: string
       x?: string
+      twitter?: string
       instagram?: string
       youtube?: string
       telegram?: string
+      linkedin?: string
+      whatsapp?: string
     }
     navigation?: {
       menu?: Array<{
@@ -191,7 +208,25 @@ export interface EffectiveSettings {
         labelEn?: string
         labelNative?: string
       }>
+      footer?: {
+        sections?: Array<{
+          title?: string
+          links?: Array<{
+            label?: string
+            href?: string
+          }>
+        }>
+        copyrightText?: string
+        showSocialLinks?: boolean
+      }
     }
+  }
+  tenant?: {
+    id?: string
+    slug?: string
+    name?: string
+    displayName?: string
+    nativeName?: string
   }
 }
 

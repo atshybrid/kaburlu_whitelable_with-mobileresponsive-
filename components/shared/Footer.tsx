@@ -37,11 +37,15 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
   const addressCountry = firstNonEmpty(effective.contact?.country, effective.settings?.contact?.country, process.env.NEXT_PUBLIC_CONTACT_COUNTRY, 'IN')
 
   const facebook = safeUrl(firstNonEmpty(effective.social?.facebook, effective.settings?.social?.facebook, process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK))
-  const x = safeUrl(firstNonEmpty(effective.social?.x, effective.settings?.social?.x, process.env.NEXT_PUBLIC_SOCIAL_X))
+  const x = safeUrl(firstNonEmpty(effective.social?.x, effective.social?.twitter, effective.settings?.social?.x, effective.settings?.social?.twitter, process.env.NEXT_PUBLIC_SOCIAL_X))
   const instagram = safeUrl(firstNonEmpty(effective.social?.instagram, effective.settings?.social?.instagram, process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM))
   const youtube = safeUrl(firstNonEmpty(effective.social?.youtube, effective.settings?.social?.youtube, process.env.NEXT_PUBLIC_SOCIAL_YOUTUBE))
   const telegram = safeUrl(firstNonEmpty(effective.social?.telegram, effective.settings?.social?.telegram, process.env.NEXT_PUBLIC_SOCIAL_TELEGRAM))
 
+  // Get footer sections from navigation config
+  const footerSections = (effective.navigation?.footer as any)?.sections || []
+  const copyrightText = (effective.navigation?.footer as any)?.copyrightText || `© ${year} ${siteName}. All rights reserved.`
+  
   const sameAs = [facebook, x, instagram, youtube, telegram].filter(Boolean) as string[]
 
   const basePath = tenantSlug ? basePathForTenant(tenantSlug) : ''
@@ -238,23 +242,48 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
               </nav>
             </div>
 
-            {/* Legal Links */}
-            <div>
-              <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
-                <span className="w-6 h-0.5 bg-[hsl(var(--primary))]" />
-                చట్టపరమైన
-              </h4>
-              <nav aria-label="Legal links">
-                <ul className="space-y-2.5 text-zinc-600">
-                  <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/about-us')}>మా గురించి</a></li>
-                  <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/privacy-policy')}>గోప్యతా విధానం</a></li>
-                  <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/terms')}>సేవా నిబంధనలు</a></li>
-                  <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/disclaimer')}>నిరాకరణ</a></li>
-                  <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/advertise')}>ప్రకటనలు ఇవ్వండి</a></li>
-                  <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/contact-us')}>మమ్మల్ని సంప్రదించండి</a></li>
-                </ul>
-              </nav>
-            </div>
+            {/* Legal Links - From Config */}
+            {footerSections.length > 0 ? (
+              footerSections.map((section: any, idx: number) => (
+                <div key={idx}>
+                  <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
+                    <span className="w-6 h-0.5 bg-[hsl(var(--primary))]" />
+                    {section.title}
+                  </h4>
+                  <nav aria-label={section.title}>
+                    <ul className="space-y-2.5 text-zinc-600">
+                      {section.links?.map((link: any, linkIdx: number) => (
+                        <li key={linkIdx}>
+                          <a 
+                            className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" 
+                            href={hrefForTenant(link.href)}
+                          >
+                            {link.label}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </nav>
+                </div>
+              ))
+            ) : (
+              <div>
+                <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
+                  <span className="w-6 h-0.5 bg-[hsl(var(--primary))]" />
+                  చట్టపరమైన
+                </h4>
+                <nav aria-label="Legal links">
+                  <ul className="space-y-2.5 text-zinc-600">
+                    <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/about-us')}>మా గురించి</a></li>
+                    <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/privacy-policy')}>గోప్యతా విధానం</a></li>
+                    <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/terms')}>సేవా నిబంధనలు</a></li>
+                    <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/disclaimer')}>నిరాకరణ</a></li>
+                    <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/advertise')}>ప్రకటనలు ఇవ్వండి</a></li>
+                    <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/contact-us')}>మమ్మల్ని సంప్రదించండి</a></li>
+                  </ul>
+                </nav>
+              </div>
+            )}
 
             {/* Contact & Social */}
             <div>
@@ -343,7 +372,7 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
             {/* Copyright */}
             <div className="flex flex-col items-center gap-2 lg:flex-row lg:gap-4 text-center lg:text-left">
               <span className="text-sm text-zinc-600">
-                © {year} <span className="text-black font-medium">{siteName}</span>. సర్వహక్కులు ప్రత్యేకించబడ్డాయి.
+                {copyrightText}
               </span>
               <div className="flex items-center gap-3 text-xs text-zinc-500">
                 <a href={hrefForTenant('/sitemap.xml')} className="hover:text-[hsl(var(--primary))] transition-colors">Sitemap</a>

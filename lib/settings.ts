@@ -74,44 +74,79 @@ const _getSettingsResult = reactCache(async (domainOverride?: string): Promise<S
     // Map new config format to old EffectiveSettings format
     result.settings = {
       seo: {
-        defaultMetaTitle: config.seo.meta.title,
-        defaultMetaDescription: config.seo.meta.description,
+        defaultMetaTitle: config.seo?.meta?.title || '',
+        defaultMetaDescription: config.seo?.meta?.description || '',
+        defaultMetaKeywords: config.seo?.meta?.keywords || '',
+        canonicalBaseUrl: config.domain?.baseUrl || '',
+        ogImageUrl: config.seo?.openGraph?.imageUrl || '',
       },
       content: {
-        defaultLanguage: config.content.defaultLanguage || 'te',
+        defaultLanguage: config.content?.defaultLanguage || 'te',
       },
       branding: {
-        logoUrl: (config.branding as any).logoUrl || config.branding.logo,
-        faviconUrl: (config.branding as any).faviconUrl || config.branding.favicon,
-        siteName: config.branding.siteName,
+        logoUrl: config.branding?.logo || '',
+        faviconUrl: config.branding?.favicon || '',
+        siteName: config.branding?.siteName || config.tenant?.displayName || '',
+        siteTagline: config.branding?.siteTagline || '',
       },
       theme: {
         colors: {
-          primary: (config.branding as any).primaryColor || config.theme?.colors?.primary,
-          secondary: (config.branding as any).secondaryColor || config.theme?.colors?.secondary,
+          primary: config.theme?.colors?.primary || '#dc2626',
+          secondary: config.theme?.colors?.secondary || '#ea580c',
+          headerBg: config.theme?.colors?.headerBg || '#ffffff',
+          footerBg: config.theme?.colors?.footerBg || '#f5f5f5',
         },
         layout: {
-          showTicker: config.layout.showTicker !== false,
-          showTopBar: config.layout.showTopBar !== false,
+          showTicker: config.layout?.showTicker !== false,
+          showTopBar: config.layout?.showTopBar !== false,
+          showBreadcrumbs: config.layout?.showBreadcrumbs !== false,
+          showReadingProgress: config.layout?.showReadingProgress !== false,
+          themeStyle: config.theme?.layout?.style || 'style1',
         },
       },
       ads: {
-        enabled: Boolean((config.integrations.ads as any).adsenseClientId || config.integrations.ads.adsense),
+        enabled: Boolean(config.integrations?.ads?.adsense),
         googleAdsense: {
-          client: (config.integrations.ads as any).adsenseClientId || config.integrations.ads.adsense || '',
+          client: config.integrations?.ads?.adsense || '',
         },
+      },
+      social: {
+        facebook: config.social?.facebook || '',
+        twitter: config.social?.twitter || '',
+        instagram: config.social?.instagram || '',
+        youtube: config.social?.youtube || '',
+        telegram: config.social?.telegram || '',
+        linkedin: config.social?.linkedin || '',
+        whatsapp: config.social?.whatsapp || '',
+      },
+      contact: {
+        email: config.contact?.email || '',
+        phone: config.contact?.phone || '',
+        city: config.contact?.address?.city || '',
+        region: config.contact?.address?.state || '',
+        country: config.contact?.address?.country || 'India',
+      },
+      navigation: {
+        footer: config.navigation?.footer || {},
+      },
+      tenant: {
+        id: config.tenant?.id || '',
+        slug: config.tenant?.slug || '',
+        name: config.tenant?.name || '',
+        displayName: config.tenant?.displayName || config.tenant?.name || '',
+        nativeName: config.tenant?.nativeName || '',
       },
       settings: {
         seo: {
-          defaultMetaTitle: config.seo.meta.title,
-          defaultMetaDescription: config.seo.meta.description,
+          defaultMetaTitle: config.seo?.meta?.title || '',
+          defaultMetaDescription: config.seo?.meta?.description || '',
         },
         content: {
-          defaultLanguage: config.content.defaultLanguage || 'te',
+          defaultLanguage: config.content?.defaultLanguage || 'te',
         },
         branding: {
-          logoUrl: (config.branding as any).logoUrl || config.branding.logo,
-          siteName: config.branding.siteName,
+          logoUrl: config.branding?.logo || '',
+          siteName: config.branding?.siteName || config.tenant?.displayName || '',
         },
       },
     }

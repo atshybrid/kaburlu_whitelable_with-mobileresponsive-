@@ -22,7 +22,7 @@ function isWrongTenantDataSimple(data: unknown): boolean {
 }
 
 // Fetch config API for favicon with full config
-async function getTenantConfig(domain: string): Promise<{ faviconUrl: string | null; primaryColor: string | null; name: string | null }> {
+async function getTenantConfig(domain: string): Promise<{ faviconUrl: string | null; primaryColor: string | null; name: string | null; displayName: string | null }> {
   try {
     console.log(`[Icon] Fetching config for domain: ${domain}`)
     
@@ -36,7 +36,7 @@ async function getTenantConfig(domain: string): Promise<{ faviconUrl: string | n
 
     if (!response.ok) {
       console.log(`[Icon] Config API failed: ${response.status}`)
-      return { faviconUrl: null, primaryColor: null, name: null }
+      return { faviconUrl: null, primaryColor: null, name: null, displayName: null }
     }
 
     const config = await response.json()
@@ -44,26 +44,27 @@ async function getTenantConfig(domain: string): Promise<{ faviconUrl: string | n
     // Check if it's wrong tenant data
     if (isWrongTenantDataSimple(config)) {
       console.log(`[Icon] Wrong tenant data detected, using fallback`)
-      return { faviconUrl: null, primaryColor: null, name: null }
+      return { faviconUrl: null, primaryColor: null, name: null, displayName: null }
     }
 
-    console.log(`[Icon] Config loaded: ${config?.branding?.name || 'unknown'}`)
+    console.log(`[Icon] Config loaded: ${config?.branding?.siteName || config?.tenant?.displayName || 'unknown'}`)
     
     return {
-      faviconUrl: config?.branding?.faviconUrl || null,
-      primaryColor: config?.branding?.primaryColor || null,
-      name: config?.branding?.name || null,
+      faviconUrl: config?.branding?.favicon || null,
+      primaryColor: config?.theme?.colors?.primary || null,
+      name: config?.tenant?.displayName || config?.tenant?.name || config?.branding?.siteName || null,
+      displayName: config?.tenant?.nativeName || config?.tenant?.displayName || null,
     }
   } catch (error) {
     console.error(`[Icon] Error fetching config:`, error)
-    return { faviconUrl: null, primaryColor: null, name: null }
+    return { faviconUrl: null, primaryColor: null, name: null, displayName: null }
   }
 }
 
 export default async function Icon() {
   // Get tenant-specific data
   let tenantName = 'K'
-  let accentColor = '#F4C430' // Kaburlu gold color
+  let accentColor = '#dc2626' // Default red color
   
   try {
     const h = await headers()
@@ -75,9 +76,14 @@ export default async function Icon() {
     // Get full tenant config
     const config = await getTenantConfig(domain)
     
+    // If favicon URL exists, redirect to it (will be handled by Next.js metadata)
+    // For now, generate letter-based icon
+    
     // Set tenant name from API response
     if (config.name && !config.name.toLowerCase().includes('crown')) {
-      tenantName = config.name.charAt(0).toUpperCase()
+      // Use first letter of native name if available, otherwise display name
+      const nameToUse = config.displayName || config.name
+      tenantName = nameToUse.charAt(0).toUpperCase()
     } else {
       // Use first letter of domain as fallback
       tenantName = domain.charAt(0).toUpperCase()
@@ -88,7 +94,7 @@ export default async function Icon() {
       accentColor = config.primaryColor
     }
     
-    console.log(`[Icon] Generated: name="${tenantName}", color="${accentColor}"`)
+    console.log(`[Icon] Generated: name="${tenantName}", color="${accentColor}", favicon="${config.faviconUrl || 'none'}"`)
     
   } catch (error) {
     console.error('[Icon] Error loading tenant for icon:', error)
