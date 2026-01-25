@@ -22,6 +22,7 @@ const DOMAIN_TO_TENANT: Record<string, string> = {
   'prashnaayudham.com': 'prashnaayudham',
   'daxintimes.com': 'daxin-times',
   'kurnoolnews.com': 'kurnool-news',
+  'chrnews.com': 'chr-news',
 }
 
 /**
@@ -61,10 +62,10 @@ export function proxy(request: NextRequest) {
   const tenantSlug = DOMAIN_TO_TENANT[tenantDomain]
   
   if (!tenantSlug) {
-    console.warn(`⚠️ Unknown domain: ${tenantDomain}`)
-    // Unknown domain - still set header but don't rewrite
+    console.warn(`⚠️ Unknown domain: ${tenantDomain}, using fallback tenant`)
+    // Unknown domain - use kaburlutoday as fallback and continue processing
     const response = NextResponse.next()
-    response.headers.set('x-tenant-domain', tenantDomain)
+    response.headers.set('X-Tenant-Domain', tenantDomain)
     return response
   }
   
