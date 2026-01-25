@@ -172,7 +172,7 @@ class RemoteDataSource implements DataSource {
     
     // FALLBACK: Try alternate endpoints
     const fallbackPaths = [
-      `/articles/public/articles/${encodeURIComponent(slug)}?domainName=${encodeURIComponent(domain)}`,
+      `/public/articles/${encodeURIComponent(slug)}?domainName=${encodeURIComponent(domain)}`,
       `/public/articles?slug=${encodeURIComponent(slug)}&pageSize=1`,
       `/public/articles/${encodeURIComponent(slug)}`,
     ]

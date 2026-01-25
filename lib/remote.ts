@@ -41,24 +41,29 @@ export async function fetchJSON<T>(path: string, init?: FetchJSONInit) {
     ...rest
   } = init ?? {}
 
-  // Get tenant domain: use provided domain, or ENV HOST, or detect from request
+  // Get tenant domain: prioritize request headers for true multi-tenancy
   let tenantDomain = tenantDomainFromInit
   if (!tenantDomain) {
-    // 🎯 SIMPLE: If HOST env is set, use it directly
-    if (process.env.HOST) {
-      tenantDomain = getDomainFromHost(process.env.HOST)
-    } else if (typeof window === 'undefined') {
-      // Server-side: detect from request headers
+    if (typeof window === 'undefined') {
+      // Server-side: detect from request headers (production multi-tenant)
       try {
         const { headers } = await import('next/headers')
         const h = await headers()
-        tenantDomain = getDomainFromHost(h.get('host'))
+        const hostHeader = h.get('host')
+        if (hostHeader && hostHeader !== 'localhost' && !hostHeader.startsWith('localhost:')) {
+          tenantDomain = getDomainFromHost(hostHeader)
+        } else {
+          // Localhost fallback: use HOST env for local testing
+          tenantDomain = getDomainFromHost(process.env.HOST || 'localhost')
+        }
       } catch {
-        tenantDomain = 'localhost'
+        tenantDomain = getDomainFromHost(process.env.HOST || 'localhost')
       }
     } else {
-      // Client-side: use NEXT_PUBLIC_HOST or window.location
-      tenantDomain = getDomainFromHost(process.env.NEXT_PUBLIC_HOST || window.location.hostname)
+      // Client-side: use window.location, fallback to NEXT_PUBLIC_HOST
+      tenantDomain = getDomainFromHost(window.location.hostname !== 'localhost' 
+        ? window.location.hostname 
+        : process.env.NEXT_PUBLIC_HOST || 'localhost')
     }
   }
 
