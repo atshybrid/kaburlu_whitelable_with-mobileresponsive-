@@ -1,4 +1,5 @@
 import { fetchJSON } from '@/lib/remote'
+import { getConfig, getCacheTTL } from '@/lib/config'
 
 export interface Article {
   id: string
@@ -143,14 +144,25 @@ export interface DataSource {
 class RemoteDataSource implements DataSource {
   async homeFeed(_tenantSlug: string) {
     void _tenantSlug
+    // Get cache TTL from config
+    const config = await getConfig()
+    const cacheTTL = getCacheTTL(config, 'homepage')
+    
     // Use paginated list endpoint from backend spec
-    const pageSize = 12
-    const res = await fetchJSON<unknown>(`/public/articles?page=1&pageSize=${pageSize}` , { tenantDomain: await currentDomain() })
+    const pageSize = config?.layout.articlesPerPage || 12
+    const res = await fetchJSON<unknown>(`/public/articles?page=1&pageSize=${pageSize}` , { 
+      tenantDomain: await currentDomain(),
+      revalidateSeconds: cacheTTL,
+    })
     return normalizeList(res)
   }
   async articleBySlug(_tenantSlug: string, slug: string) {
     void _tenantSlug
     const domain = await currentDomain()
+    
+    // Get cache TTL from config
+    const config = await getConfig()
+    const cacheTTL = getCacheTTL(config, 'article')
     
     // 🎯 PRIMARY: Use new detailed article API with all fields (mustRead, trending, related, etc.)
     // API: /public/articles/{slug}?languageCode=te
@@ -159,7 +171,7 @@ class RemoteDataSource implements DataSource {
     try {
       const res = await fetchJSON<unknown>(primaryPath, { 
         tenantDomain: domain,
-        revalidateSeconds: 60, // Cache article for 1 minute
+        revalidateSeconds: cacheTTL,
       })
       
       if (res && typeof res === 'object') {
@@ -192,14 +204,22 @@ class RemoteDataSource implements DataSource {
   }
   async articlesByCategory(_tenantSlug: string, categorySlug: string) {
     void _tenantSlug
-    const pageSize = 12
+    
+    // Get cache TTL from config
+    const config = await getConfig()
+    const cacheTTL = getCacheTTL(config, 'category')
+    const pageSize = config?.layout.articlesPerPage || 12
+    
     const paths = [
       `/public/articles?category=${encodeURIComponent(categorySlug)}&page=1&pageSize=${pageSize}`,
       `/public/categories/${encodeURIComponent(categorySlug)}/articles?page=1&pageSize=${pageSize}`,
     ]
     for (const p of paths) {
       try {
-        const res = await fetchJSON<unknown>(p, { tenantDomain: await currentDomain() })
+        const res = await fetchJSON<unknown>(p, { 
+          tenantDomain: await currentDomain(),
+          revalidateSeconds: cacheTTL,
+        })
         return normalizeList(res)
       } catch {
         // continue

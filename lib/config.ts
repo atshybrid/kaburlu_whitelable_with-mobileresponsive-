@@ -503,6 +503,82 @@ export function shouldLoadPush(config: TenantConfig | null): boolean {
   return !!config?.integrations.push.vapidPublicKey
 }
 
+// ============================================================================
+// Navigation & Layout Helpers
+// ============================================================================
+
+/**
+ * Get primary menu items from config
+ */
+export function getPrimaryMenu(config: TenantConfig | null) {
+  return config?.navigation.header.primaryMenu || []
+}
+
+/**
+ * Get footer sections from config
+ */
+export function getFooterSections(config: TenantConfig | null) {
+  return config?.navigation.footer.sections || []
+}
+
+/**
+ * Get mobile bottom nav items from config
+ */
+export function getMobileBottomNav(config: TenantConfig | null) {
+  return config?.navigation.mobile.bottomNav || []
+}
+
+/**
+ * Get layout settings from config
+ */
+export function getLayoutSettings(config: TenantConfig | null) {
+  return {
+    showTicker: config?.layout.showTicker ?? true,
+    showTopBar: config?.layout.showTopBar ?? true,
+    showBreadcrumbs: config?.layout.showBreadcrumbs ?? true,
+    showReadingProgress: config?.layout.showReadingProgress ?? true,
+    articlesPerPage: config?.layout.articlesPerPage ?? 20,
+  }
+}
+
+/**
+ * Get social links from config (filtered to only active ones)
+ */
+export function getSocialLinks(config: TenantConfig | null) {
+  if (!config) return []
+  
+  const links = []
+  const social = config.social
+  
+  if (social.facebook) links.push({ platform: 'facebook', url: social.facebook })
+  if (social.twitter) links.push({ platform: 'twitter', url: social.twitter })
+  if (social.instagram) links.push({ platform: 'instagram', url: social.instagram })
+  if (social.youtube) links.push({ platform: 'youtube', url: social.youtube })
+  if (social.telegram) links.push({ platform: 'telegram', url: social.telegram })
+  if (social.linkedin) links.push({ platform: 'linkedin', url: social.linkedin })
+  if (social.whatsapp) links.push({ platform: 'whatsapp', url: social.whatsapp })
+  
+  return links
+}
+
+/**
+ * Get contact info from config
+ */
+export function getContactInfo(config: TenantConfig | null) {
+  return {
+    email: config?.contact.email || null,
+    phone: config?.contact.phone || null,
+    address: config?.contact.address || null,
+  }
+}
+
+/**
+ * Get cache TTL for specific resource type
+ */
+export function getCacheTTL(config: TenantConfig | null, type: 'config' | 'homepage' | 'article' | 'category' | 'staticPages'): number {
+  return config?.cacheControl[type] || 300 // Default 5 min
+}
+
 /**
  * Get default language code
  */
