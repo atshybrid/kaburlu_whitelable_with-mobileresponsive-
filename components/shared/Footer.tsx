@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getEffectiveSettings } from '@/lib/settings'
 import type { EffectiveSettings } from '@/lib/remote'
 import { basePathForTenant, homeHref } from '@/lib/url'
+import { getDomainStats } from '@/lib/domain-stats'
 
 function safeUrl(v: string | undefined) {
   const s = String(v || '').trim()
@@ -27,6 +28,18 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
 
   const canonicalBaseUrl = firstNonEmpty(effective.seo?.canonicalBaseUrl, effective.settings?.seo?.canonicalBaseUrl)
   const siteUrl = stripTrailingSlash(firstNonEmpty(canonicalBaseUrl, process.env.NEXT_PUBLIC_SITE_URL, 'http://localhost:3000'))
+  
+  // Extract domain from siteUrl for domain stats API
+  const domain = siteUrl.replace(/^https?:\/\//, '').split('/')[0]
+
+  // Fetch domain stats
+  let domainStats = null
+  try {
+    domainStats = await getDomainStats(domain)
+  } catch (error) {
+    console.error('Failed to fetch domain stats:', error)
+  }
+
   const siteName = firstNonEmpty(effective.branding?.siteName, effective.settings?.branding?.siteName, 'Kaburlu News')
   const logoUrl = safeUrl(firstNonEmpty(effective.branding?.logoUrl, effective.settings?.branding?.logoUrl))
 
@@ -188,15 +201,19 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
               {/* Stats */}
               <div className="grid grid-cols-3 gap-2 pt-2">
                 <div className="text-center p-2 rounded-lg bg-zinc-100 border border-zinc-200">
-                  <div className="text-lg font-bold text-[hsl(var(--primary))]">10L+</div>
-                  <div className="text-[10px] text-zinc-600">రీడర్లు</div>
+                  <div className="text-lg font-bold text-[hsl(var(--primary))]">
+                    {domainStats ? (domainStats.stats.totalViews).toLocaleString('en-IN') : '10L+'}
+                  </div>
+                  <div className="text-[10px] text-zinc-600">పాఠకులు</div>
                 </div>
                 <div className="text-center p-2 rounded-lg bg-zinc-100 border border-zinc-200">
                   <div className="text-lg font-bold text-[hsl(var(--primary))]">24/7</div>
-                  <div className="text-[10px] text-zinc-600">న్యూస్</div>
+                  <div className="text-[10px] text-zinc-600">వార్తలు</div>
                 </div>
                 <div className="text-center p-2 rounded-lg bg-zinc-100 border border-zinc-200">
-                  <div className="text-lg font-bold text-[hsl(var(--primary))]">100+</div>
+                  <div className="text-lg font-bold text-[hsl(var(--primary))]">
+                    {domainStats ? `${domainStats.stats.totalReporters}+` : '100+'}
+                  </div>
                   <div className="text-[10px] text-zinc-600">రిపోర్టర్లు</div>
                 </div>
               </div>

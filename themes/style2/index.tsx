@@ -1,5 +1,6 @@
 import { Footer, TechnicalIssues } from '@/components/shared'
 import { Navbar } from '@/components/shared/Navbar'
+import { TopArticlesModal } from '@/components/shared/TopArticlesModal'
 import { FlashTicker } from '@/components/shared/FlashTicker'
 import { PlaceholderImg } from '@/components/shared/PlaceholderImg'
 import MobileBottomNav from '@/components/shared/MobileBottomNav'
@@ -14,6 +15,7 @@ import { getPublicHomepage, getPublicHomepageStyle2ShapeForDomain, getPublicHome
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getEffectiveSettings } from '@/lib/settings'
 import { themeCssVarsFromSettings } from '@/lib/theme-vars'
+import { getDomainStats } from '@/lib/domain-stats'
 
 /* ==================== UTILITY FUNCTIONS ==================== */
 
@@ -921,6 +923,11 @@ export async function ThemeHome({
   // Style2 fetches its own data internally via getPublicHomepage API
   // The articles prop is ignored - we always fetch fresh data
 
+  // Extract domain from settings for API calls
+  const canonicalBaseUrl = settings?.seo?.canonicalBaseUrl || settings?.settings?.seo?.canonicalBaseUrl
+  const siteUrl = canonicalBaseUrl || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const domain = tenantDomain || siteUrl.replace(/^https?:\/\//, '').split('/')[0]
+
   // Use smart API integration for style2 with v=2 and shape=style2
   const themeKey = settings?.theme?.theme || settings?.theme?.key || 'style2'
   const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'te'
@@ -974,6 +981,14 @@ export async function ThemeHome({
   const homeFeed = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : (articles.length ? articles : mockArticles))
   
   if (homeFeed.length === 0) {
+    // Fetch domain stats for modal even in error case
+    let domainStats = null
+    try {
+      domainStats = await getDomainStats(domain)
+    } catch (error) {
+      console.error('Failed to fetch domain stats:', error)
+    }
+
     return (
       <div className="theme-style2">
         <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} variant="style2" />
@@ -986,6 +1001,13 @@ export async function ThemeHome({
           </div>
         </div>
         <Footer settings={settings} tenantSlug={tenantSlug} />
+        {domainStats?.topArticles && domainStats.topArticles.length > 0 && (
+          <TopArticlesModal 
+            articles={domainStats.topArticles.slice(0, 5)} 
+            tenantSlug={tenantSlug}
+            articleHref={(slug) => articleHref(tenantSlug, slug)}
+          />
+        )}
       </div>
     )
   }
@@ -1033,6 +1055,14 @@ export async function ThemeHome({
   const heroArticle = style2Hero.length ? style2Hero[0] : heroLeftData[0]
   const secondaryArticles = heroLeftData.slice(1, 5)
   const latestArticles = homeFeed.slice(10, 20)
+
+  // Fetch domain stats for modal
+  let domainStats = null
+  try {
+    domainStats = await getDomainStats(domain)
+  } catch (error) {
+    console.error('Failed to fetch domain stats:', error)
+  }
 
   return (
     <div className="theme-style2 pb-16 sm:pb-0" style={cssVars}>
@@ -1325,6 +1355,13 @@ export async function ThemeHome({
 
       <Footer settings={settings} tenantSlug={tenantSlug} />
       <MobileBottomNav tenantSlug={tenantSlug} />
+      {domainStats?.topArticles && domainStats.topArticles.length > 0 && (
+        <TopArticlesModal 
+          articles={domainStats.topArticles.slice(0, 5)} 
+          tenantSlug={tenantSlug}
+          articleHref={(slug) => articleHref(tenantSlug, slug)}
+        />
+      )}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { Footer, TechnicalIssues, SectionError, EmptyState, ShareButtons, Breadcrumbs, ReadingProgress } from '@/components/shared'
 import { Navbar } from '@/components/shared/Navbar'
+import { TopArticlesModal } from '@/components/shared/TopArticlesModal'
 import type { Article } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
 import type { ReactNode } from 'react'
@@ -25,6 +26,7 @@ import {
   feedItemsToArticles 
 } from '@/lib/homepage'
 import { FontSizeControl, CopyLinkButton, ScrollToTopButton, StickyShareBar, ViewCounter } from '@/components/shared/ArticleEnhancements'
+import { getDomainStats } from '@/lib/domain-stats'
 
 function toHref(pathname: string): UrlObject {
   return { pathname }
@@ -586,6 +588,7 @@ export async function ThemeHome({
   title,
   articles,
   settings,
+  tenantDomain,
 }: {
   tenantSlug: string
   title: string
@@ -594,6 +597,11 @@ export async function ThemeHome({
   tenantDomain?: string
 }) {
   const baseArticles: Article[] = Array.isArray(articles) ? articles : []
+
+  // Extract domain from settings for API calls
+  const canonicalBaseUrl = settings?.seo?.canonicalBaseUrl || settings?.settings?.seo?.canonicalBaseUrl
+  const siteUrl = canonicalBaseUrl || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const domain = tenantDomain || siteUrl.replace(/^https?:\/\//, '').split('/')[0]
 
   // Determine the API version based on theme setting
   const themeKey = settings?.theme?.theme || settings?.theme?.key || 'style1'
@@ -924,12 +932,27 @@ export async function ThemeHome({
   const logoUrl = config?.branding.logo || settings?.branding?.logoUrl
   const siteName = config?.branding.siteName || title
 
+  // Fetch domain stats for modal
+  let domainStats = null
+  try {
+    domainStats = await getDomainStats(domain)
+  } catch (error) {
+    console.error('Failed to fetch domain stats:', error)
+  }
+
   return (
     <div className="theme-style1">
       <Navbar tenantSlug={tenantSlugForLinks} title={siteName} logoUrl={logoUrl} />
       {rendered}
       <MobileBottomNav tenantSlug={tenantSlugForLinks} />
       <Footer settings={settings} tenantSlug={tenantSlugForLinks} />
+      {domainStats?.topArticles && domainStats.topArticles.length > 0 && (
+        <TopArticlesModal 
+          articles={domainStats.topArticles.slice(0, 5)} 
+          tenantSlug={tenantSlugForLinks}
+          articleHref={(slug) => articleHref(tenantSlugForLinks, slug)}
+        />
+      )}
     </div>
   )
 }

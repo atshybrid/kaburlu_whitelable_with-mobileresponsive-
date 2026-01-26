@@ -386,6 +386,16 @@ const _getHomepageShapedForDomain = reactCache(async (tenantDomain: string, para
 
 // ---- Helper to convert feed items to Article format ----
 
+function isValidArticleData(article: Article | null | undefined): article is Article {
+  if (!article) return false
+  // Must have id, slug, and title to be valid
+  if (!article.id || !article.slug || !article.title) return false
+  // Slug must be a reasonable string (not just whitespace or hash)
+  const slug = String(article.slug).trim()
+  if (slug.length < 3) return false
+  return true
+}
+
 export function feedItemToArticle(item: HomepageFeedItem): Article {
   const coverUrl = item.image || item.coverImageUrl || item.coverImage || undefined
   return {
@@ -400,7 +410,8 @@ export function feedItemToArticle(item: HomepageFeedItem): Article {
 }
 
 export function feedItemsToArticles(items: HomepageFeedItem[]): Article[] {
-  return items.map(feedItemToArticle)
+  // Filter out invalid articles to prevent 404 errors
+  return items.map(feedItemToArticle).filter(isValidArticleData)
 }
 
 // ---- Fallback homepage response ----
