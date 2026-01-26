@@ -1056,7 +1056,7 @@ export async function ThemeHome({
   )
 
   const heroArticle = style2Hero.length ? style2Hero[0] : heroLeftData[0]
-  const secondaryArticles = heroLeftData.slice(1, 5)
+  const secondaryArticles = heroLeftData.slice(1, 9) // 8 articles: 2 cols × 4 rows
   const latestArticles = homeFeed.slice(10, 20)
 
   // Fetch domain stats for modal - don't block rendering
