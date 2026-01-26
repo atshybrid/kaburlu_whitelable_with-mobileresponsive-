@@ -981,12 +981,16 @@ export async function ThemeHome({
   const homeFeed = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : (articles.length ? articles : mockArticles))
   
   if (homeFeed.length === 0) {
-    // Fetch domain stats for modal even in error case
+    // Fetch domain stats for modal even in error case - don't block rendering
     let domainStats = null
     try {
-      domainStats = await getDomainStats(domain)
+      domainStats = await Promise.race([
+        getDomainStats(domain),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)) // 2s timeout
+      ])
     } catch (error) {
       console.error('Failed to fetch domain stats:', error)
+      domainStats = null
     }
 
     return (
@@ -1055,12 +1059,16 @@ export async function ThemeHome({
   const secondaryArticles = heroLeftData.slice(1, 5)
   const latestArticles = homeFeed.slice(10, 20)
 
-  // Fetch domain stats for modal
+  // Fetch domain stats for modal - don't block rendering
   let domainStats = null
   try {
-    domainStats = await getDomainStats(domain)
+    domainStats = await Promise.race([
+      getDomainStats(domain),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)) // 2s timeout
+    ])
   } catch (error) {
     console.error('Failed to fetch domain stats:', error)
+    domainStats = null
   }
 
   return (

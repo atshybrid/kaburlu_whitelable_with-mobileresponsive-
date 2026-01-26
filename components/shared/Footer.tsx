@@ -32,12 +32,16 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
   // Extract domain from siteUrl for domain stats API
   const domain = siteUrl.replace(/^https?:\/\//, '').split('/')[0]
 
-  // Fetch domain stats
+  // Fetch domain stats - completely optional, don't block rendering
   let domainStats = null
   try {
-    domainStats = await getDomainStats(domain)
+    domainStats = await Promise.race([
+      getDomainStats(domain),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)) // 2s timeout
+    ])
   } catch (error) {
     console.error('Failed to fetch domain stats:', error)
+    domainStats = null
   }
 
   const siteName = firstNonEmpty(effective.branding?.siteName, effective.settings?.branding?.siteName, 'Kaburlu News')

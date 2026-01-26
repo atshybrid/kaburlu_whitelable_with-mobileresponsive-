@@ -40,7 +40,7 @@ export const getDomainStats = reactCache(async (domain: string): Promise<DomainS
       {
         method: 'GET',
         tenantDomain: domain,
-        revalidateSeconds: 300, // Cache for 5 minutes
+        cache: 'no-store', // Don't cache on server to prevent blocking
       }
     )
     return stats

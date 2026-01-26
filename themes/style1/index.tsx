@@ -932,12 +932,16 @@ export async function ThemeHome({
   const logoUrl = config?.branding.logo || settings?.branding?.logoUrl
   const siteName = config?.branding.siteName || title
 
-  // Fetch domain stats for modal
+  // Fetch domain stats for modal - don't block rendering
   let domainStats = null
   try {
-    domainStats = await getDomainStats(domain)
+    domainStats = await Promise.race([
+      getDomainStats(domain),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)) // 2s timeout
+    ])
   } catch (error) {
     console.error('Failed to fetch domain stats:', error)
+    domainStats = null
   }
 
   return (
