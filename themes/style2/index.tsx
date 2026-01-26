@@ -1004,7 +1004,6 @@ export async function ThemeHome({
         {domainStats?.topArticles && domainStats.topArticles.length > 0 && (
           <TopArticlesModal 
             articles={domainStats.topArticles.slice(0, 5)} 
-            tenantSlug={tenantSlug}
             articleHref={(slug) => articleHref(tenantSlug, slug)}
           />
         )}
@@ -1358,7 +1357,6 @@ export async function ThemeHome({
       {domainStats?.topArticles && domainStats.topArticles.length > 0 && (
         <TopArticlesModal 
           articles={domainStats.topArticles.slice(0, 5)} 
-          tenantSlug={tenantSlug}
           articleHref={(slug) => articleHref(tenantSlug, slug)}
         />
       )}

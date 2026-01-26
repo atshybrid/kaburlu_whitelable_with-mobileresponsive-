@@ -20,11 +20,9 @@ type TopArticle = {
 
 export function TopArticlesModal({
   articles,
-  tenantSlug,
   articleHref,
 }: {
   articles: TopArticle[]
-  tenantSlug: string
   articleHref: (slug: string) => string
 }) {
   const [isOpen, setIsOpen] = useState(false)
