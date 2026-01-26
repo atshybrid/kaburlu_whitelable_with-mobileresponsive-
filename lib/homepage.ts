@@ -136,6 +136,8 @@ export type Style2HomepageItem = {
   slug?: string
   title: string
   image?: string | null
+  coverImage?: string | null
+  coverImageUrl?: string | null
   excerpt?: string | null
   category?: unknown
   publishedAt?: string | null
@@ -198,6 +200,7 @@ export async function getPublicHomepage(params: {
   v?: string | number
   themeKey?: string
   lang?: string
+  shape?: string
 }): Promise<NewHomepageResponse> {
   return _getPublicHomepage(params)
 }
@@ -222,17 +225,20 @@ const _getPublicHomepage = reactCache(async (params: {
   v?: string | number
   themeKey?: string
   lang?: string
+  shape?: string
 }): Promise<NewHomepageResponse> => {
   const h = await headers()
   const domain = domainFromHost(h.get('host'))
   const lang = String(params.lang || 'en')
   const themeKey = String(params.themeKey || 'style1')
+  const shape = params.shape || themeKey // Use themeKey as shape if not provided
 
-  // Backend contract: GET /public/homepage?v=1 (optional lang/themeKey).
+  // Backend contract: GET /public/homepage?v=1&shape=style2&themeKey=style2&lang=te
   // Domain is inferred via X-Tenant-Domain header.
-  const qs = new URLSearchParams({ v: String(params.v ?? '1') })
+  const qs = new URLSearchParams({ v: String(params.v ?? '1'), domain })
   if (lang) qs.set('lang', lang)
   if (themeKey) qs.set('themeKey', themeKey)
+  if (shape) qs.set('shape', shape)
 
   try {
     const response = await fetchJSON<NewHomepageResponse>(`/public/homepage?${qs.toString()}`, {

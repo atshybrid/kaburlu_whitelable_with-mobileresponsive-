@@ -18,13 +18,15 @@ import { themeCssVarsFromSettings } from '@/lib/theme-vars'
 /* ==================== UTILITY FUNCTIONS ==================== */
 
 function style2ItemToArticle(item: Style2HomepageItem): Article {
+  // Check all possible image fields: image, coverImageUrl, coverImage
+  const coverUrl = item.image || item.coverImageUrl || item.coverImage || undefined
   return {
     id: item.id,
     slug: item.slug || item.id,
     title: item.title,
     excerpt: item.excerpt || undefined,
     publishedAt: item.publishedAt || undefined,
-    coverImage: item.image ? { url: item.image } : undefined,
+    coverImage: coverUrl ? { url: coverUrl } : undefined,
   } as Article
 }
 
@@ -919,13 +921,13 @@ export async function ThemeHome({
   // Style2 fetches its own data internally via getPublicHomepage API
   // The articles prop is ignored - we always fetch fresh data
 
-  // Use smart API integration for style2 with v=2
+  // Use smart API integration for style2 with v=2 and shape=style2
   const themeKey = settings?.theme?.theme || settings?.theme?.key || 'style2'
-  const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'en'
+  const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'te'
   
   let homepage: NewHomepageResponse | null = null
   try {
-    homepage = await getPublicHomepage({ v: 2, themeKey, lang })
+    homepage = await getPublicHomepage({ v: 2, themeKey, lang, shape: 'style2' })
   } catch {
     homepage = null
   }
