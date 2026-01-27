@@ -1187,29 +1187,6 @@ export async function ThemeHome({
           </div>
         ) : null}
 
-        {/* More Categories in Columns */}
-        {topNavCats.length > 3 ? (
-          <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {topNavCats.slice(3, 6).map(async (cat) => {
-              const items = cat.slug 
-                ? await getItemsForCategory(cat.slug, 5)
-                : []
-              
-              if (!items.length) return null
-              
-              return (
-                <SectionCard 
-                  key={cat.id} 
-                  title={cat.name} 
-                  href={cat.slug ? categoryHref(tenantSlug, cat.slug) : undefined}
-                >
-                  <SmallCardList tenantSlug={tenantSlug} items={items} />
-                </SectionCard>
-              )
-            })}
-          </div>
-        ) : null}
-
         {/* ===== NEW STYLE SECTIONS ===== */}
         
         {/* Style 2: Magazine Grid Section (Emerald theme) */}

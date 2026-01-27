@@ -9,6 +9,8 @@ import type { ReactElement } from 'react'
 
 // Force dynamic rendering - domain check must be fresh on every request
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
 
 async function getThemeHome(themeKey: string): Promise<ThemeHomeComponent> {
   let themeModule: ThemeModule
