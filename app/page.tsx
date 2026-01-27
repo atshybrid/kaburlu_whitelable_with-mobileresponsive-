@@ -75,11 +75,26 @@ export default async function Home() {
   }
   
   const settings = settingsResult.settings
+  
+  // Check if this is an ePaper site - block NEWS layout for ePaper domains
+  // Config API structure: { domain: { kind: "NEWS" | "EPAPER" } }
+  const domainKind = (settings as any)?.domain?.kind
+  if (domainKind === 'EPAPER' || domainKind === 'epaper') {
+    return (
+      <TechnicalIssues 
+        title="ePaper Site"
+        message="This is an ePaper domain. News layout is not supported for ePaper sites. Please contact Kaburlu Media support."
+      />
+    )
+  }
+  
   const requestedThemeKey: string =
     settings?.theme?.theme ||
     settings?.theme?.key ||
+    settings?.theme?.layout?.style ||
     settings?.settings?.theme?.theme ||
     settings?.settings?.theme?.key ||
+    settings?.settings?.theme?.layout?.style ||
     'style1'
   const themeKey = (['style1', 'style2', 'style3', 'tv9', 'toi'].includes(requestedThemeKey) ? requestedThemeKey : 'style1') as
     | 'style1'
