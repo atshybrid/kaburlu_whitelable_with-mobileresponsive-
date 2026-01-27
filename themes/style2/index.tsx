@@ -928,14 +928,17 @@ export async function ThemeHome({
   const siteUrl = canonicalBaseUrl || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   const domain = tenantDomain || siteUrl.replace(/^https?:\/\//, '').split('/')[0]
 
-  // Use smart API integration for style2 with v=1 and shape=style2
+  // Determine the API version based on theme setting from config
   const themeKey = settings?.theme?.theme || settings?.theme?.key || (settings?.theme?.layout as any)?.style || (settings?.settings?.theme?.layout as any)?.style || 'style2'
   const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'te'
   
-  // ✅ Call /public/homepage with correct params: v=1, themeKey=style2, shape=style2, domain via header
+  // ✅ Style2 uses v=2, shape=style2, themeKey=style2 (from config)
+  const apiVersion = 2
+  
+  // Call /public/homepage with correct params based on config theme
   let homepage: NewHomepageResponse | null = null
   try {
-    homepage = await getPublicHomepage({ v: 1, themeKey: 'style2', lang, shape: 'style2' })
+    homepage = await getPublicHomepage({ v: apiVersion, themeKey, lang, shape: themeKey })
   } catch {
     homepage = null
   }

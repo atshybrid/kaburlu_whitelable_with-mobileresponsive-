@@ -603,9 +603,12 @@ export async function ThemeHome({
   const siteUrl = canonicalBaseUrl || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   const domain = tenantDomain || siteUrl.replace(/^https?:\/\//, '').split('/')[0]
 
-  // Determine the API version based on theme setting
+  // Determine the API version based on theme setting from config
   const themeKey = settings?.theme?.theme || settings?.theme?.key || (settings?.theme?.layout as any)?.style || (settings?.settings?.theme?.layout as any)?.style || 'style1'
   const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'te'
+  
+  // ✅ Style1 uses v=1, shape=style1, themeKey=style1
+  const apiVersion = 1
 
   // Helper to convert shaped articles to Article format
   const shapedToArticle = (item: HomepageShapedArticle): Article => {
@@ -644,8 +647,9 @@ export async function ThemeHome({
   // Also fetch legacy homepage for ticker and tenant info
   let homepage: NewHomepageResponse | null = null
   try {
-    const apiVersion = themeKey === 'style2' ? '2' : '1'
-    homepage = await getPublicHomepage({ v: apiVersion, themeKey, lang })
+    // ✅ style1 uses v=1, style2 uses v=2
+    const apiVersion = themeKey === 'style2' ? 2 : 1
+    homepage = await getPublicHomepage({ v: apiVersion, themeKey, lang, shape: themeKey })
   } catch {
     homepage = null
   }
