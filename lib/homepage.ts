@@ -228,7 +228,8 @@ const _getPublicHomepage = reactCache(async (params: {
   shape?: string
 }): Promise<NewHomepageResponse> => {
   const h = await headers()
-  const domain = domainFromHost(h.get('host'))
+  // ✅ Use X-Tenant-Domain header (set by proxy) instead of raw host
+  const domain = domainFromHeaders(h)
   const lang = String(params.lang || 'en')
   const themeKey = String(params.themeKey || 'style1')
   const shape = params.shape || themeKey // Use themeKey as shape if not provided
@@ -321,7 +322,8 @@ const _getHomepageShaped = reactCache(async (params?: {
   lang?: string
 }): Promise<HomepageShapedResponse> => {
   const h = await headers()
-  const domain = domainFromHost(h.get('host'))
+  // ✅ Use X-Tenant-Domain header (set by proxy) instead of raw host
+  const domain = domainFromHeaders(h)
   const lang = String(params?.lang || 'te')
   const themeKey = String(params?.themeKey || 'style1')
 
