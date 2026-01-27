@@ -260,6 +260,11 @@ async function RootLayoutInner({
   return (
     <html lang={languageCode} dir={langDirection} data-lang={languageCode} className={fontClasses}>
       <head>
+        {/* ✅ Prevent browser caching - force fresh data */}
+        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0" />
+        <meta httpEquiv="Pragma" content="no-cache" />
+        <meta httpEquiv="Expires" content="0" />
+        
         {/* 🎯 Dynamic theme colors from backend config */}
         <ThemeColorVars />
         

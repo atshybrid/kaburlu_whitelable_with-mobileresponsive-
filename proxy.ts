@@ -69,6 +69,9 @@ export function proxy(request: NextRequest) {
     // Unknown domain - use kaburlutoday as fallback and continue processing
     const response = NextResponse.next()
     response.headers.set('X-Tenant-Domain', tenantDomain)
+    response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
     return response
   }
   
@@ -85,6 +88,12 @@ export function proxy(request: NextRequest) {
   ) {
     const response = NextResponse.next()
     response.headers.set('X-Tenant-Domain', tenantDomain)
+    // Static files can be cached, but HTML should not
+    if (!pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot)$/)) {
+      response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+      response.headers.set('Pragma', 'no-cache')
+      response.headers.set('Expires', '0')
+    }
     return response
   }
   
@@ -103,6 +112,9 @@ export function proxy(request: NextRequest) {
     // Other routes (legal pages, etc)
     const response = NextResponse.next()
     response.headers.set('x-tenant-domain', tenantDomain)
+    response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
     return response
   }
   
@@ -116,6 +128,11 @@ export function proxy(request: NextRequest) {
   
   // ✅ CRITICAL: Set custom header for downstream consumption
   response.headers.set('X-Tenant-Domain', tenantDomain)
+  
+  // ✅ CACHE PREVENTION: Force browser to never cache HTML pages
+  response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+  response.headers.set('Pragma', 'no-cache')
+  response.headers.set('Expires', '0')
   
   // 🧪 PRODUCTION VERIFICATION (uncomment to test):
   // console.log('[TENANT]', tenantDomain, '→', internalPath)
