@@ -973,17 +973,21 @@ export async function ThemeHome({
   const style2Feed = buildStyle2HomeFeed(style2Home)
   const style2Hero = Array.isArray(style2Home?.hero) ? style2Home!.hero!.map(style2ItemToArticle) : []
 
-  // ✅ Smart data selection: Only use mock if NO real data exists
-  const hasRealData = latestItems.length > 0 || style2Feed.length > 0 || articles.length > 0
+  // ✅ Smart data selection: Only use mock if NO real data from API
+  const hasRealData = latestItems.length > 0 || style2Feed.length > 0
+  console.log('📊 [DATA CHECK] latestItems:', latestItems.length, 'style2Feed:', style2Feed.length, 'mostReadItems:', mostReadItems.length, 'hasRealData:', hasRealData)
+  
   const mockArticles = !hasRealData
     ? await import('@/lib/data').then(m => m.getHomeFeed('mock')).catch(() => [])
     : []
   
-  // ✅ Use best data source for hero section
-  const heroLeftData = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : (articles.length ? articles : mockArticles))
+  // ✅ Use best data source for hero section - never use old articles fallback
+  const heroLeftData = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : mockArticles)
   const heroRightMostRead = mostReadItems.length > 0 ? mostReadItems : []
   
-  const homeFeed = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : (articles.length ? articles : mockArticles))
+  const homeFeed = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : mockArticles)
+  
+  console.log('📰 [FEED DATA] homeFeed length:', homeFeed.length, 'heroLeftData:', heroLeftData.length, 'heroRightMostRead:', heroRightMostRead.length)
   
   if (homeFeed.length === 0) {
     // Fetch domain stats for modal even in error case - don't block rendering
@@ -1040,6 +1044,7 @@ export async function ThemeHome({
       const items = cat.slug 
         ? await getItemsForCategory(cat.slug, 6)
         : [] // Don't use homeFeed as fallback - only show if category has data
+      console.log(`📂 [CATEGORY ${idx}] "${cat.name}" (${cat.slug}):`, items.length, 'items')
       return {
         title: cat.name,
         href: cat.slug ? categoryHref(tenantSlug, cat.slug) : undefined,
@@ -1047,6 +1052,8 @@ export async function ThemeHome({
       }
     })
   )).filter(cat => cat.items.length > 0) // ✅ Filter out empty categories
+  
+  console.log(`📊 [MAIN CATEGORIES] ${categoryData.length} categories with data out of ${topNavCats.slice(0, 6).length}`)
 
   // ✅ Additional categories - only with real data
   const extraCategoryData = (await Promise.all(
@@ -1061,10 +1068,15 @@ export async function ThemeHome({
       }
     })
   )).filter(cat => cat.items.length > 0) // ✅ Filter out empty categories
+  
+  console.log(`📊 [EXTRA CATEGORIES] ${extraCategoryData.length} extra categories with data out of ${topNavCats.slice(6, 12).length}`)
 
   const heroArticle = style2Hero.length ? style2Hero[0] : heroLeftData[0]
   const secondaryArticles = heroLeftData.slice(1, 9) // 8 articles: 2 cols × 4 rows
-  const latestArticles = homeFeed.slice(10, 20)
+  // ✅ Use different data for right sidebar latest - don't slice beyond available data
+  const latestArticles = homeFeed.length > 10 ? homeFeed.slice(10, 20) : (homeFeed.length > 6 ? homeFeed.slice(6) : homeFeed.slice(0, 6))
+  console.log('🎯 [HERO WIDGETS] latestArticles for sidebar:', latestArticles.length)
+  console.log('📰 [HERO DATA] heroArticle:', heroArticle?.title, '| secondaryArticles:', secondaryArticles.map(a => a.title.substring(0, 30)))
 
   // Fetch domain stats for modal - don't block rendering
   let domainStats = null
@@ -1073,6 +1085,20 @@ export async function ThemeHome({
       getDomainStats(domain),
       new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)) // 2s timeout
     ])
+    
+    // ✅ Fix: Domain stats API doesn't return images - match with homepage articles to get images
+    if (domainStats?.topArticles) {
+      const allArticles = [...latestItems, ...mostReadItems, ...heroLeftData]
+      domainStats.topArticles = domainStats.topArticles.map(topArticle => {
+        const matchingArticle = allArticles.find(a => a.id === topArticle.id || a.slug === topArticle.slug)
+        return {
+          ...topArticle,
+          image: (matchingArticle?.imageUrl as string) || topArticle.image || undefined,
+          coverImageUrl: (matchingArticle?.imageUrl as string) || topArticle.coverImageUrl || undefined,
+        }
+      })
+      console.log('🖼️ [MODAL FIX] Enhanced topArticles with images from homepage data')
+    }
   } catch (error) {
     console.error('Failed to fetch domain stats:', error)
     domainStats = null

@@ -77,7 +77,9 @@ export function TopArticlesModal({
         <div className="overflow-y-auto max-h-[calc(85vh-80px)] p-6">
           <div className="space-y-4">
             {articles.slice(0, 5).map((article, idx) => {
-              const imageUrl = article.coverImageUrl || article.image
+              // ✅ Backend sends null for image fields in stats API, we need to fetch from articles API
+              const imageUrl = article.coverImageUrl || article.image || null
+              console.log(`🖼️ [MODAL IMG ${idx}]:`, article.title.substring(0, 30), '| image:', imageUrl?.substring(0, 50))
               return (
                 <Link
                   key={article.id}
