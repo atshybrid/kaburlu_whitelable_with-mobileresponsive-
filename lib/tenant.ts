@@ -37,10 +37,14 @@ export async function resolveTenant({ slugOverride }: { slugOverride?: string } 
 
   const local = DEFAULT_TENANTS.find((t) => t.slug === slug)
 
+  // ✅ CRITICAL: Use X-Tenant-Domain header set by proxy.ts (supports NEXT_PUBLIC_DEV_DOMAIN in localhost)
+  // Instead of using raw 'host' header which would be 'localhost' in development
+  const tenantDomainFromProxy = h.get('X-Tenant-Domain') || h.get('x-tenant-domain')
+  
   // In path-based multitenancy deployments (e.g. Vercel), the host may be the app domain.
   // If the route param itself looks like a domain, treat it as the tenant domain.
   const slugLooksLikeDomain = slug.includes('.') && !slug.includes('/')
-  const domain = normalizeTenantDomain(slugLooksLikeDomain ? slug : (host || 'localhost'))
+  const domain = normalizeTenantDomain(tenantDomainFromProxy || (slugLooksLikeDomain ? slug : (host || 'localhost')))
   
   try {
     // 🎯 NEW: Use /public/config API instead of old /public/domain/settings

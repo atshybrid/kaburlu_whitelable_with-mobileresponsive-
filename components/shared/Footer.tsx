@@ -3,6 +3,7 @@ import { getEffectiveSettings } from '@/lib/settings'
 import type { EffectiveSettings } from '@/lib/remote'
 import { basePathForTenant, homeHref } from '@/lib/url'
 import { getDomainStats } from '@/lib/domain-stats'
+import { getTenantDomain } from '@/lib/domain-utils'
 
 function safeUrl(v: string | undefined) {
   const s = String(v || '').trim()
@@ -29,8 +30,11 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
   const canonicalBaseUrl = firstNonEmpty(effective.seo?.canonicalBaseUrl, effective.settings?.seo?.canonicalBaseUrl)
   const siteUrl = stripTrailingSlash(firstNonEmpty(canonicalBaseUrl, process.env.NEXT_PUBLIC_SITE_URL, 'http://localhost:3000'))
   
-  // Extract domain from siteUrl for domain stats API
-  const domain = siteUrl.replace(/^https?:\/\//, '').split('/')[0]
+  // ✅ Use actual tenant domain from proxy/middleware, NOT canonicalBaseUrl
+  // canonicalBaseUrl might have wrong domain in backend config
+  const domain = getTenantDomain()
+  
+  console.log(`📊 [FOOTER] canonicalBaseUrl: ${canonicalBaseUrl} → domain for stats: ${domain}`)
 
   // Fetch domain stats - completely optional, don't block rendering
   let domainStats = null

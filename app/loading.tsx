@@ -3,6 +3,137 @@
  * Shown while config and data are being fetched
  */
 
+/**
+ * Style2 (TOI-style) Homepage Skeleton
+ */
+export function Style2Skeleton() {
+  return (
+    <div className="theme-style2 min-h-screen bg-white animate-pulse pb-16 sm:pb-0">
+      {/* Navbar Skeleton */}
+      <header className="border-b border-zinc-200 bg-white sticky top-0 z-50">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="flex h-14 items-center justify-between">
+            {/* Logo skeleton */}
+            <div className="h-8 w-32 bg-zinc-200 rounded" />
+            
+            {/* Nav items - hidden on mobile */}
+            <div className="hidden md:flex gap-4">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="h-3 w-16 bg-zinc-200 rounded" />
+              ))}
+            </div>
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden h-8 w-8 bg-zinc-200 rounded" />
+          </div>
+        </div>
+      </header>
+
+      {/* Flash Ticker Skeleton */}
+      <div className="bg-red-600 border-b border-red-700">
+        <div className="mx-auto max-w-7xl px-4 py-2">
+          <div className="flex items-center gap-3">
+            <div className="h-5 w-20 bg-red-400 rounded" />
+            <div className="flex-1 h-4 bg-red-400 rounded" />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <main className="mx-auto max-w-7xl px-4 py-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_320px]">
+          {/* Left Side - Hero + Secondary Grid */}
+          <div className="space-y-6">
+            {/* Hero Article Skeleton */}
+            <div className="bg-white overflow-hidden">
+              <div className="aspect-[16/9] bg-zinc-200" />
+              <div className="p-4 space-y-3">
+                <div className="h-6 bg-zinc-200 rounded w-full" />
+                <div className="h-6 bg-zinc-200 rounded w-4/5" />
+                <div className="h-4 bg-zinc-200 rounded w-3/4 mt-2" />
+                <div className="h-3 bg-zinc-200 rounded w-32 mt-2" />
+              </div>
+            </div>
+
+            {/* Secondary Grid - 8 articles (2×4) */}
+            <div className="grid grid-cols-2 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-white border-b border-zinc-100 pb-3">
+                  <div className="flex gap-3">
+                    <div className="h-16 w-24 shrink-0 bg-zinc-200" />
+                    <div className="flex-1 flex flex-col justify-center space-y-2">
+                      <div className="h-4 bg-zinc-200 rounded w-full" />
+                      <div className="h-4 bg-zinc-200 rounded w-3/4" />
+                      <div className="h-3 bg-zinc-200 rounded w-20" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Sidebar - Widgets */}
+          <aside className="space-y-6">
+            {/* Trending Widget Skeleton */}
+            <div className="bg-white border border-zinc-200">
+              <div className="bg-gradient-to-r from-red-600 to-orange-500 px-4 py-2.5">
+                <div className="h-4 w-32 bg-red-400 rounded" />
+              </div>
+              <div className="divide-y divide-zinc-100">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-start gap-3 p-3">
+                    <div className="w-6 h-6 bg-red-200 rounded" />
+                    <div className="flex-1 space-y-1">
+                      <div className="h-4 bg-zinc-200 rounded w-full" />
+                      <div className="h-4 bg-zinc-200 rounded w-2/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Latest Widget Skeleton */}
+            <div className="bg-white border border-zinc-200">
+              <div className="bg-gradient-to-r from-blue-600 to-cyan-500 px-4 py-2.5">
+                <div className="h-4 w-24 bg-blue-400 rounded" />
+              </div>
+              <div className="divide-y divide-zinc-100">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="p-3">
+                    <div className="h-4 bg-zinc-200 rounded w-full" />
+                    <div className="h-4 bg-zinc-200 rounded w-3/4 mt-1" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        {/* Category Sections Skeleton */}
+        <div className="mt-8 space-y-8">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="border-t border-zinc-200 pt-6">
+              <div className="h-6 w-40 bg-red-500 rounded mb-4" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {Array.from({ length: 3 }).map((_, j) => (
+                  <div key={j} className="space-y-2">
+                    <div className="aspect-[16/9] bg-zinc-200 rounded" />
+                    <div className="h-4 bg-zinc-200 rounded w-full" />
+                    <div className="h-4 bg-zinc-200 rounded w-4/5" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
+  )
+}
+
+/**
+ * Style1 Homepage Skeleton
+ */
 export function HomePageSkeleton() {
   return (
     <div className="min-h-screen bg-zinc-50 animate-pulse">
@@ -159,5 +290,81 @@ export function HomePageSkeleton() {
  * Simple loading component
  */
 export default function Loading() {
-  return <HomePageSkeleton />
+  // Show a minimal universal skeleton that works for all themes
+  return (
+    <div className="min-h-screen bg-zinc-50 animate-pulse">
+      {/* Universal Navbar Skeleton */}
+      <header className="border-b border-zinc-200 bg-white sticky top-0 z-50">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="flex h-16 items-center justify-between">
+            <div className="h-10 w-32 bg-zinc-200 rounded" />
+            <div className="hidden md:flex gap-4">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="h-4 w-16 bg-zinc-200 rounded" />
+              ))}
+            </div>
+            <div className="md:hidden h-8 w-8 bg-zinc-200 rounded" />
+          </div>
+        </div>
+      </header>
+
+      {/* Ticker Skeleton */}
+      <div className="bg-red-600 border-b">
+        <div className="mx-auto max-w-7xl px-4 py-2">
+          <div className="flex items-center gap-3">
+            <div className="h-5 w-20 bg-red-400 rounded" />
+            <div className="flex-1 h-4 bg-red-400 rounded" />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content - Works for both Style1 and Style2 */}
+      <main className="mx-auto max-w-7xl px-4 py-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_320px]">
+          {/* Left - Hero + Articles */}
+          <div className="space-y-6">
+            {/* Hero */}
+            <div className="bg-white rounded overflow-hidden shadow-sm">
+              <div className="aspect-[16/9] bg-zinc-200" />
+              <div className="p-4 space-y-3">
+                <div className="h-6 bg-zinc-200 rounded w-full" />
+                <div className="h-6 bg-zinc-200 rounded w-4/5" />
+                <div className="h-4 bg-zinc-200 rounded w-3/4" />
+              </div>
+            </div>
+
+            {/* Article Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-white rounded shadow-sm overflow-hidden">
+                  <div className="aspect-video bg-zinc-200" />
+                  <div className="p-3 space-y-2">
+                    <div className="h-4 bg-zinc-200 rounded w-full" />
+                    <div className="h-4 bg-zinc-200 rounded w-3/4" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Sidebar */}
+          <aside className="space-y-6">
+            <div className="bg-white border border-zinc-200 rounded">
+              <div className="bg-red-500 px-4 py-2.5">
+                <div className="h-4 w-32 bg-red-300 rounded" />
+              </div>
+              <div className="p-4 space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="h-4 bg-zinc-200 rounded" />
+                ))}
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+  )
 }
+
+// Export theme-specific skeletons for use in Suspense boundaries
+export { Style2Skeleton, HomePageSkeleton as Style1Skeleton }

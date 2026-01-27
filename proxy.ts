@@ -52,9 +52,11 @@ export function proxy(request: NextRequest) {
     // Localhost: use development fallback
     const devDomain = process.env.NEXT_PUBLIC_DEV_DOMAIN || 'kaburlutoday.com'
     tenantDomain = normalizeDomain(devDomain)
+    console.log(`🔧 [PROXY] localhost detected → using NEXT_PUBLIC_DEV_DOMAIN: ${devDomain} → tenantDomain: ${tenantDomain}`)
   } else {
     // Production: ALWAYS use actual host header
     tenantDomain = normalizedHost
+    console.log(`🌐 [PROXY] Production domain: ${tenantDomain}`)
   }
   
   // =========================================================================

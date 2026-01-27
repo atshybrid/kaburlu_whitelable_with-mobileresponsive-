@@ -96,6 +96,16 @@ export default async function Home() {
     settings?.settings?.theme?.key ||
     settings?.settings?.theme?.layout?.style ||
     'style1'
+  
+  // Debug: Log theme detection
+  console.log('🎨 Theme Detection:', {
+    'theme.theme': settings?.theme?.theme,
+    'theme.key': settings?.theme?.key,
+    'theme.layout.style': settings?.theme?.layout?.style,
+    'requestedThemeKey': requestedThemeKey,
+    'domain': tenant.domain
+  })
+  
   const themeKey = (['style1', 'style2', 'style3', 'tv9', 'toi'].includes(requestedThemeKey) ? requestedThemeKey : 'style1') as
     | 'style1'
     | 'style2'
