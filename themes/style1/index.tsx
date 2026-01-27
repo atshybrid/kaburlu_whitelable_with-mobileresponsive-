@@ -604,7 +604,7 @@ export async function ThemeHome({
   const domain = tenantDomain || siteUrl.replace(/^https?:\/\//, '').split('/')[0]
 
   // Determine the API version based on theme setting
-  const themeKey = settings?.theme?.theme || settings?.theme?.key || settings?.theme?.layout?.style || settings?.settings?.theme?.layout?.style || 'style1'
+  const themeKey = settings?.theme?.theme || settings?.theme?.key || (settings?.theme?.layout as any)?.style || (settings?.settings?.theme?.layout as any)?.style || 'style1'
   const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'te'
 
   // Helper to convert shaped articles to Article format

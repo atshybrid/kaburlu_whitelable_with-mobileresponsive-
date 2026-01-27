@@ -32,7 +32,7 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
   
   // ✅ Use actual tenant domain from proxy/middleware, NOT canonicalBaseUrl
   // canonicalBaseUrl might have wrong domain in backend config
-  const domain = getTenantDomain()
+  const domain = await getTenantDomain()
   
   console.log(`📊 [FOOTER] canonicalBaseUrl: ${canonicalBaseUrl} → domain for stats: ${domain}`)
 

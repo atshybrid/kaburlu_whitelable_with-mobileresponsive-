@@ -366,5 +366,5 @@ export default function Loading() {
   )
 }
 
-// Export theme-specific skeletons for use in Suspense boundaries
-export { Style2Skeleton, HomePageSkeleton as Style1Skeleton }
+// Export Style1 skeleton for backwards compatibility
+export { HomePageSkeleton as Style1Skeleton }

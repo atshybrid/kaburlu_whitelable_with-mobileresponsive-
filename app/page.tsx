@@ -91,17 +91,17 @@ export default async function Home() {
   const requestedThemeKey: string =
     settings?.theme?.theme ||
     settings?.theme?.key ||
-    settings?.theme?.layout?.style ||
+    (settings?.theme?.layout as any)?.style ||
     settings?.settings?.theme?.theme ||
     settings?.settings?.theme?.key ||
-    settings?.settings?.theme?.layout?.style ||
+    (settings?.settings?.theme?.layout as any)?.style ||
     'style1'
   
   // Debug: Log theme detection
   console.log('🎨 Theme Detection:', {
     'theme.theme': settings?.theme?.theme,
     'theme.key': settings?.theme?.key,
-    'theme.layout.style': settings?.theme?.layout?.style,
+    'theme.layout.style': (settings?.theme?.layout as any)?.style,
     'requestedThemeKey': requestedThemeKey,
     'domain': tenant.domain
   })
