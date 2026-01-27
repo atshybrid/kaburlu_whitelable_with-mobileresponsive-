@@ -973,14 +973,15 @@ export async function ThemeHome({
   const style2Feed = buildStyle2HomeFeed(style2Home)
   const style2Hero = Array.isArray(style2Home?.hero) ? style2Home!.hero!.map(style2ItemToArticle) : []
 
-  // Use smart API data with fallbacks
-  // Generate mock data if all API sources are empty (for development/testing)
-  const mockArticles = (latestItems.length === 0 && style2Feed.length === 0 && articles.length === 0)
+  // ✅ Smart data selection: Only use mock if NO real data exists
+  const hasRealData = latestItems.length > 0 || style2Feed.length > 0 || articles.length > 0
+  const mockArticles = !hasRealData
     ? await import('@/lib/data').then(m => m.getHomeFeed('mock')).catch(() => [])
     : []
   
+  // ✅ Use best data source for hero section
   const heroLeftData = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : (articles.length ? articles : mockArticles))
-  const heroRightMostRead = mostReadItems.length > 0 ? mostReadItems : (style2Feed.length ? style2Feed.slice(0, 5) : (articles.length ? articles.slice(0, 5) : mockArticles.slice(0, 5)))
+  const heroRightMostRead = mostReadItems.length > 0 ? mostReadItems : []
   
   const homeFeed = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : (articles.length ? articles : mockArticles))
   
@@ -1026,27 +1027,29 @@ export async function ThemeHome({
     if (backend?.length) return backend.slice(0, count)
     try {
       const list = await getArticlesByCategory('na', slug)
-      return list.slice(0, count)
+      // ✅ Only return if we got real data (not empty or error)
+      return list && list.length > 0 ? list.slice(0, count) : []
     } catch {
       return []
     }
   }
 
-  const categoryData = await Promise.all(
+  // ✅ Smart category data: Only include categories with actual data
+  const categoryData = (await Promise.all(
     topNavCats.slice(0, 6).map(async (cat, idx) => {
       const items = cat.slug 
         ? await getItemsForCategory(cat.slug, 6)
-        : homeFeed.slice(idx * 6, (idx + 1) * 6)
+        : [] // Don't use homeFeed as fallback - only show if category has data
       return {
         title: cat.name,
         href: cat.slug ? categoryHref(tenantSlug, cat.slug) : undefined,
         items,
       }
     })
-  )
+  )).filter(cat => cat.items.length > 0) // ✅ Filter out empty categories
 
-  // Additional categories for extra sections
-  const extraCategoryData = await Promise.all(
+  // ✅ Additional categories - only with real data
+  const extraCategoryData = (await Promise.all(
     topNavCats.slice(6, 12).map(async (cat) => {
       const items = cat.slug 
         ? await getItemsForCategory(cat.slug, 6)
@@ -1057,7 +1060,7 @@ export async function ThemeHome({
         items,
       }
     })
-  )
+  )).filter(cat => cat.items.length > 0) // ✅ Filter out empty categories
 
   const heroArticle = style2Hero.length ? style2Hero[0] : heroLeftData[0]
   const secondaryArticles = heroLeftData.slice(1, 9) // 8 articles: 2 cols × 4 rows
@@ -1202,28 +1205,30 @@ export async function ThemeHome({
         ) : null}
 
         {/* Style 4: Spotlight Section (Amber/Orange theme) */}
-        {categoryData[2]?.items?.length > 0 || latestArticles.length > 4 ? (
+        {categoryData[2]?.items?.length > 0 ? (
           <SpotlightSection 
             tenantSlug={tenantSlug}
-            title={categoryData[2]?.title || "స్పాట్‌లైట్"}
-            href={categoryData[2]?.href}
-            items={categoryData[2]?.items?.length > 0 ? categoryData[2].items : latestArticles.slice(0, 4)}
+            title={categoryData[2].title}
+            href={categoryData[2].href}
+            items={categoryData[2].items}
             accentColor="from-amber-500 to-orange-600"
           />
         ) : null}
 
         {/* Ad Banner */}
-        <div className="my-6">
-          <AdBanner variant="leaderboard" size="small" />
-        </div>
+        {categoryData[2]?.items?.length > 0 ? (
+          <div className="my-6">
+            <AdBanner variant="leaderboard" size="small" />
+          </div>
+        ) : null}
 
         {/* Style 5: Newspaper Columns (Blue theme) */}
-        {categoryData[3]?.items?.length > 0 || homeFeed.length > 20 ? (
+        {categoryData[3]?.items?.length > 0 ? (
           <NewspaperColumnsSection 
             tenantSlug={tenantSlug}
-            title={categoryData[3]?.title || "వార్తా విశ్లేషణ"}
-            href={categoryData[3]?.href}
-            items={categoryData[3]?.items?.length > 0 ? categoryData[3].items : homeFeed.slice(20, 26)}
+            title={categoryData[3].title}
+            href={categoryData[3].href}
+            items={categoryData[3].items}
             accentColor="border-blue-600"
           />
         ) : null}
@@ -1239,13 +1244,6 @@ export async function ThemeHome({
                 items={extraCategoryData[0].items}
                 accentColor="from-violet-500 to-purple-600"
               />
-            ) : homeFeed.length > 10 ? (
-              <MagazineGridSection 
-                tenantSlug={tenantSlug}
-                title="వైవిధ్య వార్తలు"
-                items={homeFeed.slice(0, 4)}
-                accentColor="from-violet-500 to-purple-600"
-              />
             ) : null}
             
             {extraCategoryData[1]?.items?.length > 0 ? (
@@ -1256,94 +1254,82 @@ export async function ThemeHome({
                 items={extraCategoryData[1].items}
                 accentColor="from-cyan-500 to-blue-600"
               />
-            ) : homeFeed.length > 6 ? (
-              <HorizontalCardsSection 
-                tenantSlug={tenantSlug}
-                title="ట్రెండింగ్ స్టోరీస్"
-                items={homeFeed.slice(4, 10)}
-                accentColor="from-cyan-500 to-blue-600"
-              />
             ) : null}
           </>
-        ) : homeFeed.length > 10 ? (
-          <>
-            <MagazineGridSection 
-              tenantSlug={tenantSlug}
-              title="వైవిధ్య వార్తలు"
-              items={homeFeed.slice(0, 4)}
-              accentColor="from-violet-500 to-purple-600"
-            />
-            <HorizontalCardsSection 
-              tenantSlug={tenantSlug}
-              title="ట్రెండింగ్ స్టోరీస్"
-              items={homeFeed.slice(4, 10)}
-              accentColor="from-cyan-500 to-blue-600"
-            />
-          </>
         ) : null}
 
         {/* Ad Banner */}
-        <div className="my-6">
-          <AdBanner variant="sidebar" size="medium" />
-        </div>
+        {extraCategoryData.length > 0 ? (
+          <div className="my-6">
+            <AdBanner variant="sidebar" size="medium" />
+          </div>
+        ) : null}
 
-        {/* Style 6: Photo Gallery Section - Always show with available data */}
-        {homeFeed.length > 4 ? (
+        {/* Style 6: Photo Gallery Section */}
+        {categoryData[4]?.items?.length > 0 ? (
           <PhotoGallerySection 
             tenantSlug={tenantSlug}
-            title={categoryData[4]?.title || "ఫోటో గ్యాలరీ"}
-            href={categoryData[4]?.href}
-            items={categoryData[4]?.items?.length > 0 ? categoryData[4].items : homeFeed.slice(0, 6)}
+            title={categoryData[4].title}
+            href={categoryData[4].href}
+            items={categoryData[4].items}
           />
         ) : null}
 
         {/* Ad Banner */}
-        <div className="my-6">
-          <AdBanner variant="leaderboard" size="small" />
-        </div>
+        {categoryData[4]?.items?.length > 0 ? (
+          <div className="my-6">
+            <AdBanner variant="leaderboard" size="small" />
+          </div>
+        ) : null}
 
-        {/* Style 7: Timeline Section - Always show with available data */}
-        {homeFeed.length > 3 ? (
+        {/* Style 7: Timeline Section */}
+        {categoryData[5]?.items?.length > 0 ? (
           <TimelineSection 
             tenantSlug={tenantSlug}
-            title={categoryData[5]?.title || "తాజా అప్‌డేట్స్"}
-            href={categoryData[5]?.href}
-            items={categoryData[5]?.items?.length > 0 ? categoryData[5].items : homeFeed.slice(2, 7)}
+            title={categoryData[5].title}
+            href={categoryData[5].href}
+            items={categoryData[5].items}
           />
         ) : null}
 
-        {/* Style 8: Featured Banner - Always show with first article */}
-        {homeFeed.length > 0 ? (
+        {/* Style 8: Featured Banner */}
+        {extraCategoryData[2]?.items?.length > 0 ? (
           <FeaturedBannerSection 
             tenantSlug={tenantSlug}
-            title="ప్రత్యేక వార్త"
-            items={[homeFeed[Math.floor(homeFeed.length / 2)] || homeFeed[0]]}
+            title={extraCategoryData[2].title}
+            items={[extraCategoryData[2].items[0]]}
           />
         ) : null}
 
         {/* Ad Banner */}
-        <div className="my-6">
-          <AdBanner variant="horizontal" size="medium" />
-        </div>
+        {extraCategoryData[2]?.items?.length > 0 ? (
+          <div className="my-6">
+            <AdBanner variant="horizontal" size="medium" />
+          </div>
+        ) : null}
 
-        {/* Style 9: Two Compact Lists Side by Side - Always show */}
-        {homeFeed.length > 4 ? (
+        {/* Style 9: Two Compact Lists Side by Side */}
+        {(extraCategoryData[3]?.items?.length > 0 || extraCategoryData[4]?.items?.length > 0) ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <CompactListSection 
-              tenantSlug={tenantSlug}
-              title={extraCategoryData[2]?.title || "ఇతర వార్తలు"}
-              href={extraCategoryData[2]?.href}
-              items={extraCategoryData[2]?.items?.length > 0 ? extraCategoryData[2].items : homeFeed.slice(0, 8)}
-              accentColor="bg-green-600"
-            />
+            {extraCategoryData[3]?.items?.length > 0 ? (
+              <CompactListSection 
+                tenantSlug={tenantSlug}
+                title={extraCategoryData[3].title}
+                href={extraCategoryData[3].href}
+                items={extraCategoryData[3].items}
+                accentColor="bg-green-600"
+              />
+            ) : null}
             
-            <CompactListSection 
-              tenantSlug={tenantSlug}
-              title={extraCategoryData[3]?.title || "మరిన్ని వార్తలు"}
-              href={extraCategoryData[3]?.href}
-              items={extraCategoryData[3]?.items?.length > 0 ? extraCategoryData[3].items : [...homeFeed].reverse().slice(0, 8)}
-              accentColor="bg-purple-600"
-            />
+            {extraCategoryData[4]?.items?.length > 0 ? (
+              <CompactListSection 
+                tenantSlug={tenantSlug}
+                title={extraCategoryData[4].title}
+                href={extraCategoryData[4].href}
+                items={extraCategoryData[4].items}
+                accentColor="bg-purple-600"
+              />
+            ) : null}
           </div>
         ) : null}
 
@@ -1369,7 +1355,7 @@ export async function ThemeHome({
       {domainStats?.topArticles && domainStats.topArticles.length > 0 && (
         <TopArticlesModal 
           articles={domainStats.topArticles.slice(0, 5)} 
-          articleHref={(slug) => articleHref(tenantSlug, slug)}
+          tenantSlug={tenantSlug}
         />
       )}
     </div>
