@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { PlaceholderImg } from './PlaceholderImg'
+import { articleHref as buildArticleHref } from '@/lib/url'
 
 type TopArticle = {
   id: string
@@ -20,10 +21,10 @@ type TopArticle = {
 
 export function TopArticlesModal({
   articles,
-  articleHref,
+  tenantSlug,
 }: {
   articles: TopArticle[]
-  articleHref: (slug: string) => string
+  tenantSlug: string
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [hasShown, setHasShown] = useState(false)
@@ -80,7 +81,7 @@ export function TopArticlesModal({
               return (
                 <Link
                   key={article.id}
-                  href={articleHref(article.slug)}
+                  href={buildArticleHref(tenantSlug, article.slug)}
                   onClick={() => setIsOpen(false)}
                   className="group flex gap-4 p-4 rounded-xl border border-zinc-200 hover:border-orange-500 hover:shadow-lg transition-all duration-200 bg-white"
                 >

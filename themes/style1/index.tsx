@@ -957,7 +957,7 @@ export async function ThemeHome({
       {domainStats?.topArticles && domainStats.topArticles.length > 0 && (
         <TopArticlesModal 
           articles={domainStats.topArticles.slice(0, 5)} 
-          articleHref={(slug) => articleHref(tenantSlugForLinks, slug)}
+          tenantSlug={tenantSlugForLinks}
         />
       )}
     </div>

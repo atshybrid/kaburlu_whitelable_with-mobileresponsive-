@@ -1012,7 +1012,7 @@ export async function ThemeHome({
         {domainStats?.topArticles && domainStats.topArticles.length > 0 && (
           <TopArticlesModal 
             articles={domainStats.topArticles.slice(0, 5)} 
-            articleHref={(slug) => articleHref(tenantSlug, slug)}
+            tenantSlug={tenantSlug}
           />
         )}
       </div>
