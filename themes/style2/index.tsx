@@ -929,7 +929,7 @@ export async function ThemeHome({
   const domain = tenantDomain || siteUrl.replace(/^https?:\/\//, '').split('/')[0]
 
   // Use smart API integration for style2 with v=2 and shape=style2
-  const themeKey = settings?.theme?.theme || settings?.theme?.key || 'style2'
+  const themeKey = settings?.theme?.theme || settings?.theme?.key || settings?.theme?.layout?.style || settings?.settings?.theme?.layout?.style || 'style2'
   const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'te'
   
   let homepage: NewHomepageResponse | null = null
