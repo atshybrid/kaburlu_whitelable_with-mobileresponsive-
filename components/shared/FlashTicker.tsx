@@ -29,11 +29,19 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 5000 }: { tenantSl
   const previous = prevIdx !== null ? list[prevIdx] : null
   const currentHref = articleHref(tenantSlug, current.slug || current.id)
   
-  // Suppress hydration warning for ticker hrefs as they're client-controlled animations
-  const [mounted, setMounted] = useState(false)
+  // ✅ Fixed: Use lazy initialization instead of effect to avoid cascading renders
+  const [mounted, setMounted] = useState(() => {
+    // Check if we're in the browser (client-side)
+    return typeof window !== 'undefined'
+  })
+  
+  // Only set mounted on client after first render completes
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    if (!mounted) {
+      // Use microtask to avoid cascading render
+      queueMicrotask(() => setMounted(true))
+    }
+  }, [mounted])
 
   return (
     <div 
