@@ -28,6 +28,12 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 5000 }: { tenantSl
   const current = list[idx]
   const previous = prevIdx !== null ? list[prevIdx] : null
   const currentHref = articleHref(tenantSlug, current.slug || current.id)
+  
+  // Suppress hydration warning for ticker hrefs as they're client-controlled animations
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <div 
@@ -53,7 +59,7 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 5000 }: { tenantSl
       */}
       
       <div className="relative flex-1 overflow-hidden min-h-6 py-0.5">
-        {previous && (
+        {mounted && previous && (
           <Link
             key={previous.id + '-' + prevIdx + '-out'}
             href={toHref(articleHref(tenantSlug, previous.slug || previous.id))}
@@ -64,13 +70,15 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 5000 }: { tenantSl
             {previous.title}
           </Link>
         )}
-        <Link
-          key={current.id + '-' + idx + '-in'}
-          href={toHref(currentHref)}
-          className="ticker-item animate-[ticker-in_420ms_ease-out_forwards] block truncate text-sm font-bold leading-6 hover:text-red-600"
-        >
-          {current.title}
-        </Link>
+        {mounted && (
+          <Link
+            key={current.id + '-' + idx + '-in'}
+            href={toHref(currentHref)}
+            className="ticker-item animate-[ticker-in_420ms_ease-out_forwards] block truncate text-sm font-bold leading-6 hover:text-red-600"
+          >
+            {current.title}
+          </Link>
+        )}
       </div>
       
       {/* Manual controls - hidden */}
