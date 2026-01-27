@@ -976,10 +976,17 @@ export async function ThemeHome({
   // ✅ Smart data selection: Only use mock if NO real data from API
   const hasRealData = latestItems.length > 0 || style2Feed.length > 0
   console.log('📊 [DATA CHECK] latestItems:', latestItems.length, 'style2Feed:', style2Feed.length, 'mostReadItems:', mostReadItems.length, 'hasRealData:', hasRealData)
+  if (latestItems.length > 0) {
+    console.log('✅ [REAL DATA] First article:', latestItems[0].title, '| imageUrl:', latestItems[0].imageUrl?.substring(0, 50))
+  }
   
   const mockArticles = !hasRealData
     ? await import('@/lib/data').then(m => m.getHomeFeed('mock')).catch(() => [])
     : []
+  
+  if (mockArticles.length > 0) {
+    console.warn('⚠️ [MOCK DATA LOADED] Using', mockArticles.length, 'mock articles - API returned no data!')
+  }
   
   // ✅ Use best data source for hero section - never use old articles fallback
   const heroLeftData = latestItems.length > 0 ? latestItems : (style2Feed.length ? style2Feed : mockArticles)
