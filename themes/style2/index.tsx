@@ -977,7 +977,9 @@ export async function ThemeHome({
   const hasRealData = latestItems.length > 0 || style2Feed.length > 0
   console.log('📊 [DATA CHECK] latestItems:', latestItems.length, 'style2Feed:', style2Feed.length, 'mostReadItems:', mostReadItems.length, 'hasRealData:', hasRealData)
   if (latestItems.length > 0) {
-    console.log('✅ [REAL DATA] First article:', latestItems[0].title, '| imageUrl:', latestItems[0].imageUrl?.substring(0, 50))
+    const firstImg = latestItems[0].imageUrl
+    const imgPreview = typeof firstImg === 'string' ? firstImg.substring(0, 50) : 'no-image'
+    console.log('✅ [REAL DATA] First article:', latestItems[0].title, '| imageUrl:', imgPreview)
   }
   
   const mockArticles = !hasRealData
