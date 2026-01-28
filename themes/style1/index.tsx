@@ -2769,12 +2769,17 @@ async function CategoryColumns({
   tenantSlug: string
   sectionDataMap?: Record<string, Article[]>
 }) {
-  const cats: Category[] = await getCategoriesForNav()
+  const allCats: Category[] = await getCategoriesForNav()
+  
+  // 🎯 IMPORTANT: Filter out 'latest' and 'breaking' - these are feed types, NOT real categories
+  // Only the hero section should use latest/breaking data. Category sections must use real categories.
+  const feedTypeSlugs = ['latest', 'breaking']
+  const cats = allCats.filter(c => !feedTypeSlugs.includes(c.slug.toLowerCase()))
 
   // Use real backend categories. Some tenants don't have slugs like `latest` or `breaking`.
   // Prefer common news slugs, then fill from available categories.
   // STRICT LIMIT: Only 4 categories for 4-column layout
-  const preferredSlugs = ['national', 'entertainment', 'politics', 'sports']
+  const preferredSlugs = ['national', 'entertainment', 'politics', 'political', 'sports']
   const preferred = preferredSlugs
     .map((slug) => cats.find((c) => c.slug === slug))
     .filter(Boolean) as Category[]

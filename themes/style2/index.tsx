@@ -963,7 +963,12 @@ export async function ThemeHome({
     // Navigation failed - continue with empty categories
   }
   
-  const topNavCats = navCats.filter((c) => !c.parentId)
+  // 🎯 IMPORTANT: Filter out 'latest' and 'breaking' - these are feed types, NOT real categories
+  // Only the hero section should use latest/breaking data. Category sections must use real categories.
+  const feedTypeSlugs = ['latest', 'breaking']
+  const filteredCats = navCats.filter(c => !feedTypeSlugs.includes(c.slug.toLowerCase()))
+  
+  const topNavCats = filteredCats.filter((c) => !c.parentId)
 
   // Fallback to old API if new one doesn't return data
   const style2Home = (!latestItems.length && !mostReadItems.length) 

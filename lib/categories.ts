@@ -154,10 +154,9 @@ export async function getCategoriesForNav(): Promise<Category[]> {
 }
 
 function makeMockCategories(): Category[] {
-  // Telugu categories matching public/news/*.json files
+  // Telugu categories - Only REAL categories, NOT feed types like 'latest' or 'breaking'
+  // 'latest' and 'breaking' are feed types used only for hero section, not for category sections
   return [
-    { id: 'cat-latest', name: 'లేటెస్ట్', slug: 'latest' },
-    { id: 'cat-breaking', name: 'బ్రేకింగ్', slug: 'breaking' },
     { id: 'cat-politics', name: 'రాజకీయాలు', slug: 'political' },
     { id: 'cat-sports', name: 'క్రీడలు', slug: 'sports' },
     { id: 'cat-entertainment', name: 'వినోదం', slug: 'entertainment' },
@@ -168,5 +167,6 @@ function makeMockCategories(): Category[] {
     { id: 'cat-education', name: 'విద్య', slug: 'education' },
     { id: 'cat-world', name: 'ప్రపంచం', slug: 'world' },
     { id: 'cat-tech', name: 'టెక్నాలజీ', slug: 'technology' },
+    { id: 'cat-national', name: 'జాతీయం', slug: 'national' },
   ]
 }
