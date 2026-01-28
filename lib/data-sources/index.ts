@@ -20,6 +20,7 @@ export interface Article {
   shareCount?: number
   authors?: Array<{ id?: string; name?: string; role?: string }> | null
   categories?: Array<{ id?: string; name?: string; slug?: string }> | null
+  category?: { id?: string; name?: string; slug?: string } | null
   tags?: string[] | null
   readingTimeMin?: number
   media?: {
@@ -425,7 +426,8 @@ function normalizeNewArticleResponse(response: Record<string, unknown>): Article
     contentHtml: article.content_html,
     excerpt: article.excerpt,
     
-    // Category
+    // Category - store both singular and array format
+    category: article.category || null,
     categories: article.category ? [article.category] : [],
     
     // Dates

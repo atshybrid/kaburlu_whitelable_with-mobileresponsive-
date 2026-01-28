@@ -1842,10 +1842,11 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
     day: 'numeric' 
   })
 
-  // Get breadcrumb from categories
-  const category = article.categories && article.categories[0]
+  // Get breadcrumb from categories (try singular category field first, then categories array)
+  const category = (article as Record<string, unknown>).category as { id?: string; name?: string; slug?: string } | undefined 
+    || (article.categories && article.categories[0])
   // Use the shared extractCategoryName utility
-  const categoryName = (category?.name ? extractCategoryName(category.name) : '') || 'ఆర్టికల్'
+  const categoryName = category ? extractCategoryName(category) : 'ఆర్టికల్'
   const categorySlug = category?.slug
   
   // Get reporter info from API
