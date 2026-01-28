@@ -1632,8 +1632,18 @@ function TrendingArticlesSidebar({ trending, tenantSlug }: { trending: NonNullab
   )
 }
 
-// Article Content with Must-Read Card
-function ArticleContentWithMustRead({ html, mustRead, tenantSlug }: { html: string; mustRead: Article['mustRead']; tenantSlug: string }) {
+// Article Content with Must-Read Card and In-Article Images
+function ArticleContentWithMustRead({ 
+  html, 
+  mustRead, 
+  tenantSlug,
+  secondImage 
+}: { 
+  html: string; 
+  mustRead: Article['mustRead']; 
+  tenantSlug: string;
+  secondImage?: { url?: string; alt?: string; caption?: string } | null;
+}) {
   if (!html) {
     return (
       <div className="px-6 sm:px-8 lg:px-10 py-8">
@@ -1650,6 +1660,7 @@ function ArticleContentWithMustRead({ html, mustRead, tenantSlug }: { html: stri
   let paraIndex = 0
   let actualParagraphCount = 0
   let mustReadInserted = false
+  let secondImageInserted = false
   
   for (let i = 0; i < parts.length; i++) {
     const chunk = parts[i].trim()
@@ -1684,6 +1695,29 @@ function ArticleContentWithMustRead({ html, mustRead, tenantSlug }: { html: stri
         </div>
       )
       mustReadInserted = true
+    }
+    
+    // Insert second image after 5-6 paragraphs (in the middle of article)
+    if (!secondImageInserted && secondImage?.url && actualParagraphCount === 6) {
+      nodes.push(
+        <figure key="second-image" className="my-8 rounded-xl overflow-hidden shadow-lg">
+          <div className="relative aspect-video w-full bg-zinc-100">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={secondImage.url} 
+              alt={secondImage.alt || 'Article image'}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
+          {secondImage.caption && (
+            <figcaption className="px-4 py-3 text-sm text-zinc-600 italic bg-zinc-50 border-t border-zinc-200">
+              📷 {secondImage.caption}
+            </figcaption>
+          )}
+        </figure>
+      )
+      secondImageInserted = true
     }
     
     // Insert ad after every N paragraphs, but not at the very end and not right after first paragraph
@@ -2075,11 +2109,12 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 </div>
               </div>
 
-              {/* Article Content with Must-Read Card */}
+              {/* Article Content with Must-Read Card and In-Article Images */}
               <ArticleContentWithMustRead 
                 html={article.contentHtml || article.content || ''} 
                 mustRead={mustRead}
                 tenantSlug={tenantSlug}
+                secondImage={article.media?.images && article.media.images.length > 1 ? article.media.images[1] : null}
               />
 
               {/* Additional Images Gallery */}
