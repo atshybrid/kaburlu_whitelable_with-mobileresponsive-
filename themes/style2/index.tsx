@@ -4,11 +4,12 @@ import { TopArticlesModal } from '@/components/shared/TopArticlesModal'
 import { FlashTicker } from '@/components/shared/FlashTicker'
 import { PlaceholderImg } from '@/components/shared/PlaceholderImg'
 import MobileBottomNav from '@/components/shared/MobileBottomNav'
+import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapper'
 import type { Article } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
 import Link from 'next/link'
 import type { UrlObject } from 'url'
-import { articleHref, categoryHref } from '@/lib/url'
+import { articleHref, categoryHref, basePathForTenant } from '@/lib/url'
 import { getTenantFromHeaders } from '@/lib/tenant'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
 import { getPublicHomepage, getPublicHomepageStyle2ShapeForDomain, getPublicHomepageStyle2Shape, type Style2HomepageItem, type Style2HomepageResponse, type NewHomepageResponse, feedItemsToArticles } from '@/lib/homepage'
@@ -324,6 +325,7 @@ function TitleList({ tenantSlug, items }: { tenantSlug: string; items: Article[]
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function SmallCardList({ tenantSlug, items }: { tenantSlug: string; items: Article[] }) {
   if (!items.length) return null
   
@@ -910,7 +912,7 @@ function CompactListSection({
 export async function ThemeHome({
   tenantSlug,
   title,
-  articles,
+  articles: _articles,
   settings,
   tenantDomain,
 }: {
@@ -922,6 +924,7 @@ export async function ThemeHome({
 }) {
   // Style2 fetches its own data internally via getPublicHomepage API
   // The articles prop is ignored - we always fetch fresh data
+  void _articles // Explicitly mark as intentionally unused
 
   // Extract domain from settings for API calls
   const canonicalBaseUrl = settings?.seo?.canonicalBaseUrl || settings?.settings?.seo?.canonicalBaseUrl
@@ -929,6 +932,7 @@ export async function ThemeHome({
   const domain = tenantDomain || siteUrl.replace(/^https?:\/\//, '').split('/')[0]
 
   // Determine the API version based on theme setting from config
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const themeKey = settings?.theme?.theme || settings?.theme?.key || (settings?.theme?.layout as any)?.style || (settings?.settings?.theme?.layout as any)?.style || 'style2'
   const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'te'
   
@@ -1119,7 +1123,7 @@ export async function ThemeHome({
 
       <div className="flash-ticker">
         <div className="mx-auto max-w-7xl px-4">
-          <FlashTicker tenantSlug={tenantSlug} items={tickerItems.length > 0 ? tickerItems.slice(0, 10) : homeFeed.slice(0, 10)} intervalMs={3500} />
+          <FlashTicker tenantSlug={tenantSlug} basePath={basePathForTenant(tenantSlug)} items={tickerItems.length > 0 ? tickerItems.slice(0, 10) : homeFeed.slice(0, 10)} intervalMs={3500} />
         </div>
       </div>
 
@@ -1436,6 +1440,16 @@ export async function ThemeArticle({
 
   return (
     <div className="theme-style2 pb-16 sm:pb-0" style={cssVars}>
+      {/* Congratulations Overlay for View Milestones */}
+      {article.viewCount && article.viewCount > 0 && (
+        <CongratulationsWrapper 
+          viewCount={article.viewCount}
+          tenantName={title}
+          locale="te"
+          articleId={article.id || article.slug}
+        />
+      )}
+      
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       
       <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} variant="style2" />

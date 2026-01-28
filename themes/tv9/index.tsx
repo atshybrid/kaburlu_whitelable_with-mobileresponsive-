@@ -5,7 +5,7 @@ import { LiveTvEmbed } from '@/components/shared/LiveTvEmbed'
 import { Navbar } from '@/components/shared/Navbar'
 import type { Article } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
-import { articleHref } from '@/lib/url'
+import { articleHref, basePathForTenant } from '@/lib/url'
 import { PlaceholderImg } from '@/components/shared/PlaceholderImg'
 import { FlashTicker } from '@/components/shared/FlashTicker'
 
@@ -100,7 +100,7 @@ export function ThemeHome({ tenantSlug, title, articles, settings }: { tenantSlu
       {/* Flash News strip */}
       <div className="bg-white">
         <div className="mx-auto max-w-7xl px-4">
-          <FlashTicker tenantSlug={tenantSlug} items={articles.slice(0, 12)} />
+          <FlashTicker tenantSlug={tenantSlug} basePath={basePathForTenant(tenantSlug)} items={articles.slice(0, 12)} />
         </div>
       </div>
 

@@ -14,4 +14,7 @@ export { Breadcrumbs } from './Breadcrumbs'
 export { ReadingProgress } from './ReadingProgress'
 export { SearchBar } from './SearchBar'
 export { OfflineDetector } from './OfflineDetector'
+export { CongratulationsOverlay, useCongratulations } from './CongratulationsOverlay'
+export { CongratulationsWrapper } from './CongratulationsWrapper'
 export * from './Skeletons'
+

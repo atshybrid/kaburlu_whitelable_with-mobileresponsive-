@@ -3,17 +3,37 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import type { UrlObject } from 'url'
 import type { Article } from '@/lib/data-sources'
-import { articleHref } from '@/lib/url'
 
 function toHref(pathname: string): UrlObject {
   return { pathname }
 }
 
-export function FlashTicker({ tenantSlug, items, intervalMs = 5000 }: { tenantSlug: string; items: Article[]; intervalMs?: number }) {
+/**
+ * FlashTicker - Breaking news ticker with smooth animations
+ * 
+ * @param tenantSlug - Used if basePath is not provided (legacy)
+ * @param basePath - Pre-computed base path from server to avoid hydration mismatch
+ * @param items - Array of articles to display
+ * @param intervalMs - Interval between items (default 5000ms)
+ */
+export function FlashTicker({ 
+  tenantSlug, 
+  basePath = '', 
+  items, 
+  intervalMs = 5000 
+}: { 
+  tenantSlug: string
+  basePath?: string
+  items: Article[]
+  intervalMs?: number 
+}) {
   const list = useMemo(() => (Array.isArray(items) && items.length ? items : [{ id: 'na', title: 'No updates', slug: 'na' }]), [items])
   const [idx, setIdx] = useState(0)
   const [prevIdx, setPrevIdx] = useState<number | null>(null)
   const [isPaused, setIsPaused] = useState(false)
+
+  // Use basePath directly to construct article URLs (avoid hydration mismatch)
+  const getArticleHref = (slug: string) => `${basePath}/article/${slug}`
 
   useEffect(() => {
     if (isPaused) return // Don't rotate when paused
@@ -27,30 +47,27 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 5000 }: { tenantSl
 
   const current = list[idx]
   const previous = prevIdx !== null ? list[prevIdx] : null
-  const currentHref = articleHref(tenantSlug, current.slug || current.id)
+  const currentHref = getArticleHref(current.slug || current.id)
   
-  // ✅ Fixed: Use lazy initialization instead of effect to avoid cascading renders
-  const [mounted, setMounted] = useState(() => {
-    // Check if we're in the browser (client-side)
-    return typeof window !== 'undefined'
-  })
+  // ✅ Fixed: Track mounted state for animations only (not for conditional rendering)
+  const [mounted, setMounted] = useState(false)
   
-  // Only set mounted on client after first render completes
+  // Set mounted on client after hydration completes
   useEffect(() => {
-    if (!mounted) {
-      // Use microtask to avoid cascading render
-      queueMicrotask(() => setMounted(true))
-    }
-  }, [mounted])
+    setMounted(true)
+  }, [])
 
   return (
     <div 
-      className="flex items-center gap-3 py-2"
+      className="flex items-center gap-2 sm:gap-3 py-2 sm:py-2"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={() => setIsPaused(true)}
+      onTouchEnd={() => setIsPaused(false)}
     >
-      <div className="flex items-center rounded bg-red-600 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
-        Flashnews
+      <div className="flex items-center shrink-0 rounded bg-gradient-to-r from-red-600 to-red-500 px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wide text-white shadow-sm">
+        <span className="hidden sm:inline">Flashnews</span>
+        <span className="sm:hidden">🔴 తాజా</span>
       </div>
       
       {/* Manual controls - hidden */}
@@ -67,26 +84,26 @@ export function FlashTicker({ tenantSlug, items, intervalMs = 5000 }: { tenantSl
       */}
       
       <div className="relative flex-1 overflow-hidden min-h-6 py-0.5">
+        {/* Previous item - only show when mounted and animating */}
         {mounted && previous && (
           <Link
             key={previous.id + '-' + prevIdx + '-out'}
-            href={toHref(articleHref(tenantSlug, previous.slug || previous.id))}
-            className="ticker-item animate-[ticker-out_400ms_ease-in_forwards] block truncate text-sm font-bold leading-6"
+            href={toHref(getArticleHref(previous.slug || previous.id))}
+            className="ticker-item animate-[ticker-out_400ms_ease-in_forwards] block truncate text-[13px] sm:text-sm font-bold leading-6"
             aria-hidden="true"
             tabIndex={-1}
           >
             {previous.title}
           </Link>
         )}
-        {mounted && (
-          <Link
-            key={current.id + '-' + idx + '-in'}
-            href={toHref(currentHref)}
-            className="ticker-item animate-[ticker-in_420ms_ease-out_forwards] block truncate text-sm font-bold leading-6 hover:text-red-600"
-          >
-            {current.title}
-          </Link>
-        )}
+        {/* Current item - always render to avoid hydration mismatch */}
+        <Link
+          key={mounted ? current.id + '-' + idx + '-in' : 'initial'}
+          href={toHref(currentHref)}
+          className={`ticker-item block truncate text-[13px] sm:text-sm font-bold leading-6 hover:text-red-600 active:text-red-700 ${mounted ? 'animate-[ticker-in_420ms_ease-out_forwards]' : ''}`}
+        >
+          {current.title}
+        </Link>
       </div>
       
       {/* Manual controls - hidden */}

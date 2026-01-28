@@ -7,9 +7,9 @@ function isMockMode() {
 }
 
 function allowMockFallback() {
-  // Never show mock/demo content in production unless explicitly enabled.
-  if (isMockMode()) return true
-  return process.env.NODE_ENV !== 'production'
+  // ✅ IMPORTANT: Only allow mock data if explicitly enabled via MOCK_DATA env var
+  // Never show mock/demo content in production or when real API is available
+  return isMockMode()
 }
 
 export async function getHomeFeed(tenantId: string) {
@@ -17,13 +17,14 @@ export async function getHomeFeed(tenantId: string) {
   const tenant = await getTenantFromHeaders()
   const ds = getDataSource()
 
-  if (allowMockFallback()) return makeMockArticles({ count: 12, tenantSlug: tenant.slug })
-
   try {
     const list = await ds.homeFeed(tenant.slug, tenant.id)
     if (Array.isArray(list) && list.length > 0) return list
+    // ✅ Return empty array if no data - sections will hide themselves
     return []
   } catch {
+    // Only use mock in explicit mock mode
+    if (allowMockFallback()) return makeMockArticles({ count: 12, tenantSlug: tenant.slug })
     return []
   }
 }
@@ -50,13 +51,14 @@ export async function getArticlesByCategory(tenantId: string, categorySlug: stri
   const tenant = await getTenantFromHeaders()
   const ds = getDataSource()
 
-  if (allowMockFallback()) return makeMockArticles({ count: 12, tenantSlug: tenant.slug, categorySlug })
-
   try {
     const list = await ds.articlesByCategory(tenant.slug, categorySlug, tenant.id)
     if (Array.isArray(list) && list.length > 0) return list
+    // ✅ Return empty array if no data - category pages will show "no articles" message
     return []
   } catch {
+    // Only use mock in explicit mock mode
+    if (allowMockFallback()) return makeMockArticles({ count: 12, tenantSlug: tenant.slug, categorySlug })
     return []
   }
 }

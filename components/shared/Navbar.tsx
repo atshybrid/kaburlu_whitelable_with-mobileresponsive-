@@ -184,34 +184,34 @@ export async function Navbar({
 
   return (
     <header id="top" className="w-full border-b border-zinc-200 bg-white sticky top-0 z-50 shadow-sm">
-      <div className="mx-auto max-w-7xl px-4">
-        {/* Top bar with logo and title */}
-        <div className="flex h-16 items-center justify-between sm:h-20">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4">
+        {/* Top bar with logo and title - Mobile optimized */}
+        <div className="flex h-14 items-center justify-between sm:h-20">
           {/* Mobile: Center logo */}
           <div className="flex-1 flex sm:flex-none sm:block">
-            <Link href={toHref(homeHref(tenantSlug))} className="flex items-center gap-3 mx-auto sm:mx-0">
+            <Link href={toHref(homeHref(tenantSlug))} className="flex items-center gap-2 sm:gap-3 mx-auto sm:mx-0">
               {finalLogoUrl && !isWrongTenantLogo(finalLogoUrl) ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={finalLogoUrl} alt={finalTitle} className="h-12 w-auto sm:h-16" />
+                <img src={finalLogoUrl} alt={finalTitle} className="h-10 w-auto sm:h-16" />
               ) : (
-                <div className="text-xl sm:text-2xl font-medium text-zinc-900">{finalTitle}</div>
+                <div className="text-lg sm:text-2xl font-bold text-zinc-900 tracking-tight">{finalTitle}</div>
               )}
             </Link>
           </div>
           
-          {/* Right side controls */}
-          <div className="flex items-center gap-2">
+          {/* Right side controls - Touch-friendly */}
+          <div className="flex items-center gap-1 sm:gap-2">
             <SearchBar tenantSlug={tenantSlug} />
             <MobileMenu items={items} homeHref={homeHref(tenantSlug)} />
           </div>
         </div>
-        {/* Navigation row */}
+        {/* Navigation row - Desktop only */}
         <div className="hidden pb-2 sm:block">
           <NavbarMenuClient items={items} />
         </div>
       </div>
-      {/* Primary color accent strip */}
-      <div className="h-1 w-full bg-[hsl(var(--primary,217_91%_60%))]" />
+      {/* Primary color accent strip - Thinner on mobile */}
+      <div className="h-0.5 sm:h-1 w-full bg-gradient-to-r from-red-600 via-red-500 to-red-600" />
     </header>
   )
 }

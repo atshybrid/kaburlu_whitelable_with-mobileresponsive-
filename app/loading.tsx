@@ -1,7 +1,11 @@
 /**
  * Homepage Loading Skeleton
  * Shown while config and data are being fetched
+ * 
+ * ✅ Now dynamically loads the correct skeleton based on tenant theme
  */
+
+import { resolveTenant } from '@/lib/tenant'
 
 /**
  * Style2 (TOI-style) Homepage Skeleton
@@ -287,83 +291,25 @@ export function HomePageSkeleton() {
 }
 
 /**
- * Simple loading component
+ * Smart Loading Component
+ * ✅ Resolves tenant theme and shows the correct skeleton
  */
-export default function Loading() {
-  // Show a minimal universal skeleton that works for all themes
-  return (
-    <div className="min-h-screen bg-zinc-50 animate-pulse">
-      {/* Universal Navbar Skeleton */}
-      <header className="border-b border-zinc-200 bg-white sticky top-0 z-50">
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="flex h-16 items-center justify-between">
-            <div className="h-10 w-32 bg-zinc-200 rounded" />
-            <div className="hidden md:flex gap-4">
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="h-4 w-16 bg-zinc-200 rounded" />
-              ))}
-            </div>
-            <div className="md:hidden h-8 w-8 bg-zinc-200 rounded" />
-          </div>
-        </div>
-      </header>
+export default async function Loading() {
+  // Resolve tenant to get the correct theme
+  const tenant = await resolveTenant()
+  const themeKey = tenant.themeKey || 'style1'
 
-      {/* Ticker Skeleton */}
-      <div className="bg-red-600 border-b">
-        <div className="mx-auto max-w-7xl px-4 py-2">
-          <div className="flex items-center gap-3">
-            <div className="h-5 w-20 bg-red-400 rounded" />
-            <div className="flex-1 h-4 bg-red-400 rounded" />
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content - Works for both Style1 and Style2 */}
-      <main className="mx-auto max-w-7xl px-4 py-6">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_320px]">
-          {/* Left - Hero + Articles */}
-          <div className="space-y-6">
-            {/* Hero */}
-            <div className="bg-white rounded overflow-hidden shadow-sm">
-              <div className="aspect-[16/9] bg-zinc-200" />
-              <div className="p-4 space-y-3">
-                <div className="h-6 bg-zinc-200 rounded w-full" />
-                <div className="h-6 bg-zinc-200 rounded w-4/5" />
-                <div className="h-4 bg-zinc-200 rounded w-3/4" />
-              </div>
-            </div>
-
-            {/* Article Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="bg-white rounded shadow-sm overflow-hidden">
-                  <div className="aspect-video bg-zinc-200" />
-                  <div className="p-3 space-y-2">
-                    <div className="h-4 bg-zinc-200 rounded w-full" />
-                    <div className="h-4 bg-zinc-200 rounded w-3/4" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right Sidebar */}
-          <aside className="space-y-6">
-            <div className="bg-white border border-zinc-200 rounded">
-              <div className="bg-red-500 px-4 py-2.5">
-                <div className="h-4 w-32 bg-red-300 rounded" />
-              </div>
-              <div className="p-4 space-y-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-4 bg-zinc-200 rounded" />
-                ))}
-              </div>
-            </div>
-          </aside>
-        </div>
-      </main>
-    </div>
-  )
+  // Return the appropriate skeleton based on theme
+  switch (themeKey) {
+    case 'style2':
+    case 'toi':
+      return <Style2Skeleton />
+    case 'style1':
+    case 'style3':
+    case 'tv9':
+    default:
+      return <HomePageSkeleton />
+  }
 }
 
 // Export Style1 skeleton for backwards compatibility

@@ -22,6 +22,43 @@ function stripTrailingSlash(url: string) {
   return url.replace(/\/+$/, '')
 }
 
+/**
+ * Check if a color is dark (needs white text)
+ * Supports both hex (#RRGGBB, #RGB) and HSL (H S% L%) formats
+ * Uses luminance formula for hex: 0.299*R + 0.587*G + 0.114*B
+ * For HSL: if lightness < 50%, color is dark
+ */
+function isColorDark(color: string | undefined): boolean {
+  if (!color) return false
+  const trimmed = color.trim()
+  
+  // Check if it's HSL format (e.g., "240 100% 50%" or "240, 100%, 50%")
+  const hslMatch = trimmed.match(/^(\d+)\s*[,\s]\s*(\d+)%?\s*[,\s]\s*(\d+)%?$/)
+  if (hslMatch) {
+    const lightness = parseInt(hslMatch[3], 10)
+    // If lightness < 50%, color is dark
+    return lightness < 50
+  }
+  
+  // Handle hex format
+  const hex = trimmed.replace('#', '')
+  if (hex.length !== 6 && hex.length !== 3) return false
+  
+  const fullHex = hex.length === 3 
+    ? hex.split('').map(c => c + c).join('') 
+    : hex
+  
+  const r = parseInt(fullHex.slice(0, 2), 16)
+  const g = parseInt(fullHex.slice(2, 4), 16)
+  const b = parseInt(fullHex.slice(4, 6), 16)
+  
+  // Luminance formula
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  
+  // If luminance < 0.5, color is dark
+  return luminance < 0.5
+}
+
 export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSettings; tenantSlug?: string }) {
   const year = new Date().getFullYear()
 
@@ -37,16 +74,24 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
   console.log(`📊 [FOOTER] canonicalBaseUrl: ${canonicalBaseUrl} → domain for stats: ${domain}`)
 
   // Fetch domain stats - completely optional, don't block rendering
-  let domainStats = null
+  let domainStats: Awaited<ReturnType<typeof getDomainStats>> = null
   try {
     domainStats = await Promise.race([
       getDomainStats(domain),
       new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)) // 2s timeout
     ])
+    console.log(`📊 [FOOTER] Domain stats result:`, domainStats ? {
+      totalViews: domainStats.stats?.totalViews,
+      totalReporters: domainStats.stats?.totalReporters
+    } : 'null/timeout')
   } catch (error) {
     console.error('Failed to fetch domain stats:', error)
     domainStats = null
   }
+
+  // Helper to safely get stats values with fallback
+  const viewCount = domainStats?.stats?.totalViews ?? 0
+  const reporterCount = domainStats?.stats?.totalReporters ?? 0
 
   const siteName = firstNonEmpty(effective.branding?.siteName, effective.settings?.branding?.siteName, 'Kaburlu News')
   const logoUrl = safeUrl(firstNonEmpty(effective.branding?.logoUrl, effective.settings?.branding?.logoUrl))
@@ -62,6 +107,18 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
   const instagram = safeUrl(firstNonEmpty(effective.social?.instagram, effective.settings?.social?.instagram, process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM))
   const youtube = safeUrl(firstNonEmpty(effective.social?.youtube, effective.settings?.social?.youtube, process.env.NEXT_PUBLIC_SOCIAL_YOUTUBE))
   const telegram = safeUrl(firstNonEmpty(effective.social?.telegram, effective.settings?.social?.telegram, process.env.NEXT_PUBLIC_SOCIAL_TELEGRAM))
+
+  // Get primary color for newsletter section text color logic
+  const primaryColor = firstNonEmpty(
+    effective.theme?.colors?.primary,
+    effective.settings?.theme?.colors?.primary
+  )
+  const isDarkPrimary = isColorDark(primaryColor)
+  
+  // Text colors for newsletter section based on primary color brightness
+  const newsletterTextColor = isDarkPrimary ? 'text-white' : 'text-black'
+  const newsletterTextMuted = isDarkPrimary ? 'text-white/80' : 'text-black/80'
+  const newsletterTextSubtle = isDarkPrimary ? 'text-white/70' : 'text-black/70'
 
   // Get footer sections from navigation config
   const footerSections = (effective.navigation?.footer as any)?.sections || []
@@ -131,15 +188,15 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
             <div className="flex items-center gap-3">
               <span className="text-2xl animate-pulse">🔴</span>
               <div>
-                <span className="text-sm font-bold text-black">బ్రేకింగ్ న్యూస్ అలర్ట్స్ పొందండి!</span>
-                <span className="hidden sm:inline text-sm text-black/70 ml-2">• వెంటనే తెలుసుకోండి</span>
+                <span className={`text-sm font-bold ${newsletterTextColor}`}>బ్రేకింగ్ న్యూస్ అలర్ట్స్ పొందండి!</span>
+                <span className={`hidden sm:inline text-sm ${newsletterTextSubtle} ml-2`}>• వెంటనే తెలుసుకోండి</span>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <a href="#" className="px-4 py-1.5 rounded-full bg-white text-red-600 text-xs font-bold hover:bg-red-100 transition-colors">
+              <a href="#" className={`px-4 py-1.5 rounded-full ${isDarkPrimary ? 'bg-white text-[hsl(var(--primary))]' : 'bg-black text-white'} text-xs font-bold hover:opacity-80 transition-colors`}>
                 📱 యాప్ డౌన్‌లోడ్
               </a>
-              <a href={telegram || '#'} className="px-4 py-1.5 rounded-full bg-white/20 text-white text-xs font-bold hover:bg-white/30 transition-colors">
+              <a href={telegram || '#'} className={`px-4 py-1.5 rounded-full ${isDarkPrimary ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-black/10 text-black hover:bg-black/20'} text-xs font-bold transition-colors`}>
                 టెలిగ్రామ్ జాయిన్
               </a>
             </div>
@@ -147,7 +204,7 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
         </div>
       </div>
 
-      {/* Newsletter Section - Uses Primary Color */}
+      {/* Newsletter Section - Uses Primary Color with Smart Text Colors */}
       <div className="relative overflow-hidden bg-[hsl(var(--primary))]">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djZoNnYtNmgtNnptMCAwdi02aC02djZoNnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-50" />
         <div className="relative mx-auto max-w-7xl px-4 py-10">
@@ -155,12 +212,12 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
             <div className="max-w-xl">
               <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
                 <span className="text-3xl">📰</span>
-                <h3 className="text-2xl font-bold text-black">తాజా వార్తలను మిస్ అవ్వకండి!</h3>
+                <h3 className={`text-2xl font-bold ${newsletterTextColor}`}>తాజా వార్తలను మిస్ అవ్వకండి!</h3>
               </div>
-              <p className="text-black/80">
+              <p className={newsletterTextMuted}>
                 రోజూ ఉదయం మీ ఇన్‌బాక్స్‌లో బ్రేకింగ్ న్యూస్, ట్రెండింగ్ స్టోరీలు మరియు ఎక్స్‌క్లూజివ్ కంటెంట్ పొందండి.
               </p>
-              <div className="flex items-center justify-center lg:justify-start gap-4 mt-3 text-sm text-black/70">
+              <div className={`flex items-center justify-center lg:justify-start gap-4 mt-3 text-sm ${newsletterTextSubtle}`}>
                 <span className="flex items-center gap-1"><span>✓</span> ఉచితం</span>
                 <span className="flex items-center gap-1"><span>✓</span> స్పామ్ లేదు</span>
                 <span className="flex items-center gap-1"><span>✓</span> ఎప్పుడైనా అన్‌సబ్‌స్క్రైబ్</span>
@@ -210,7 +267,7 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
               <div className="grid grid-cols-3 gap-2 pt-2">
                 <div className="text-center p-2 rounded-lg bg-zinc-100 border border-zinc-200">
                   <div className="text-lg font-bold text-[hsl(var(--primary))]">
-                    {domainStats ? (domainStats.stats.totalViews).toLocaleString('en-IN') : '10L+'}
+                    {viewCount > 0 ? viewCount.toLocaleString('en-IN') : '10L+'}
                   </div>
                   <div className="text-[10px] text-zinc-600">పాఠకులు</div>
                 </div>
@@ -220,7 +277,7 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
                 </div>
                 <div className="text-center p-2 rounded-lg bg-zinc-100 border border-zinc-200">
                   <div className="text-lg font-bold text-[hsl(var(--primary))]">
-                    {domainStats ? `${domainStats.stats.totalReporters}+` : '100+'}
+                    {reporterCount > 0 ? `${reporterCount}+` : '100+'}
                   </div>
                   <div className="text-[10px] text-zinc-600">రిపోర్టర్లు</div>
                 </div>

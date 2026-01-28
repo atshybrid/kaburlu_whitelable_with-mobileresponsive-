@@ -18,7 +18,7 @@ export type HomeSectionLayout =
   | { type: 'full' }
   | {
       type: 'grid'
-      columns: Array<{ key: string; name: string; position: number }>
+      columns: Array<{ key: string; name: string; position: number; width?: string }>
     }
 
 export type HomeSection = {
@@ -87,6 +87,7 @@ const homeSectionLayoutSchema: z.ZodType<HomeSectionLayout> = z.union([
         key: z.string().min(1),
         name: z.string().min(1),
         position: z.number().int().nonnegative(),
+        width: z.string().optional(),
       }),
     ),
   }),
@@ -336,127 +337,453 @@ export function defaultHomeLayout(tenantSlug: string, themeKey: HomeLayoutThemeK
     }
   }
 
-  // style1 (default) mirrors your current `themes/style1` homepage layout.
+  // style1 (default) - Clean organized sections for backend control
+  // Each section has: key, name, position, isActive (show/hide), size info
   return {
     version: 1,
     tenantSlug: slug,
     themeKey,
     updatedAt: now,
     sections: [
+      // ═══════════════════════════════════════════════════════════════
+      // SECTION 1: FLASH TICKER (Breaking News Strip)
+      // Position: 1 | Size: Full Width | Height: 40px
+      // ═══════════════════════════════════════════════════════════════
       {
-        id: 's-ticker',
+        id: 's-flash-ticker',
         key: 'flashTicker',
-        name: 'Flash Ticker Strip',
+        name: 'Flash Ticker (Breaking News)',
         position: 1,
         isActive: true,
         layout: { type: 'full' },
-        blocks: [{ id: 'b-ticker', key: 'flashTicker', name: 'Flash Ticker', type: 'flashTicker', position: 1, isActive: true, config: { maxItems: 12 } }],
+        blocks: [{ 
+          id: 'b-ticker', 
+          key: 'flashTicker', 
+          name: 'Flash Ticker', 
+          type: 'flashTicker', 
+          position: 1, 
+          isActive: true, 
+          config: { 
+            maxItems: 12,
+            size: 'full-width',
+            height: '40px',
+          } 
+        }],
       },
+
+      // ═══════════════════════════════════════════════════════════════
+      // SECTION 2: HERO SECTION (Main Grid - 4 Columns)
+      // Position: 2 | Size: Full Width | Layout: 4 Columns Grid
+      // Col-1 + Col-2: 15 articles total (no category labels)
+      // Col-3: Most Read - 8 articles (with label)
+      // Col-4: Top Viewed - 4 articles (with label)
+      // Total: 27 articles
+      // ═══════════════════════════════════════════════════════════════
       {
-        id: 's-main-grid',
-        key: 'mainGrid4',
-        name: 'Main Grid (4 Columns)',
+        id: 's-hero-section',
+        key: 'heroSection',
+        name: 'Hero Section (4 Column Grid)',
         position: 2,
         isActive: true,
         layout: {
           type: 'grid',
           columns: [
-            { key: 'col-1', name: 'Column 1 (Hero Stack)', position: 1 },
-            { key: 'col-2', name: 'Column 2 (Last News)', position: 2 },
-            { key: 'col-3', name: 'Column 3 (Trending Category)', position: 3 },
-            { key: 'col-4', name: 'Column 4 (Ads + Trending Titles)', position: 4 },
+            { key: 'col-1', name: 'Hero Lead Column', position: 1, width: '25%' },
+            { key: 'col-2', name: 'Latest Articles', position: 2, width: '25%' },
+            { key: 'col-3', name: 'Most Read', position: 3, width: '25%' },
+            { key: 'col-4', name: 'Top Viewed', position: 4, width: '25%' },
           ],
         },
         blocks: [
-          { id: 'b-hero', key: 'heroLead', name: 'Hero Lead', type: 'heroLead', position: 1, isActive: true, columnKey: 'col-1' },
-          { id: 'b-medium', key: 'mediumCards', name: 'Medium Cards', type: 'mediumCards', position: 2, isActive: true, columnKey: 'col-1', config: { count: 2 } },
-          { id: 'b-small', key: 'smallList', name: 'Small List Rows', type: 'smallList', position: 3, isActive: true, columnKey: 'col-1', config: { count: 3 } },
+          // ─────────────────────────────────────────────────────────
+          // Col-1: Hero Lead (1) + Medium Cards (2) + Small List (5) = 8 articles
+          // ─────────────────────────────────────────────────────────
+          { 
+            id: 'b-hero-lead', 
+            key: 'heroLead', 
+            name: 'Hero Lead Image', 
+            type: 'heroLead', 
+            position: 1, 
+            isActive: true, 
+            columnKey: 'col-1',
+            config: { 
+              count: 1, 
+              size: 'large',
+              showCategoryLabel: false,  // No category link
+            }
+          },
+          { 
+            id: 'b-medium-cards', 
+            key: 'mediumCards', 
+            name: 'Medium Cards', 
+            type: 'mediumCards', 
+            position: 2, 
+            isActive: true, 
+            columnKey: 'col-1', 
+            config: { 
+              count: 2, 
+              size: 'medium',
+              showCategoryLabel: false,
+            } 
+          },
+          { 
+            id: 'b-small-list-col1', 
+            key: 'smallListCol1', 
+            name: 'Small List Col1', 
+            type: 'smallList', 
+            position: 3, 
+            isActive: true, 
+            columnKey: 'col-1', 
+            config: { 
+              count: 5, 
+              showLabel: false,
+              showCategoryLabel: false,
+            } 
+          },
 
+          // ─────────────────────────────────────────────────────────
+          // Col-2: Latest Articles (7 articles, no label, no category)
+          // Total Col-1 + Col-2 = 8 + 7 = 15 articles
+          // ─────────────────────────────────────────────────────────
           {
-            id: 'b-last-news',
-            key: 'lastNewsCategoryBlock',
-            name: 'Last News (Category Block)',
-            type: 'categoryBlock',
+            id: 'b-latest-articles',
+            key: 'latestArticles',
+            name: 'Latest Articles',
+            type: 'smallList',
             position: 1,
             isActive: true,
             columnKey: 'col-2',
             config: {
-              categorySource: 'navFirstOrEnv',
-              envCategoryKey: 'NEXT_PUBLIC_LAST_NEWS_CATEGORY',
-              envCountKey: 'NEXT_PUBLIC_LAST_NEWS_COUNT',
-              maxItems: 8,
+              count: 7,
+              showLabel: false,
+              showCategoryLabel: false,
+              source: 'latest',
             },
           },
 
+          // ─────────────────────────────────────────────────────────
+          // Col-3: Most Read (8 articles, with label)
+          // ─────────────────────────────────────────────────────────
           {
-            id: 'b-trending-cat',
-            key: 'trendingCategoryBlock',
-            name: 'Trending (Category Block)',
-            type: 'trendingCategoryBlock',
+            id: 'b-most-read',
+            key: 'mostRead',
+            name: 'Most Read Section',
+            type: 'smallList',
             position: 1,
             isActive: true,
             columnKey: 'col-3',
-            config: { categorySource: 'navSecondOrEnv' },
+            config: { 
+              count: 8,
+              showLabel: true,
+              labelText: 'Most Read',
+              showCategoryLabel: false,
+              source: 'mostRead',
+            },
           },
 
-          { id: 'b-ad-top', key: 'topBannerAd', name: 'Top Banner Ad (16:9)', type: 'ad', position: 1, isActive: true, columnKey: 'col-4', config: { format: '16:9' } },
+          // ─────────────────────────────────────────────────────────
+          // Col-4: Top Viewed (4 articles, with label) + Ads
+          // ─────────────────────────────────────────────────────────
+          { 
+            id: 'b-ad-728x90-top', 
+            key: 'adTopBanner', 
+            name: 'Ad Banner Top', 
+            type: 'ad', 
+            position: 1, 
+            isActive: true, 
+            columnKey: 'col-4', 
+            config: { 
+              size: '300x250',
+              type: 'none', // 'google' | 'local' | 'none'
+              // google: { adClient: 'ca-pub-xxx', adSlot: '123456' },
+              // local: { imageUrl: '/ads/banner.jpg', targetUrl: 'https://example.com' },
+            } 
+          },
           {
-            id: 'b-trending-list',
-            key: 'trendingNewsTitles',
-            name: 'Trending News (Titles Only)',
-            type: 'trendingList',
+            id: 'b-top-viewed',
+            key: 'topViewed',
+            name: 'Top Viewed Articles',
+            type: 'smallList',
             position: 2,
             isActive: true,
             columnKey: 'col-4',
-            config: { maxItems: 8 },
+            config: { 
+              count: 4,
+              showLabel: true,
+              labelText: 'Top Viewed',
+              showCategoryLabel: false,
+              source: 'topViewed',
+            },
           },
-          { id: 'b-ad-bottom', key: 'bottomBannerAd', name: 'Bottom Banner Ad', type: 'ad', position: 3, isActive: true, columnKey: 'col-4', config: { format: 'banner' } },
+          { 
+            id: 'b-ad-728x90-bottom', 
+            key: 'adBottomBanner', 
+            name: 'Ad Banner Bottom', 
+            type: 'ad', 
+            position: 3, 
+            isActive: true, 
+            columnKey: 'col-4', 
+            config: { 
+              size: '300x250',
+              type: 'none', // 'google' | 'local' | 'none'
+            } 
+          },
         ],
       },
+
+      // ═══════════════════════════════════════════════════════════════
+      // SECTION 3: HORIZONTAL AD 1 (Below Hero)
+      // Position: 3 | Size: Full Width | Height: 90px or 250px
+      // ═══════════════════════════════════════════════════════════════
       {
-        id: 's-had-1',
+        id: 's-horizontal-ad-1',
         key: 'horizontalAd1',
-        name: 'Horizontal Ad (Below Main Grid)',
+        name: 'Horizontal Ad 1 (Below Hero)',
         position: 3,
         isActive: true,
         layout: { type: 'full' },
-        blocks: [{ id: 'b-had-1', key: 'horizontalAd', name: 'Horizontal Ad', type: 'horizontalAd', position: 1, isActive: true, config: { label: 'Horizontal Ad' } }],
+        blocks: [{ 
+          id: 'b-h-ad-1', 
+          key: 'horizontalAd1', 
+          name: 'Horizontal Ad', 
+          type: 'horizontalAd', 
+          position: 1, 
+          isActive: true, 
+          config: { 
+            size: '728x90',
+            type: 'none', // 'google' | 'local' | 'none'
+            // google: { adClient: 'ca-pub-xxx', adSlot: '123456' },
+            // local: { imageUrl: '/ads/horizontal.jpg', targetUrl: 'https://example.com' },
+          } 
+        }],
       },
+
+      // ═══════════════════════════════════════════════════════════════
+      // SECTION 4: CATEGORY SECTION 1 (4 Categories, 5 articles each = 20 articles)
+      // Position: 4 | Layout: 4 Categories + Sidebar Ad
+      // Categories: జాతీయం, వినోదం, రాజకీయాలు, క్రీడలు
+      // ═══════════════════════════════════════════════════════════════
       {
-        id: 's-cat-hub',
-        key: 'categoryHub',
-        name: 'Category Hub (4 Columns)',
+        id: 's-category-1',
+        key: 'categorySection1',
+        name: 'Category Section 1 (4 Categories)',
         position: 4,
         isActive: true,
-        layout: { type: 'full' },
-        blocks: [{ id: 'b-cat-cols', key: 'categoryColumns', name: 'Category Columns', type: 'categoryColumns', position: 1, isActive: true, config: { columns: 4 } }],
+        layout: { 
+          type: 'grid',
+          columns: [
+            { key: 'main', name: 'Main Content', position: 1, width: '70%' },
+            { key: 'sidebar', name: 'Sidebar Ads', position: 2, width: '30%' },
+          ],
+        },
+        blocks: [
+          { 
+            id: 'b-cat1-block', 
+            key: 'categorySection1Block', 
+            name: 'Category Section 1 Block', 
+            type: 'categoryBlock', 
+            position: 1, 
+            isActive: true, 
+            columnKey: 'main',
+            config: { 
+              categoriesCount: 4,
+              articlesPerCategory: 5,
+              categories: [
+                { slug: 'national', label: 'జాతీయం', position: 1 },
+                { slug: 'entertainment', label: 'వినోదం', position: 2 },
+                { slug: 'politics', label: 'రాజకీయాలు', position: 3 },
+                { slug: 'sports', label: 'క్రీడలు', position: 4 },
+              ],
+              layout: 'hero-grid',  // Each category shows 1 hero + 4 grid
+            } 
+          },
+          { 
+            id: 'b-cat1-sidebar-ad', 
+            key: 'category1SidebarAd', 
+            name: 'Sidebar Ad (300×600)', 
+            type: 'ad', 
+            position: 1, 
+            isActive: true, 
+            columnKey: 'sidebar',
+            config: { 
+              size: '300x600',
+              sticky: true,
+              type: 'none', // 'google' | 'local' | 'none'
+              // google: { adClient: 'ca-pub-xxx', adSlot: '123456' },
+              // local: { imageUrl: '/ads/sidebar.jpg', targetUrl: 'https://example.com' },
+            } 
+          },
+        ],
       },
+
+      // ═══════════════════════════════════════════════════════════════
+      // SECTION 5: CATEGORY SECTION 2 (4 Categories, 5 articles each = 20 articles)
+      // Position: 5 | Layout: 4 Categories + Sidebar Ad
+      // Categories: వ్యాపారం, సాంకేతికం, ఆరోగ్యం, శిక్షణ
+      // ═══════════════════════════════════════════════════════════════
       {
-        id: 's-had-2',
-        key: 'horizontalAd2',
-        name: 'Horizontal Ad (Below Category Hub)',
+        id: 's-category-2',
+        key: 'categorySection2',
+        name: 'Category Section 2 (4 Categories)',
         position: 5,
         isActive: true,
-        layout: { type: 'full' },
-        blocks: [{ id: 'b-had-2', key: 'horizontalAd', name: 'Horizontal Ad', type: 'horizontalAd', position: 1, isActive: true, config: { label: 'Horizontal Ad' } }],
+        layout: { 
+          type: 'grid',
+          columns: [
+            { key: 'main', name: 'Main Content', position: 1, width: '70%' },
+            { key: 'sidebar', name: 'Sidebar Ads', position: 2, width: '30%' },
+          ],
+        },
+        blocks: [
+          { 
+            id: 'b-cat2-block', 
+            key: 'categorySection2Block', 
+            name: 'Category Section 2 Block', 
+            type: 'categoryBlock', 
+            position: 1, 
+            isActive: true, 
+            columnKey: 'main',
+            config: { 
+              categoriesCount: 4,
+              articlesPerCategory: 5,
+              categories: [
+                { slug: 'business', label: 'వ్యాపారం', position: 1 },
+                { slug: 'technology', label: 'సాంకేతికం', position: 2 },
+                { slug: 'health', label: 'ఆరోగ్యం', position: 3 },
+                { slug: 'education', label: 'శిక్షణ', position: 4 },
+              ],
+              layout: 'hero-grid',
+            } 
+          },
+          { 
+            id: 'b-cat2-sidebar-ad', 
+            key: 'category2SidebarAd', 
+            name: 'Sidebar Ad (300×600)', 
+            type: 'ad', 
+            position: 1, 
+            isActive: true, 
+            columnKey: 'sidebar',
+            config: { 
+              size: '300x600',
+              sticky: true,
+              type: 'none', // 'google' | 'local' | 'none'
+              // google: { adClient: 'ca-pub-xxx', adSlot: '123456' },
+              // local: { imageUrl: '/ads/sidebar.jpg', targetUrl: 'https://example.com' },
+            } 
+          },
+        ],
       },
+
+      // ═══════════════════════════════════════════════════════════════
+      // SECTION 6: HORIZONTAL AD 2 (Below Categories)
+      // Position: 6 | Size: Full Width | Height: 90px or 250px
+      // ═══════════════════════════════════════════════════════════════
       {
-        id: 's-stories',
-        key: 'webStories',
-        name: 'Web Stories Area',
+        id: 's-horizontal-ad-2',
+        key: 'horizontalAd2',
+        name: 'Horizontal Ad 2 (Below Categories)',
         position: 6,
         isActive: true,
         layout: { type: 'full' },
-        blocks: [{ id: 'b-stories', key: 'webStoriesArea', name: 'Web Stories', type: 'webStoriesArea', position: 1, isActive: true }],
+        blocks: [{ 
+          id: 'b-h-ad-2', 
+          key: 'horizontalAd2', 
+          name: 'Horizontal Ad', 
+          type: 'horizontalAd', 
+          position: 1, 
+          isActive: true, 
+          config: { 
+            size: '728x90',
+            type: 'none', // 'google' | 'local' | 'none'
+            // google: { adClient: 'ca-pub-xxx', adSlot: '123456' },
+            // local: { imageUrl: '/ads/horizontal.jpg', targetUrl: 'https://example.com' },
+          } 
+        }],
       },
+
+      // ═══════════════════════════════════════════════════════════════
+      // SECTION 7: CATEGORY HUB (2 Categories per Row, 5 articles each)
+      // Position: 7 | Size: Full Width | Layout: 2 Columns Grid
+      // Each row has 2 categories, each category has 5 articles
+      // ═══════════════════════════════════════════════════════════════
       {
-        id: 's-had-3',
-        key: 'horizontalAd3',
-        name: 'Horizontal Ad (Optional)',
+        id: 's-category-hub',
+        key: 'categoryHub',
+        name: 'Category Hub (2 per Row)',
         position: 7,
-        isActive: false,
+        isActive: true,
         layout: { type: 'full' },
-        blocks: [{ id: 'b-had-3', key: 'horizontalAd', name: 'Horizontal Ad', type: 'horizontalAd', position: 1, isActive: false, config: { label: 'Horizontal Ad' } }],
+        blocks: [{ 
+          id: 'b-category-columns', 
+          key: 'categoryColumns', 
+          name: 'Category Columns', 
+          type: 'categoryColumns', 
+          position: 1, 
+          isActive: true, 
+          config: { 
+            columnsPerRow: 2,
+            articlesPerCategory: 5,
+            categories: [
+              { slug: 'crime', label: 'క్రైమ్', position: 1 },
+              { slug: 'international', label: 'అంతర్జాతీయం', position: 2 },
+              { slug: 'lifestyle', label: 'జీవనశైలి', position: 3 },
+              { slug: 'science', label: 'సైన్స్', position: 4 },
+            ],
+          } 
+        }],
+      },
+
+      // ═══════════════════════════════════════════════════════════════
+      // SECTION 8: WEB STORIES
+      // Position: 8 | Size: Full Width | Layout: Horizontal Scroll Carousel
+      // ═══════════════════════════════════════════════════════════════
+      {
+        id: 's-web-stories',
+        key: 'webStories',
+        name: 'Web Stories Carousel',
+        position: 8,
+        isActive: true,
+        layout: { type: 'full' },
+        blocks: [{ 
+          id: 'b-web-stories', 
+          key: 'webStoriesArea', 
+          name: 'Web Stories', 
+          type: 'webStoriesArea', 
+          position: 1, 
+          isActive: true,
+          config: {
+            maxItems: 10,
+            layout: 'carousel',
+            cardSize: '150×200',
+          }
+        }],
+      },
+
+      // ═══════════════════════════════════════════════════════════════
+      // SECTION 9: HORIZONTAL AD 3 (Optional - Below Web Stories)
+      // Position: 9 | Size: Full Width | Height: 90px or 250px
+      // ═══════════════════════════════════════════════════════════════
+      {
+        id: 's-horizontal-ad-3',
+        key: 'horizontalAd3',
+        name: 'Horizontal Ad 3 (Optional)',
+        position: 9,
+        isActive: false, // Disabled by default
+        layout: { type: 'full' },
+        blocks: [{ 
+          id: 'b-h-ad-3', 
+          key: 'horizontalAd3', 
+          name: 'Horizontal Ad', 
+          type: 'horizontalAd', 
+          position: 1, 
+          isActive: false, 
+          config: { 
+            size: '728x90',
+            type: 'none', // 'google' | 'local' | 'none'
+            // google: { adClient: 'ca-pub-xxx', adSlot: '123456' },
+            // local: { imageUrl: '/ads/horizontal.jpg', targetUrl: 'https://example.com' },
+          } 
+        }],
       },
     ],
   }

@@ -1,14 +1,14 @@
-import { Footer, TechnicalIssues, SectionError, EmptyState, ShareButtons, Breadcrumbs, ReadingProgress } from '@/components/shared'
+import { Footer, TechnicalIssues, SectionError, EmptyState, ShareButtons, ReadingProgress } from '@/components/shared'
 import { Navbar } from '@/components/shared/Navbar'
 import { TopArticlesModal } from '@/components/shared/TopArticlesModal'
 import type { Article } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
-import type { ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import Link from 'next/link'
 import type { UrlObject } from 'url'
 import { PlaceholderImg } from '@/components/shared/PlaceholderImg'
 import { FlashTicker } from '@/components/shared/FlashTicker'
-import { articleHref, categoryHref } from '@/lib/url'
+import { articleHref, categoryHref, basePathForTenant } from '@/lib/url'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
 import { getEffectiveSettings } from '@/lib/settings'
@@ -26,6 +26,7 @@ import {
   feedItemsToArticles 
 } from '@/lib/homepage'
 import { FontSizeControl, CopyLinkButton, ScrollToTopButton, StickyShareBar, ViewCounter } from '@/components/shared/ArticleEnhancements'
+import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapper'
 import { getDomainStats } from '@/lib/domain-stats'
 
 function toHref(pathname: string): UrlObject {
@@ -34,201 +35,266 @@ function toHref(pathname: string): UrlObject {
 
 // ============================================
 // ARTICLE PAGE SKELETON - Animated Loading UI
+// Complete Mobile Responsive with Shimmer Effect
 // ============================================
+
+// Shimmer animation component for skeleton loading
+function ShimmerBox({ className }: { className?: string }) {
+  return (
+    <div className={`relative overflow-hidden bg-zinc-200 ${className || ''}`}>
+      <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+    </div>
+  )
+}
+
 function ArticlePageSkeleton() {
   return (
-    <div className="theme-style1 bg-zinc-50 min-h-screen animate-pulse">
-      {/* Navbar Skeleton */}
+    <div className="theme-style1 bg-zinc-50 min-h-screen">
+      {/* Shimmer Animation Keyframes - injected via style tag */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes shimmer {
+          100% { transform: translateX(100%); }
+        }
+      `}} />
+      
+      {/* Navbar Skeleton - Mobile Responsive */}
       <div className="sticky top-0 z-50 bg-white border-b border-zinc-200">
-        <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-          <div className="h-10 w-32 bg-zinc-200 rounded" />
+        <div className="mx-auto max-w-7xl px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between">
+          <ShimmerBox className="h-8 sm:h-10 w-24 sm:w-32 rounded" />
+          {/* Desktop Nav */}
           <div className="hidden md:flex gap-4">
             {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} className="h-4 w-16 bg-zinc-200 rounded" />
+              <ShimmerBox key={i} className="h-4 w-16 rounded" />
             ))}
           </div>
-          <div className="h-8 w-8 bg-zinc-200 rounded-full" />
+          {/* Mobile Menu Icon */}
+          <div className="flex items-center gap-2">
+            <ShimmerBox className="h-8 w-8 rounded-full" />
+            <ShimmerBox className="md:hidden h-8 w-8 rounded" />
+          </div>
         </div>
       </div>
       
-      <main className="mx-auto max-w-7xl px-4 py-6">
-        {/* Breadcrumb Skeleton */}
-        <div className="flex gap-2 mb-6">
-          <div className="h-4 w-12 bg-zinc-200 rounded" />
-          <div className="h-4 w-4 bg-zinc-200 rounded" />
-          <div className="h-4 w-20 bg-zinc-200 rounded" />
+      <main className="mx-auto max-w-7xl px-3 sm:px-4 py-4 sm:py-6">
+        {/* Breadcrumb Skeleton - Responsive */}
+        <div className="flex gap-2 mb-4 sm:mb-6">
+          <ShimmerBox className="h-3 sm:h-4 w-10 sm:w-12 rounded" />
+          <ShimmerBox className="h-3 sm:h-4 w-3 sm:w-4 rounded" />
+          <ShimmerBox className="h-3 sm:h-4 w-16 sm:w-20 rounded" />
         </div>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid grid-cols-1 gap-6 lg:gap-8 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px]">
           {/* Main Content Skeleton */}
           <article className="min-w-0">
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              {/* Header Skeleton */}
-              <div className="p-6 sm:p-8 lg:p-10">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm overflow-hidden">
+              {/* Header Skeleton - Responsive Padding */}
+              <div className="p-4 sm:p-6 md:p-8 lg:p-10">
                 {/* Category Badge */}
-                <div className="h-8 w-24 bg-red-100 rounded-full mb-4" />
+                <ShimmerBox className="h-6 sm:h-8 w-20 sm:w-24 rounded-full mb-3 sm:mb-4" />
                 
-                {/* Title */}
-                <div className="space-y-3 mb-6">
-                  <div className="h-10 w-full bg-zinc-200 rounded-lg" />
-                  <div className="h-10 w-4/5 bg-zinc-200 rounded-lg" />
+                {/* Title - Responsive */}
+                <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
+                  <ShimmerBox className="h-7 sm:h-8 md:h-10 w-full rounded-lg" />
+                  <ShimmerBox className="h-7 sm:h-8 md:h-10 w-11/12 sm:w-4/5 rounded-lg" />
                 </div>
                 
-                {/* Metadata Bar */}
-                <div className="flex flex-wrap items-center gap-4 pb-6 border-b border-zinc-100">
+                {/* Metadata Bar - Mobile Stack */}
+                <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-zinc-100">
                   <div className="flex items-center gap-2">
-                    <div className="h-10 w-10 bg-zinc-200 rounded-full" />
+                    <ShimmerBox className="h-9 w-9 sm:h-10 sm:w-10 rounded-full" />
                     <div className="space-y-1">
-                      <div className="h-3 w-20 bg-zinc-200 rounded" />
-                      <div className="h-3 w-16 bg-zinc-200 rounded" />
+                      <ShimmerBox className="h-3 w-20 rounded" />
+                      <ShimmerBox className="h-3 w-16 rounded" />
                     </div>
                   </div>
-                  <div className="h-4 w-24 bg-zinc-200 rounded" />
-                  <div className="h-4 w-20 bg-zinc-200 rounded" />
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <ShimmerBox className="h-3 sm:h-4 w-20 sm:w-24 rounded" />
+                    <ShimmerBox className="h-3 sm:h-4 w-16 sm:w-20 rounded" />
+                  </div>
                 </div>
                 
-                {/* Share Buttons */}
-                <div className="flex items-center gap-3 mt-4">
-                  <div className="h-4 w-12 bg-zinc-200 rounded" />
+                {/* Share Buttons - Responsive */}
+                <div className="flex items-center gap-2 sm:gap-3 mt-3 sm:mt-4">
+                  <ShimmerBox className="h-3 sm:h-4 w-10 sm:w-12 rounded" />
                   {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="h-9 w-9 bg-zinc-200 rounded-full" />
+                    <ShimmerBox key={i} className="h-8 w-8 sm:h-9 sm:w-9 rounded-full" />
                   ))}
                 </div>
               </div>
               
-              {/* Featured Image Skeleton */}
-              <div className="relative aspect-[16/9] bg-gradient-to-br from-zinc-200 to-zinc-300 mx-6 sm:mx-8 lg:mx-10 rounded-xl overflow-hidden">
+              {/* Featured Image Skeleton - Responsive Margins */}
+              <div className="relative aspect-[16/9] bg-gradient-to-br from-zinc-200 to-zinc-300 mx-3 sm:mx-6 md:mx-8 lg:mx-10 rounded-lg sm:rounded-xl overflow-hidden">
+                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <svg className="w-16 h-16 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-12 h-12 sm:w-16 sm:h-16 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
               </div>
               
-              {/* Content Skeleton */}
-              <div className="p-6 sm:p-8 lg:p-10 space-y-6">
+              {/* Content Skeleton - Responsive */}
+              <div className="p-4 sm:p-6 md:p-8 lg:p-10 space-y-4 sm:space-y-6">
                 {/* Paragraphs */}
-                {[1, 2, 3, 4, 5].map(i => (
+                {[1, 2, 3, 4].map(i => (
                   <div key={i} className="space-y-2">
-                    <div className="h-4 w-full bg-zinc-200 rounded" />
-                    <div className="h-4 w-full bg-zinc-200 rounded" />
-                    <div className="h-4 w-3/4 bg-zinc-200 rounded" />
+                    <ShimmerBox className="h-3 sm:h-4 w-full rounded" />
+                    <ShimmerBox className="h-3 sm:h-4 w-full rounded" />
+                    <ShimmerBox className="h-3 sm:h-4 w-3/4 rounded" />
                   </div>
                 ))}
                 
-                {/* Ad Placeholder */}
-                <div className="h-24 bg-gradient-to-r from-zinc-100 to-zinc-200 rounded-xl flex items-center justify-center">
-                  <div className="h-6 w-32 bg-zinc-300 rounded" />
+                {/* Ad Placeholder - Responsive */}
+                <div className="relative h-16 sm:h-20 md:h-24 bg-gradient-to-r from-zinc-100 to-zinc-200 rounded-lg sm:rounded-xl flex items-center justify-center overflow-hidden">
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                  <ShimmerBox className="h-5 sm:h-6 w-24 sm:w-32 rounded" />
                 </div>
                 
                 {/* More Paragraphs */}
-                {[1, 2, 3].map(i => (
+                {[1, 2].map(i => (
                   <div key={i} className="space-y-2">
-                    <div className="h-4 w-full bg-zinc-200 rounded" />
-                    <div className="h-4 w-full bg-zinc-200 rounded" />
-                    <div className="h-4 w-2/3 bg-zinc-200 rounded" />
+                    <ShimmerBox className="h-3 sm:h-4 w-full rounded" />
+                    <ShimmerBox className="h-3 sm:h-4 w-full rounded" />
+                    <ShimmerBox className="h-3 sm:h-4 w-2/3 rounded" />
                   </div>
                 ))}
                 
-                {/* Tags Skeleton */}
-                <div className="flex flex-wrap gap-2 pt-6 border-t border-zinc-100">
+                {/* Tags Skeleton - Responsive */}
+                <div className="flex flex-wrap gap-2 pt-4 sm:pt-6 border-t border-zinc-100">
                   {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="h-8 w-20 bg-zinc-200 rounded-full" />
+                    <ShimmerBox key={i} className="h-7 sm:h-8 w-16 sm:w-20 rounded-full" />
                   ))}
                 </div>
               </div>
               
-              {/* Publisher Card Skeleton */}
-              <div className="mx-6 sm:mx-8 lg:mx-10 mb-8 p-6 border-2 border-zinc-200 rounded-2xl bg-gradient-to-br from-zinc-50 to-white">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-zinc-200 rounded-full" />
+              {/* Publisher Card Skeleton - Responsive */}
+              <div className="mx-3 sm:mx-6 md:mx-8 lg:mx-10 mb-6 sm:mb-8 p-4 sm:p-6 border-2 border-zinc-200 rounded-xl sm:rounded-2xl bg-gradient-to-br from-zinc-50 to-white">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <ShimmerBox className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex-shrink-0" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-5 w-32 bg-zinc-200 rounded" />
-                    <div className="h-4 w-24 bg-zinc-200 rounded" />
+                    <ShimmerBox className="h-4 sm:h-5 w-28 sm:w-32 rounded" />
+                    <ShimmerBox className="h-3 sm:h-4 w-20 sm:w-24 rounded" />
                   </div>
                 </div>
               </div>
             </div>
             
-            {/* Related Articles Skeleton */}
-            <div className="mt-8 bg-white rounded-2xl shadow-sm p-6 sm:p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-8 w-1.5 bg-red-200 rounded-full" />
-                <div className="h-6 w-40 bg-zinc-200 rounded" />
+            {/* Related Articles Skeleton - Responsive Grid */}
+            <div className="mt-6 sm:mt-8 bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6 md:p-8">
+              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <ShimmerBox className="h-6 sm:h-8 w-1 sm:w-1.5 rounded-full" />
+                <ShimmerBox className="h-5 sm:h-6 w-32 sm:w-40 rounded" />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Mobile: 1 col, Tablet: 2 cols, Desktop: 3 cols */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="space-y-3">
-                    <div className="aspect-video bg-zinc-200 rounded-lg" />
-                    <div className="h-4 w-full bg-zinc-200 rounded" />
-                    <div className="h-4 w-3/4 bg-zinc-200 rounded" />
+                  <div key={i} className="space-y-2 sm:space-y-3">
+                    <div className="relative aspect-video overflow-hidden rounded-lg">
+                      <ShimmerBox className="absolute inset-0" />
+                    </div>
+                    <ShimmerBox className="h-3 sm:h-4 w-full rounded" />
+                    <ShimmerBox className="h-3 sm:h-4 w-3/4 rounded" />
                   </div>
                 ))}
               </div>
             </div>
             
-            {/* Navigation Skeleton */}
-            <div className="mt-8 grid grid-cols-2 gap-4">
-              <div className="p-4 border-2 border-zinc-200 rounded-xl bg-white">
-                <div className="flex items-center gap-3">
-                  <div className="w-16 h-16 bg-zinc-200 rounded-lg" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3 w-16 bg-zinc-200 rounded" />
-                    <div className="h-4 w-full bg-zinc-200 rounded" />
+            {/* Navigation Skeleton - Mobile Stacked, Desktop Side by Side */}
+            <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="p-3 sm:p-4 border-2 border-zinc-200 rounded-lg sm:rounded-xl bg-white">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <ShimmerBox className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg flex-shrink-0" />
+                  <div className="flex-1 space-y-2 min-w-0">
+                    <ShimmerBox className="h-2.5 sm:h-3 w-14 sm:w-16 rounded" />
+                    <ShimmerBox className="h-3 sm:h-4 w-full rounded" />
                   </div>
                 </div>
               </div>
-              <div className="p-4 border-2 border-zinc-200 rounded-xl bg-white">
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 space-y-2 text-right">
-                    <div className="h-3 w-16 bg-zinc-200 rounded ml-auto" />
-                    <div className="h-4 w-full bg-zinc-200 rounded" />
+              <div className="p-3 sm:p-4 border-2 border-zinc-200 rounded-lg sm:rounded-xl bg-white">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex-1 space-y-2 text-right min-w-0">
+                    <ShimmerBox className="h-2.5 sm:h-3 w-14 sm:w-16 rounded ml-auto" />
+                    <ShimmerBox className="h-3 sm:h-4 w-full rounded" />
                   </div>
-                  <div className="w-16 h-16 bg-zinc-200 rounded-lg" />
+                  <ShimmerBox className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg flex-shrink-0" />
                 </div>
               </div>
             </div>
           </article>
           
-          {/* Sidebar Skeleton */}
+          {/* Sidebar Skeleton - Hidden on Mobile/Tablet */}
           <aside className="hidden lg:block">
             <div className="sticky top-24 space-y-6">
               {/* Trending Skeleton */}
               <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <div className="bg-gradient-to-r from-purple-100 to-pink-100 px-6 py-4">
-                  <div className="h-6 w-32 bg-purple-200 rounded" />
+                <div className="bg-gradient-to-r from-purple-100 to-pink-100 px-5 xl:px-6 py-3 xl:py-4">
+                  <ShimmerBox className="h-5 xl:h-6 w-28 xl:w-32 rounded" />
                 </div>
-                <div className="p-4 space-y-4">
+                <div className="p-3 xl:p-4 space-y-3 xl:space-y-4">
                   {[1, 2, 3, 4, 5].map(i => (
-                    <div key={i} className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex-shrink-0" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 w-full bg-zinc-200 rounded" />
-                        <div className="h-3 w-3/4 bg-zinc-200 rounded" />
+                    <div key={i} className="flex items-start gap-2 xl:gap-3">
+                      <ShimmerBox className="w-7 h-7 xl:w-8 xl:h-8 rounded-full flex-shrink-0" />
+                      <div className="flex-1 space-y-1.5 xl:space-y-2 min-w-0">
+                        <ShimmerBox className="h-3 xl:h-4 w-full rounded" />
+                        <ShimmerBox className="h-2.5 xl:h-3 w-3/4 rounded" />
                       </div>
-                      <div className="w-14 h-14 bg-zinc-200 rounded-lg flex-shrink-0" />
+                      <ShimmerBox className="w-12 h-12 xl:w-14 xl:h-14 rounded-lg flex-shrink-0" />
                     </div>
                   ))}
                 </div>
               </div>
               
               {/* Ad Skeleton */}
-              <div className="h-[300px] bg-gradient-to-br from-zinc-200 to-zinc-300 rounded-2xl flex items-center justify-center">
-                <div className="h-8 w-24 bg-zinc-400 rounded" />
+              <div className="relative h-[250px] xl:h-[300px] bg-gradient-to-br from-zinc-200 to-zinc-300 rounded-2xl flex items-center justify-center overflow-hidden">
+                <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                <ShimmerBox className="h-7 xl:h-8 w-20 xl:w-24 rounded" />
               </div>
             </div>
           </aside>
         </div>
+        
+        {/* Mobile Sidebar Content - Shows on Mobile/Tablet Only */}
+        <div className="lg:hidden mt-6 sm:mt-8 space-y-6">
+          {/* Trending Section - Mobile */}
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-100 to-pink-100 px-4 py-3">
+              <ShimmerBox className="h-5 w-28 rounded" />
+            </div>
+            <div className="p-3 space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex items-start gap-2">
+                  <ShimmerBox className="w-6 h-6 rounded-full flex-shrink-0" />
+                  <div className="flex-1 space-y-1.5 min-w-0">
+                    <ShimmerBox className="h-3 w-full rounded" />
+                    <ShimmerBox className="h-2.5 w-3/4 rounded" />
+                  </div>
+                  <ShimmerBox className="w-12 h-12 rounded-lg flex-shrink-0" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </main>
       
-      {/* Footer Skeleton */}
-      <div className="mt-12 bg-zinc-900 py-8">
+      {/* Footer Skeleton - Responsive */}
+      <div className="mt-8 sm:mt-12 bg-zinc-900 py-6 sm:py-8">
         <div className="mx-auto max-w-7xl px-4">
-          <div className="flex justify-center gap-8">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-4 w-16 bg-zinc-700 rounded" />
+              <ShimmerBox key={i} className="h-3 sm:h-4 w-14 sm:w-16 bg-zinc-700 rounded" />
             ))}
           </div>
+        </div>
+      </div>
+      
+      {/* Mobile Bottom Nav Skeleton */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 px-4 py-2 safe-area-pb">
+        <div className="flex items-center justify-around">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="flex flex-col items-center gap-1">
+              <ShimmerBox className="h-5 w-5 rounded" />
+              <ShimmerBox className="h-2 w-8 rounded" />
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -313,24 +379,41 @@ function HorizontalAd({ className, label = 'Horizontal Ad' }: { className?: stri
 }
 
 function HeroLead({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
+  const categoryName = a.categories?.[0]?.name || ''
+  
   return (
-    <article className="group overflow-hidden rounded-lg bg-white shadow-md hover:shadow-xl transition-shadow">
+    <article className="group overflow-hidden rounded-2xl sm:rounded-lg bg-white shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ease-out cursor-pointer">
       <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="block">
-        <div className="relative aspect-video w-full overflow-hidden bg-zinc-100">
+        <div className="relative aspect-[16/10] sm:aspect-video w-full overflow-hidden bg-zinc-100">
           {a.coverImage?.url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img 
               src={a.coverImage.url} 
               alt={a.title} 
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+              className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" 
               loading="eager"
             />
           ) : (
-            <PlaceholderImg className="h-full w-full object-cover" />
+            <PlaceholderImg className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" />
           )}
+          {/* Category badge */}
+          {categoryName && (
+            <span className="absolute top-3 left-3 bg-red-600 text-white text-[11px] sm:text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg z-10">
+              {categoryName}
+            </span>
+          )}
+          {/* Gradient overlay - always visible on mobile for readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent sm:from-black/40 sm:via-transparent sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300" />
+          {/* Mobile: Title overlay on image - larger and bolder */}
+          <div className="sm:hidden absolute bottom-0 left-0 right-0 p-4">
+            <h2 className="text-lg font-bold text-white drop-shadow-lg line-clamp-3 leading-tight">
+              {a.title}
+            </h2>
+          </div>
         </div>
-        <div className="p-4">
-          <h2 className="text-lg font-bold text-zinc-900 group-hover:text-red-600 transition-colors line-clamp-3">
+        {/* Desktop: Title below image */}
+        <div className="hidden sm:block p-4">
+          <h2 className="text-lg font-bold text-zinc-900 group-hover:text-red-600 transition-colors duration-200 line-clamp-3">
             {a.title}
           </h2>
         </div>
@@ -340,24 +423,34 @@ function HeroLead({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
 }
 
 function CardMedium({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
+  const categoryName = a.categories?.[0]?.name || ''
+  
   return (
-    <article className="group overflow-hidden rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow border border-zinc-100">
+    <article className="group overflow-hidden rounded-xl sm:rounded-lg bg-white shadow-sm hover:shadow-lg active:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 ease-out border border-zinc-100 hover:border-red-200 cursor-pointer">
       <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="block">
-        <div className="relative aspect-video w-full overflow-hidden bg-zinc-100">
+        <div className="relative aspect-[16/10] sm:aspect-video w-full overflow-hidden bg-zinc-100">
           {a.coverImage?.url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img 
               src={a.coverImage.url} 
               alt={a.title} 
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" 
+              className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105" 
               loading="lazy"
             />
           ) : (
-            <PlaceholderImg className="h-full w-full object-cover" />
+            <PlaceholderImg className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105" />
           )}
+          {/* Category badge */}
+          {categoryName && (
+            <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] sm:text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+              {categoryName}
+            </span>
+          )}
+          {/* Subtle overlay on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
-        <div className="p-3">
-          <h3 className="text-sm font-bold text-zinc-900 group-hover:text-red-600 transition-colors line-clamp-2">
+        <div className="p-3 sm:p-2.5">
+          <h3 className="text-base sm:text-sm font-bold text-zinc-900 group-hover:text-red-600 active:text-red-700 transition-colors duration-200 line-clamp-2 leading-snug">
             {a.title}
           </h3>
         </div>
@@ -368,21 +461,21 @@ function CardMedium({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
 
 function Section({ title, children, noShadow, flushBody, viewMoreHref, bodyClassName }: { title: string; children: React.ReactNode; noShadow?: boolean; flushBody?: boolean; viewMoreHref?: string; bodyClassName?: string }) {
   const hasTitle = (title ?? '').trim().length > 0
-  const bodyClasses = bodyClassName ?? (flushBody ? '' : 'p-4 space-y-4')
+  const bodyClasses = bodyClassName ?? (flushBody ? '' : 'p-3 sm:p-4 space-y-3 sm:space-y-4')
   return (
-    <section className={`mb-8 rounded-xl bg-white border border-zinc-100 ${noShadow ? '' : 'shadow-sm'}`}>
+    <section className={`mb-6 sm:mb-8 rounded-xl bg-white border border-zinc-100 ${noShadow ? '' : 'shadow-sm'}`}>
       {hasTitle && (
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 bg-linear-to-r from-zinc-50 to-white">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-zinc-100 bg-linear-to-r from-zinc-50 to-white">
           <div className="inline-flex items-center gap-2">
-            <span className="inline-block h-6 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500 shadow-sm" />
-            <span className="text-sm font-bold uppercase tracking-wide text-zinc-900">{title}</span>
+            <span className="inline-block h-5 sm:h-6 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500 shadow-sm" />
+            <span className="text-[13px] sm:text-sm font-bold uppercase tracking-wide text-zinc-900">{title}</span>
           </div>
           {viewMoreHref ? (
             <a
               href={viewMoreHref}
-              className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-xs font-semibold hover:bg-red-600 hover:text-white hover:border-red-600 transition-all"
+              className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold hover:bg-red-600 hover:text-white hover:border-red-600 active:bg-red-700 transition-all"
             >
-              View More →
+              అన్నీ →
             </a>
           ) : null}
         </div>
@@ -392,6 +485,7 @@ function Section({ title, children, noShadow, flushBody, viewMoreHref, bodyClass
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; columnKey?: string }) {
   // Fetch data and handle errors separately
   let category: Category | null = null
@@ -556,30 +650,270 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
 }
 
 function ListRow({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
+  const categoryName = a.categories?.[0]?.name || ''
+  
   return (
     <article className="group border-b border-zinc-100 last:border-0">
       <Link 
         href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-        className="grid grid-cols-[1fr_auto] items-center gap-3 py-2.5 hover:bg-zinc-50 transition-colors"
+        className="block sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-3 py-3 sm:py-2.5 px-2 -mx-2 rounded-lg hover:bg-gradient-to-r hover:from-red-50/50 hover:to-transparent active:from-red-100/50 transition-all duration-200 cursor-pointer"
       >
-        <h4 className="text-sm font-semibold text-zinc-800 group-hover:text-red-600 transition-colors line-clamp-2">
-          {a.title}
-        </h4>
-        <div className="h-14 w-20 overflow-hidden rounded shrink-0 bg-zinc-100">
+        {/* Mobile: Full-width image on top */}
+        <div className="sm:hidden relative aspect-[16/9] w-full overflow-hidden rounded-xl mb-2.5 bg-zinc-100 shadow-sm group-hover:shadow-md transition-shadow duration-300">
           {a.coverImage?.url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img 
               src={a.coverImage.url} 
               alt={a.title} 
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" 
+              className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105" 
               loading="lazy"
             />
+          ) : (
+            <PlaceholderImg className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105" />
+          )}
+          {/* Category badge on mobile image */}
+          {categoryName && (
+            <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+              {categoryName}
+            </span>
+          )}
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+        
+        {/* Title - full width on mobile, left side on desktop */}
+        <h4 className="text-base sm:text-sm font-semibold text-zinc-800 group-hover:text-red-600 active:text-red-700 transition-colors duration-200 line-clamp-2 leading-snug">
+          {a.title}
+        </h4>
+        
+        {/* Desktop only: Small thumbnail on right */}
+        <div className="hidden sm:block h-14 w-20 overflow-hidden rounded-lg shrink-0 bg-zinc-100 shadow-sm group-hover:shadow-md transition-shadow duration-300">
+          {a.coverImage?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img 
+              src={a.coverImage.url} 
+              alt={a.title} 
+              className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-110" 
+              loading="lazy"
+            />
+          ) : (
+            <PlaceholderImg className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-110" />
+          )}
+        </div>
+      </Link>
+    </article>
+  )
+}
+
+// ============================================
+// MOBILE VARIETY CARDS - Different styles for visual interest
+// ============================================
+
+// Style 1: Horizontal Card - Image left, text right (compact)
+function MobileHorizontalCard({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
+  const categoryName = a.categories?.[0]?.name || ''
+  return (
+    <article className="group">
+      <Link 
+        href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+        className="flex gap-3 p-2 -mx-2 rounded-xl hover:bg-zinc-50 active:bg-zinc-100 transition-colors"
+      >
+        <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-xl bg-zinc-100">
+          {a.coverImage?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={a.coverImage.url} alt={a.title} className="h-full w-full object-cover" loading="lazy" />
+          ) : (
+            <PlaceholderImg className="h-full w-full object-cover" />
+          )}
+          {categoryName && (
+            <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+              {categoryName}
+            </span>
+          )}
+        </div>
+        <div className="flex-1 flex flex-col justify-center min-w-0">
+          <h4 className="text-[15px] font-bold text-zinc-900 group-hover:text-red-600 line-clamp-3 leading-snug">
+            {a.title}
+          </h4>
+          <span className="mt-1 text-[11px] text-zinc-500">📖 2 నిమిషాలు</span>
+        </div>
+      </Link>
+    </article>
+  )
+}
+
+// Style 2: Text-only Card with color accent (no image)
+function MobileTextCard({ tenantSlug, a, accentColor = 'red' }: { tenantSlug: string; a: Article; accentColor?: 'red' | 'blue' | 'green' | 'purple' | 'orange' }) {
+  const colors = {
+    red: 'border-l-red-500 bg-red-50/50',
+    blue: 'border-l-blue-500 bg-blue-50/50',
+    green: 'border-l-green-500 bg-green-50/50',
+    purple: 'border-l-purple-500 bg-purple-50/50',
+    orange: 'border-l-orange-500 bg-orange-50/50',
+  }
+  const categoryName = a.categories?.[0]?.name || ''
+  return (
+    <article className="group">
+      <Link 
+        href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+        className={`block p-3 border-l-4 rounded-r-xl ${colors[accentColor]} hover:shadow-md active:shadow-sm transition-all`}
+      >
+        {categoryName && (
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wide">{categoryName}</span>
+        )}
+        <h4 className="text-base font-bold text-zinc-900 group-hover:text-red-600 line-clamp-2 leading-snug mt-0.5">
+          {a.title}
+        </h4>
+      </Link>
+    </article>
+  )
+}
+
+// Style 3: Numbered Trending Card
+function MobileNumberedCard({ tenantSlug, a, number }: { tenantSlug: string; a: Article; number: number }) {
+  return (
+    <article className="group">
+      <Link 
+        href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+        className="flex items-start gap-3 p-2 -mx-2 rounded-xl hover:bg-zinc-50 active:bg-zinc-100 transition-colors"
+      >
+        <span className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white text-sm font-black shadow-md">
+          {number}
+        </span>
+        <div className="flex-1 min-w-0">
+          <h4 className="text-[15px] font-bold text-zinc-900 group-hover:text-red-600 line-clamp-2 leading-snug">
+            {a.title}
+          </h4>
+          <span className="text-[11px] text-zinc-400">🔥 ట్రెండింగ్</span>
+        </div>
+        <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
+          {a.coverImage?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={a.coverImage.url} alt={a.title} className="h-full w-full object-cover" loading="lazy" />
           ) : (
             <PlaceholderImg className="h-full w-full object-cover" />
           )}
         </div>
       </Link>
     </article>
+  )
+}
+
+// Style 4: Mini Cards Grid (2 columns)
+function MobileMiniCard({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
+  return (
+    <article className="group">
+      <Link 
+        href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+        className="block overflow-hidden rounded-xl bg-white border border-zinc-100 hover:shadow-lg hover:border-red-200 active:shadow-md transition-all"
+      >
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100">
+          {a.coverImage?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={a.coverImage.url} alt={a.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
+          ) : (
+            <PlaceholderImg className="h-full w-full object-cover" />
+          )}
+        </div>
+        <div className="p-2.5">
+          <h4 className="text-[13px] font-bold text-zinc-900 group-hover:text-red-600 line-clamp-2 leading-snug">
+            {a.title}
+          </h4>
+        </div>
+      </Link>
+    </article>
+  )
+}
+
+// Style 5: Featured Large Card (for first/important items)
+function MobileFeaturedCard({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
+  const categoryName = a.categories?.[0]?.name || ''
+  return (
+    <article className="group">
+      <Link 
+        href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+        className="block overflow-hidden rounded-2xl bg-white shadow-md hover:shadow-xl active:shadow-lg transition-all"
+      >
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-zinc-100">
+          {a.coverImage?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={a.coverImage.url} alt={a.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+          ) : (
+            <PlaceholderImg className="h-full w-full object-cover" />
+          )}
+          {categoryName && (
+            <span className="absolute top-3 left-3 bg-red-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-lg">
+              {categoryName}
+            </span>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <h4 className="text-lg font-bold text-white drop-shadow-lg line-clamp-2 leading-tight">
+              {a.title}
+            </h4>
+          </div>
+        </div>
+      </Link>
+    </article>
+  )
+}
+
+// Mixed Layout Component - Renders articles with varied styles for mobile
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function MobileMixedFeed({ tenantSlug, articles }: { tenantSlug: string; articles: Article[] }) {
+  const accentColors: Array<'red' | 'blue' | 'green' | 'purple' | 'orange'> = ['red', 'blue', 'green', 'purple', 'orange']
+  
+  return (
+    <div className="sm:hidden space-y-4">
+      {articles.map((a, idx) => {
+        const pattern = idx % 10 // Repeat pattern every 10 items
+        
+        // Pattern: Featured → 2-grid → Horizontal → Text → Numbered → 2-grid → Horizontal → Text → Numbered → Featured
+        switch (pattern) {
+          case 0:
+            // Featured large card
+            return <MobileFeaturedCard key={a.id} tenantSlug={tenantSlug} a={a} />
+          
+          case 1:
+          case 2:
+            // 2-column grid (pairs)
+            if (pattern === 1 && articles[idx + 1]) {
+              return (
+                <div key={a.id} className="grid grid-cols-2 gap-3">
+                  <MobileMiniCard tenantSlug={tenantSlug} a={a} />
+                  <MobileMiniCard tenantSlug={tenantSlug} a={articles[idx + 1]} />
+                </div>
+              )
+            }
+            return null // Skip second item in pair
+          
+          case 3:
+            // Horizontal compact
+            return <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} />
+          
+          case 4:
+            // Text-only with accent
+            return <MobileTextCard key={a.id} tenantSlug={tenantSlug} a={a} accentColor={accentColors[idx % 5]} />
+          
+          case 5:
+          case 6:
+          case 7:
+            // Numbered trending (3 in a row)
+            return <MobileNumberedCard key={a.id} tenantSlug={tenantSlug} a={a} number={pattern - 4} />
+          
+          case 8:
+            // Horizontal compact
+            return <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} />
+          
+          case 9:
+            // Text-only with different accent
+            return <MobileTextCard key={a.id} tenantSlug={tenantSlug} a={a} accentColor={accentColors[(idx + 2) % 5]} />
+          
+          default:
+            return <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} />
+        }
+      })}
+    </div>
   )
 }
 
@@ -604,11 +938,8 @@ export async function ThemeHome({
   const domain = tenantDomain || siteUrl.replace(/^https?:\/\//, '').split('/')[0]
 
   // Determine the API version based on theme setting from config
-  const themeKey = settings?.theme?.theme || settings?.theme?.key || (settings?.theme?.layout as any)?.style || (settings?.settings?.theme?.layout as any)?.style || 'style1'
+  const themeKey = settings?.theme?.theme || settings?.theme?.key || (settings?.theme?.layout as Record<string, unknown>)?.style || (settings?.settings?.theme?.layout as Record<string, unknown>)?.style || 'style1'
   const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'te'
-  
-  // ✅ Style1 uses v=1, shape=style1, themeKey=style1
-  const apiVersion = 1
 
   // Helper to convert shaped articles to Article format
   const shapedToArticle = (item: HomepageShapedArticle): Article => {
@@ -632,7 +963,7 @@ export async function ThemeHome({
   // Fetch shaped homepage with structured sections
   let shapedHomepage: HomepageShapedResponse | null = null
   try {
-    shapedHomepage = await getHomepageShaped({ themeKey, lang })
+    shapedHomepage = await getHomepageShaped({ themeKey: String(themeKey), lang: String(lang) })
     console.log('✅ Shaped homepage loaded:', {
       hasHero: !!shapedHomepage?.hero,
       hasTopStories: !!shapedHomepage?.topStories,
@@ -649,7 +980,7 @@ export async function ThemeHome({
   try {
     // ✅ style1 uses v=1, style2 uses v=2
     const apiVersion = themeKey === 'style2' ? 2 : 1
-    homepage = await getPublicHomepage({ v: apiVersion, themeKey, lang, shape: themeKey })
+    homepage = await getPublicHomepage({ v: apiVersion, themeKey: String(themeKey), lang: String(lang), shape: String(themeKey) })
   } catch {
     homepage = null
   }
@@ -698,6 +1029,7 @@ export async function ThemeHome({
   let lead: Article | undefined
   let medium: Article[]
   let small: Article[]
+  let allLatest: Article[] = [] // Full continuous list for col1 & col2
 
   if (shapedHomepage?.hero && shapedHomepage.hero.length > 0) {
     // Use hero from shaped API
@@ -707,6 +1039,9 @@ export async function ThemeHome({
     const topStories = (shapedHomepage.topStories || []).map(shapedToArticle)
     medium = topStories.slice(0, 2)
     small = topStories.slice(2, 8)
+    
+    // Build continuous list: hero(1) + topStories for sequential display
+    allLatest = [lead, ...topStories]
   } else {
     // Fallback to legacy data
     const latestItems = feeds.latest?.items ? feedItemsToArticles(feeds.latest.items) : []
@@ -714,6 +1049,9 @@ export async function ThemeHome({
     lead = latestData[0]
     medium = latestData.slice(1, 3)
     small = latestData.slice(3, 9)
+    
+    // Full list for continuous sequence
+    allLatest = latestData
   }
 
   // Extract sections data from shaped homepage
@@ -752,23 +1090,54 @@ export async function ThemeHome({
           </div>
         )
       case 'smallList':
-        // In the 4th column: show Most Read (3 items) from API
-        // Other columns: show articles from latest without labels
+        // Column-specific article lists:
+        // Col 1: Already has heroLead + mediumCards, smallList adds 4 more = 7 total
+        // Col 2: 8 latest articles
+        // Col 3: "Must Read" label + 8 articles
+        // Col 4: "Top Articles" label + 2 articles
         {
-          const isCol4 = block.columnKey === 'col-4'
+          const colKey = block.columnKey || ''
           
-          if (isCol4 && mostReadData.length > 0) {
-            // Column 4: Show Most Read items with label
+          // Get articles for each column from sectionDataMap or fallback
+          // Col 1: articles 4,5,6 (indices 3,4,5) - hero is 1, medium is 2,3
+          // Col 2: articles 7-14 (indices 6-13) - continues from col 1
+          const col2Articles = allLatest.slice(6, 14) // Articles 7-14
+          const col3Articles = sectionDataMap['mustRead'] || sectionDataMap['must-read'] || sectionDataMap['col-3'] || small
+          const col4Articles = mostReadData.length > 0 ? mostReadData : (sectionDataMap['topViewed'] || sectionDataMap['top-viewed'] || sectionDataMap['col-4'] || small)
+          
+          if (colKey === 'col-1') {
+            // Column 1: articles 4,5,6 (heroLead=1, medium=2,3, small=4,5,6) = 6 total
             return (
-              <div key={block.id} className="flex flex-col flex-1 gap-4">
-                {/* Most Read Section */}
+              <div key={block.id} className="grid grid-cols-1 gap-3">
+                {allLatest.slice(3, 6).map((a) => (
+                  <ListRow key={a.id} tenantSlug={tenantSlugForLinks} a={a} />
+                ))}
+              </div>
+            )
+          }
+          
+          if (colKey === 'col-2') {
+            // Column 2: articles 7-14 (continues from col 1)
+            return (
+              <div key={block.id} className="grid grid-cols-1 gap-3">
+                {col2Articles.map((a) => (
+                  <ListRow key={a.id} tenantSlug={tenantSlugForLinks} a={a} />
+                ))}
+              </div>
+            )
+          }
+          
+          if (colKey === 'col-3') {
+            // Column 3: Must Read with label + 8 articles
+            return (
+              <div key={block.id} className="flex flex-col flex-1">
                 <section className="rounded-xl bg-white p-4">
                   <h3 className="mb-3 text-sm font-bold uppercase tracking-wide flex items-center gap-2">
-                    <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
-                    Most Read
+                    <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-orange-500 to-orange-400" />
+                    Must Read
                   </h3>
                   <div className="grid grid-cols-1 gap-3">
-                    {mostReadData.map((a) => (
+                    {col3Articles.slice(0, 8).map((a) => (
                       <ListRow key={a.id} tenantSlug={tenantSlugForLinks} a={a} />
                     ))}
                   </div>
@@ -777,7 +1146,26 @@ export async function ThemeHome({
             )
           }
           
-          // Column 2 and 3: No label, just articles
+          if (colKey === 'col-4') {
+            // Column 4: Top Articles with label + 4 articles
+            return (
+              <div key={block.id} className="flex flex-col flex-1">
+                <section className="rounded-xl bg-white p-4">
+                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wide flex items-center gap-2">
+                    <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
+                    Top Articles
+                  </h3>
+                  <div className="grid grid-cols-1 gap-3">
+                    {col4Articles.slice(0, 4).map((a) => (
+                      <ListRow key={a.id} tenantSlug={tenantSlugForLinks} a={a} />
+                    ))}
+                  </div>
+                </section>
+              </div>
+            )
+          }
+          
+          // Default fallback
           return (
             <div key={block.id} className="grid grid-cols-1 gap-3">
               {small.slice(0, 3).map((a) => (
@@ -787,13 +1175,15 @@ export async function ThemeHome({
           )
         }
       case 'categoryBlock':
-        // Smart category rendering - render dynamic category sections from API
-        return <CategoryBlock key={block.id} tenantSlug={tenantSlugForLinks} columnKey={block.columnKey} />
+        // Skip single category blocks - we only want 4-column category sections
+        return null
       // Render category blocks for trending sections
       case 'trendingCategoryBlock':
-        return <CategoryBlock key={block.id} tenantSlug={tenantSlugForLinks} columnKey={block.columnKey} />
+        // Skip single category blocks
+        return null
       case 'trendingList':
-        return <CategoryBlock key={block.id} tenantSlug={tenantSlugForLinks} columnKey={block.columnKey} />
+        // Skip single category blocks  
+        return null
       case 'ad': {
         const cfg = (block.config || {}) as Record<string, unknown>
         const fmt = String(cfg.format ?? '').toLowerCase()
@@ -856,7 +1246,7 @@ export async function ThemeHome({
     }
 
     return (
-      <div key={section.id} className="grid grid-cols-1 gap-4 lg:grid-cols-4 lg:gap-6 items-stretch">
+      <div key={section.id} className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6 items-stretch">
         {cols.map((c) => (
           <div key={c.key} id={c.key === 'col-1' ? 'left-col' : undefined} className={colClass(c.key)}>
             {(blocksByCol.get(c.key) || []).map((b) => renderBlock(b))}
@@ -865,6 +1255,9 @@ export async function ThemeHome({
       </div>
     )
   }
+
+  // Pending ads array for deferred rendering
+  const pendingAds: ReactNode[] = []
 
   function renderSection(section: HomeSection): { placement: 'outside' | 'main'; node: ReactNode } | null {
     if (!section.isActive) return null
@@ -876,24 +1269,47 @@ export async function ThemeHome({
           node: (
             <div key={section.id} className="bg-white">
               <div className="mx-auto max-w-7xl px-4">
-                <FlashTicker tenantSlug={tenantSlugForLinks} items={tickerData.slice(0, 12)} />
+                <FlashTicker tenantSlug={tenantSlugForLinks} basePath={basePathForTenant(tenantSlugForLinks)} items={tickerData.slice(0, 12)} />
               </div>
             </div>
           ),
         }
+      case 'heroSection':
       case 'mainGrid4':
-        return { placement: 'main', node: renderMainGrid(section) }
+        // Hero + 1 Ad + 4-column category section + 1 Ad
+        return { 
+          placement: 'main', 
+          node: (
+            <Fragment key={section.id}>
+              {renderMainGrid(section)}
+              {/* 1 Horizontal Ad after Hero */}
+              <div className="my-6">
+                <HorizontalAd label="Advertisement" />
+              </div>
+              {/* 4-Column Category Section */}
+              <div className="mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+                  <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} />
+                </div>
+              </div>
+              {/* 1 Horizontal Ad after Category Section */}
+              <div className="my-6">
+                <HorizontalAd label="Advertisement" />
+              </div>
+            </Fragment>
+          )
+        }
       case 'horizontalAd1':
       case 'horizontalAd2':
       case 'horizontalAd3': {
         const b = activeBlocksForSection(section).find((x) => x.type === 'horizontalAd')
         if (!b) return null
-        return { placement: 'main', node: renderBlock(b) }
+        // Skip these - we already show 1 ad after hero
+        return null
       }
       case 'categoryHub': {
-        const b = activeBlocksForSection(section).find((x) => x.type === 'categoryColumns')
-        if (!b) return null
-        return { placement: 'main', node: renderBlock(b) }
+        // Already rendered after hero, skip here
+        return null
       }
       case 'webStories': {
         const b = activeBlocksForSection(section).find((x) => x.type === 'webStoriesArea')
@@ -914,7 +1330,7 @@ export async function ThemeHome({
   function flushMain() {
     if (mainChunk.length === 0) return
     rendered.push(
-      <main id="main-content" key={`main-${mainKey++}`} className="mx-auto max-w-7xl px-4 py-3">
+      <main id="main-content" key={`main-${mainKey++}`} className="mx-auto max-w-7xl px-3 sm:px-4 py-2 sm:py-3\">
         {mainChunk}
       </main>,
     )
@@ -927,6 +1343,13 @@ export async function ThemeHome({
       rendered.push(p.node)
     } else {
       mainChunk.push(p.node)
+    }
+  }
+  
+  // Add pending ads at the end (after all main content)
+  if (pendingAds.length > 0) {
+    for (const ad of pendingAds) {
+      mainChunk.push(ad)
     }
   }
   flushMain()
@@ -1386,12 +1809,26 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
   // Get related articles
   const related = article.related || []
   
-  // Get navigation articles
-  const previousArticle = article.previousArticle
-  const nextArticle = article.nextArticle
+  // Navigation articles available for future use
+  // const previousArticle = article.previousArticle
+  // const nextArticle = article.nextArticle
+
+  // Get locale from settings (extracted from domain or default to Telugu)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const locale = (settings as any)?.locale || (settings as any)?.language?.code || 'te'
 
   return (
     <div className="theme-style1 bg-zinc-50">
+      {/* Congratulations Overlay for View Milestones */}
+      {article.viewCount && article.viewCount > 0 && (
+        <CongratulationsWrapper 
+          viewCount={article.viewCount}
+          tenantName={title}
+          locale={locale}
+          articleId={article.id || article.slug}
+        />
+      )}
+      
       <ReadingProgress />
       <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} />
       
@@ -1655,12 +2092,12 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                     ఫోటో గ్యాలరీ
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {article.media.images.map((img: any, idx: number) => (
+                    {article.media.images.map((img, idx) => (
                       <figure key={idx} className="group cursor-pointer">
                         <div className="relative aspect-video rounded-lg overflow-hidden">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img 
-                            src={img.url} 
+                            src={img.url || ''} 
                             alt={img.alt || img.caption || `Image ${idx + 1}`}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
@@ -1898,6 +2335,7 @@ function HorizontalInlineAd() {
 }
 
 // Enhanced Article Content with Drop Caps and Better Typography for Telugu
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function EnhancedArticleContent({ html }: { html: string }) {
   if (!html) {
     return (
@@ -1961,6 +2399,7 @@ function ConditionalAdBanner({ variant }: { variant: 'horizontal' | 'tall' }) {
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function InterleavedArticle({ html }: { html: string }) {
   if (!html) {
     return (
@@ -2012,6 +2451,7 @@ function InterleavedArticle({ html }: { html: string }) {
 //   )
 // }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function MustReadSection({ tenantSlug, currentArticleId }: { tenantSlug: string; currentArticleId: string }) {
   let items: Article[] = []
   try {
@@ -2076,6 +2516,7 @@ async function MustReadSection({ tenantSlug, currentArticleId }: { tenantSlug: s
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ReporterSection({ reporter }: { reporter: { name: string; photo: string; designation: string; bio: string } }) {
   return (
     <section id="author" className="mb-12 scroll-mt-24">
@@ -2152,6 +2593,7 @@ function ReporterSection({ reporter }: { reporter: { name: string; photo: string
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function RelatedArticles({ tenantSlug, article }: { tenantSlug: string; article: Article }) {
   let items: Article[] = []
   try {
@@ -2206,6 +2648,7 @@ async function RelatedArticles({ tenantSlug, article }: { tenantSlug: string; ar
 }
 
 // Most Read Sidebar Component - Sticky with scroll
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function MostReadSidebar({ tenantSlug, currentArticleId }: { tenantSlug: string; currentArticleId: string }) {
   let items: Article[] = []
   try {
@@ -2330,7 +2773,8 @@ async function CategoryColumns({
 
   // Use real backend categories. Some tenants don't have slugs like `latest` or `breaking`.
   // Prefer common news slugs, then fill from available categories.
-  const preferredSlugs = ['national', 'entertainment', 'politics', 'sports', 'technology', 'business', 'international']
+  // STRICT LIMIT: Only 4 categories for 4-column layout
+  const preferredSlugs = ['national', 'entertainment', 'politics', 'sports']
   const preferred = preferredSlugs
     .map((slug) => cats.find((c) => c.slug === slug))
     .filter(Boolean) as Category[]
@@ -2339,15 +2783,18 @@ async function CategoryColumns({
   const seen = new Set<string>()
   for (const c of preferred) {
     if (!c || seen.has(c.slug)) continue
+    if (chosen.length >= 4) break // Check BEFORE adding
     chosen.push(c)
     seen.add(c.slug)
-    if (chosen.length >= 4) break
   }
-  for (const c of cats) {
-    if (!c || seen.has(c.slug)) continue
-    chosen.push(c)
-    seen.add(c.slug)
-    if (chosen.length >= 4) break
+  // Only fill from cats if we don't have 4 yet
+  if (chosen.length < 4) {
+    for (const c of cats) {
+      if (!c || seen.has(c.slug)) continue
+      if (chosen.length >= 4) break // Check BEFORE adding
+      chosen.push(c)
+      seen.add(c.slug)
+    }
   }
 
   const fillToCount = (primary: Article[], feed: Article[], target: number) => {
@@ -2396,58 +2843,122 @@ async function CategoryColumns({
   )
   return (
     <>
-      {lists.map(({ category: c, items }) => (
-        <section key={c.id} className="rounded-xl bg-white">
-          <div className="flex items-center justify-between border-b px-4 py-2">
+      {lists.map(({ category: c, items }, categoryIndex) => (
+        <section key={c.id} className="rounded-xl bg-white shadow-sm border border-zinc-100">
+          <div className="flex items-center justify-between border-b border-zinc-100 px-3 sm:px-4 py-2.5">
             <Link href={toHref(categoryHref(tenantSlug, c.slug))} className="inline-flex items-center gap-2">
-              <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
+              <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
               <span className="text-sm font-bold uppercase tracking-wide hover:text-red-600">{extractCategoryName(c.name)}</span>
             </Link>
             <Link
               href={toHref(categoryHref(tenantSlug, c.slug))}
-              className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-50"
+              className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-[11px] font-semibold hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors"
             >
-              View More →
+              అన్నీ →
             </Link>
           </div>
-          <div className="space-y-3 p-3">
-            {/* Featured item at top with 16:9 image and 2-line title */}
+          
+          {/* MOBILE LAYOUT - Varied styles based on category index */}
+          <div className="sm:hidden p-3 space-y-3">
+            {categoryIndex % 4 === 0 && (
+              <>
+                {/* Style A: Featured + Horizontal cards */}
+                {items[0] && <MobileFeaturedCard tenantSlug={tenantSlug} a={items[0]} />}
+                {items.slice(1).map((a) => (
+                  <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} />
+                ))}
+              </>
+            )}
+            {categoryIndex % 4 === 1 && (
+              <>
+                {/* Style B: 2-column grid + Text cards */}
+                {items.length >= 2 && (
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <MobileMiniCard tenantSlug={tenantSlug} a={items[0]} />
+                    <MobileMiniCard tenantSlug={tenantSlug} a={items[1]} />
+                  </div>
+                )}
+                {items.slice(2).map((a, i) => (
+                  <MobileTextCard key={a.id} tenantSlug={tenantSlug} a={a} accentColor={(['blue', 'green', 'purple'] as const)[i % 3]} />
+                ))}
+              </>
+            )}
+            {categoryIndex % 4 === 2 && (
+              <>
+                {/* Style C: Numbered trending list */}
+                {items.map((a, i) => (
+                  <MobileNumberedCard key={a.id} tenantSlug={tenantSlug} a={a} number={i + 1} />
+                ))}
+              </>
+            )}
+            {categoryIndex % 4 === 3 && (
+              <>
+                {/* Style D: Mixed - Featured + 2-grid + Horizontal */}
+                {items[0] && <MobileFeaturedCard tenantSlug={tenantSlug} a={items[0]} />}
+                {items.length >= 3 && (
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <MobileMiniCard tenantSlug={tenantSlug} a={items[1]} />
+                    <MobileMiniCard tenantSlug={tenantSlug} a={items[2]} />
+                  </div>
+                )}
+                {items.slice(3).map((a) => (
+                  <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} />
+                ))}
+              </>
+            )}
+          </div>
+          
+          {/* DESKTOP LAYOUT - Original style */}
+          <div className="hidden sm:block space-y-0 p-3">
+            {/* Featured item at top with full-width image */}
             {items[0] && (
-              <div className="space-y-2">
-                <div className="relative aspect-video w-full overflow-hidden rounded">
+              <Link 
+                href={toHref(articleHref(tenantSlug, items[0].slug || items[0].id))} 
+                className="block group mb-3"
+              >
+                <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-zinc-100">
                   {items[0].coverImage?.url ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={items[0].coverImage.url} alt={items[0].title} className="h-full w-full object-cover" />
+                    <img 
+                      src={items[0].coverImage.url} 
+                      alt={items[0].title} 
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                      loading="lazy"
+                    />
                   ) : (
-                    <PlaceholderImg className="h-full w-full object-cover" />
+                    <PlaceholderImg className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
                   )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                 </div>
-                <Link href={toHref(articleHref(tenantSlug, items[0].slug || items[0].id))} className="line-clamp-2 text-sm font-semibold leading-snug hover:text-red-600">
+                <h3 className="mt-2 line-clamp-2 text-sm font-bold leading-snug text-zinc-900 group-hover:text-red-600 transition-colors">
                   {items[0].title}
-                </Link>
-              </div>
+                </h3>
+              </Link>
             )}
-            {/* Remaining items in compact rows with thumbs */}
+            {/* Remaining items - Desktop side-by-side layout */}
             {items.slice(1).map((a) => (
-              <div
+              <Link
                 key={a.id}
-                className="grid grid-cols-[1fr_auto] items-center gap-3 px-3 py-3 border-b border-dashed border-zinc-200 last:border-b-0"
+                href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+                className="grid grid-cols-[1fr_auto] items-center gap-3 py-3 border-t border-zinc-100 group"
               >
-                <Link
-                  href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-                  className="line-clamp-2 text-sm font-semibold leading-tight hover:text-red-600"
-                >
+                <span className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-800 group-hover:text-red-600 transition-colors">
                   {a.title}
-                </Link>
-                <div className="h-16 w-24 overflow-hidden rounded">
+                </span>
+                <div className="h-14 w-20 overflow-hidden rounded-lg shrink-0 bg-zinc-100">
                   {a.coverImage?.url ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={a.coverImage.url} alt={a.title} className="h-full w-full object-cover" />
+                    <img 
+                      src={a.coverImage.url} 
+                      alt={a.title} 
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                      loading="lazy"
+                    />
                   ) : (
-                    <PlaceholderImg className="h-full w-full object-cover" />
+                    <PlaceholderImg className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
                   )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </section>

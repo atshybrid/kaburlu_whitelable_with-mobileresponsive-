@@ -164,9 +164,9 @@ class RemoteDataSource implements DataSource {
     const config = await getConfig()
     const cacheTTL = getCacheTTL(config, 'article')
     
-    // 🎯 PRIMARY: Use new detailed article API with all fields (mustRead, trending, related, etc.)
-    // API: /public/articles/{slug}?languageCode=te
-    const primaryPath = `/public/articles/${encodeURIComponent(slug)}?languageCode=te`
+    // 🎯 PRIMARY: Use article API with domainName parameter (backend requires this for tenant identification)
+    // API: /public/articles/{slug}?domainName={domain}
+    const primaryPath = `/public/articles/${encodeURIComponent(slug)}?domainName=${encodeURIComponent(domain)}`
     
     try {
       const res = await fetchJSON<unknown>(primaryPath, { 
@@ -183,8 +183,8 @@ class RemoteDataSource implements DataSource {
     
     // FALLBACK: Try alternate endpoints
     const fallbackPaths = [
-      `/public/articles/${encodeURIComponent(slug)}?domainName=${encodeURIComponent(domain)}`,
-      `/public/articles?slug=${encodeURIComponent(slug)}&pageSize=1`,
+      `/public/articles/${encodeURIComponent(slug)}?languageCode=te`,
+      `/public/articles?slug=${encodeURIComponent(slug)}&domainName=${encodeURIComponent(domain)}&pageSize=1`,
       `/public/articles/${encodeURIComponent(slug)}`,
     ]
     
