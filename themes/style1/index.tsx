@@ -2,6 +2,7 @@ import { Footer, TechnicalIssues, SectionError, EmptyState, ShareButtons, Readin
 import { Navbar } from '@/components/shared/Navbar'
 import { TopArticlesModal } from '@/components/shared/TopArticlesModal'
 import type { Article } from '@/lib/data-sources'
+import { getLatestArticles, getMustReadArticles, getRelatedArticles, getTrendingArticles } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
 import { Fragment, type ReactNode } from 'react'
 import Link from 'next/link'
@@ -1543,8 +1544,8 @@ function PublisherCard({ publisher }: { publisher: NonNullable<Article['publishe
   )
 }
 
-// Trending Articles Sidebar Component
-function TrendingArticlesSidebar({ trending, tenantSlug }: { trending: NonNullable<Article['trending']>; tenantSlug: string }) {
+// Trending Articles Sidebar Component - Updated to accept Article[]
+function TrendingArticlesSidebar({ trending, tenantSlug }: { trending: Article[]; tenantSlug: string }) {
   if (!trending || trending.length === 0) return null
 
   return (
@@ -1566,7 +1567,9 @@ function TrendingArticlesSidebar({ trending, tenantSlug }: { trending: NonNullab
       
       {/* Articles List */}
       <div className="divide-y divide-zinc-100">
-        {trending.slice(0, 7).map((trendingArticle, index) => (
+        {trending.slice(0, 7).map((trendingArticle, index) => {
+          const imgUrl = (trendingArticle as Record<string, unknown>).coverImageUrl as string | undefined || trendingArticle.coverImage?.url
+          return (
           <a 
             key={trendingArticle.id} 
             href={articleHref(tenantSlug, trendingArticle.slug || trendingArticle.id || '')}
@@ -1597,11 +1600,11 @@ function TrendingArticlesSidebar({ trending, tenantSlug }: { trending: NonNullab
             </div>
             
             {/* Thumbnail */}
-            {trendingArticle.coverImageUrl ? (
+            {imgUrl ? (
               <div className="shrink-0 w-16 h-16 rounded-lg overflow-hidden shadow-sm ring-1 ring-zinc-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
-                  src={trendingArticle.coverImageUrl} 
+                  src={imgUrl} 
                   alt={trendingArticle.title || ''} 
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   loading="lazy"
@@ -1613,7 +1616,7 @@ function TrendingArticlesSidebar({ trending, tenantSlug }: { trending: NonNullab
               </div>
             )}
           </a>
-        ))}
+        )})}
       </div>
       
       {/* View All Link */}
@@ -1808,6 +1811,21 @@ function MustReadCard({ mustRead, tenantSlug }: { mustRead: NonNullable<Article[
 export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }: { tenantSlug: string; title: string; article: Article; tenantDomain?: string }) {
   const settings = await getEffectiveSettings()
   
+  // 🎯 Fetch sidebar and bottom section data in parallel using new APIs
+  const articleSlug = article.slug || article.id || ''
+  const [latestArticles, mustReadArticles, relatedArticles, trendingArticles] = await Promise.all([
+    getLatestArticles(7, articleSlug).catch(() => []),
+    getMustReadArticles(5, articleSlug).catch(() => []),
+    // Use related from article first, otherwise fetch
+    article.related && article.related.length > 0 
+      ? Promise.resolve(article.related.map(r => ({ ...r, title: r.title || '' } as Article)))
+      : getRelatedArticles(articleSlug, 6).catch(() => []),
+    // Use trending from article first, otherwise fetch
+    article.trending && article.trending.length > 0
+      ? Promise.resolve(article.trending.map(t => ({ ...t, title: t.title || '' } as Article)))
+      : getTrendingArticles(4, articleSlug).catch(() => []),
+  ])
+  
   // Extract authors from new API structure
   const authors = article.authors && Array.isArray(article.authors) ? article.authors : []
   const primaryAuthor = authors[0] || { name: 'Staff Reporter', role: 'reporter' }
@@ -1834,14 +1852,14 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
   const reporter = article.reporter
   const publisher = article.publisher
   
-  // Get must-read article
+  // Get must-read article (single featured article for inline display)
   const mustRead = article.mustRead
   
-  // Get trending articles
-  const trending = article.trending || []
-  
-  // Get related articles
-  const related = article.related || []
+  // Use fetched data for sidebar/bottom sections
+  const trending = trendingArticles
+  const related = relatedArticles
+  const sidebarLatest = latestArticles
+  const sidebarMustRead = mustReadArticles
   
   // Navigation articles available for future use
   // const previousArticle = article.previousArticle
@@ -2191,17 +2209,19 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                     సంబంధిత వార్తలు
                   </h2>
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {related.map((relatedArticle) => (
+                    {related.map((relatedArticle) => {
+                      const imgUrl = (relatedArticle as Record<string, unknown>).coverImageUrl as string | undefined || relatedArticle.coverImage?.url
+                      return (
                       <a 
                         key={relatedArticle.id} 
                         href={articleHref(tenantSlug, relatedArticle.slug || relatedArticle.id || '')} 
                         className="group block overflow-hidden rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow border border-zinc-100"
                       >
                         <div className="relative aspect-video w-full overflow-hidden">
-                          {relatedArticle.coverImageUrl ? (
+                          {imgUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img 
-                              src={relatedArticle.coverImageUrl} 
+                              src={imgUrl} 
                               alt={relatedArticle.title || ''} 
                               className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.05]" 
                               loading="lazy" 
@@ -2225,7 +2245,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                           )}
                         </div>
                       </a>
-                    ))}
+                    )})}
                   </div>
                 </div>
               </div>
@@ -2307,9 +2327,76 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
             )}
           </article>
 
-          {/* Sidebar */}
+          {/* Enhanced Sidebar */}
           <aside className="hidden lg:block">
             <div className="sticky top-24 space-y-6">
+              {/* Latest Articles Section */}
+              {sidebarLatest && sidebarLatest.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-sm p-5">
+                  <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
+                    <span className="inline-block h-6 w-1.5 rounded-full bg-gradient-to-b from-blue-600 to-blue-500" />
+                    లేటెస్ట్ వార్తలు
+                  </h3>
+                  <div className="space-y-3">
+                    {sidebarLatest.slice(0, 7).map((item, idx) => (
+                      <a 
+                        key={item.id || idx} 
+                        href={articleHref(tenantSlug, item.slug || item.id || '')}
+                        className="group flex items-start gap-3 p-2 -mx-2 rounded-lg hover:bg-zinc-50 transition-colors"
+                      >
+                        <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-zinc-100 text-xs font-bold text-zinc-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                          {idx + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-zinc-800 group-hover:text-blue-600 line-clamp-2 transition-colors" style={{ lineHeight: '1.6' }}>
+                            {item.title}
+                          </h4>
+                          {item.publishedAt && (
+                            <span className="text-xs text-zinc-400 mt-1 block">
+                              {new Date(item.publishedAt).toLocaleDateString('te-IN', { month: 'short', day: 'numeric' })}
+                            </span>
+                          )}
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Must Read Section */}
+              {sidebarMustRead && sidebarMustRead.length > 0 && (
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl shadow-sm p-5 border border-amber-200">
+                  <h3 className="text-lg font-bold text-amber-800 mb-4 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    తప్పక చదవండి
+                  </h3>
+                  <div className="space-y-3">
+                    {sidebarMustRead.slice(0, 5).map((item, idx) => (
+                      <a 
+                        key={item.id || idx} 
+                        href={articleHref(tenantSlug, item.slug || item.id || '')}
+                        className="group block p-3 -mx-1 rounded-xl bg-white/50 hover:bg-white hover:shadow-md transition-all"
+                      >
+                        <h4 className="text-sm font-semibold text-zinc-800 group-hover:text-amber-700 line-clamp-2 transition-colors" style={{ lineHeight: '1.6' }}>
+                          {item.title}
+                        </h4>
+                        {item.viewCount && (
+                          <div className="flex items-center gap-1 text-xs text-amber-600 mt-2">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            {item.viewCount.toLocaleString()}
+                          </div>
+                        )}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Trending Articles - Enhanced Design */}
               {trending && trending.length > 0 && (
                 <TrendingArticlesSidebar trending={trending} tenantSlug={tenantSlug} />

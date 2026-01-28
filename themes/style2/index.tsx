@@ -6,12 +6,13 @@ import { PlaceholderImg } from '@/components/shared/PlaceholderImg'
 import MobileBottomNav from '@/components/shared/MobileBottomNav'
 import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapper'
 import type { Article } from '@/lib/data-sources'
+import { getLatestArticles, getMustReadArticles, getRelatedArticles, getTrendingArticles } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
 import Link from 'next/link'
 import type { UrlObject } from 'url'
 import { articleHref, categoryHref, basePathForTenant } from '@/lib/url'
 import { getTenantFromHeaders } from '@/lib/tenant'
-import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
+import { getArticlesByCategory } from '@/lib/data'
 import { getPublicHomepage, getPublicHomepageStyle2ShapeForDomain, getPublicHomepageStyle2Shape, type Style2HomepageItem, type Style2HomepageResponse, type NewHomepageResponse, feedItemsToArticles } from '@/lib/homepage'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getEffectiveSettings } from '@/lib/settings'
@@ -1416,15 +1417,23 @@ export async function ThemeArticle({
 }) {
   const settings = await getEffectiveSettings().catch(() => undefined)
   const cssVars = themeCssVarsFromSettings(settings)
-  const tenant = await getTenantFromHeaders()
+  const _tenant = await getTenantFromHeaders()
   
-  let sidebarLatest: Article[] = []
-  try {
-    const sidebarFeed = await getHomeFeed(tenant.id)
-    sidebarLatest = sidebarFeed.filter((a) => a.id !== article.id).slice(0, 8)
-  } catch {
-    // Sidebar failed - continue without it
-  }
+  // 🎯 Fetch sidebar and bottom section data in parallel using new APIs
+  const articleSlug = article.slug || article.id || ''
+  const [latestArticles, mustReadArticles, relatedArticles, trendingArticles] = await Promise.all([
+    getLatestArticles(8, articleSlug).catch(() => []),
+    getMustReadArticles(5, articleSlug).catch(() => []),
+    article.related && article.related.length > 0 
+      ? Promise.resolve(article.related.map(r => ({ ...r, title: r.title || '' } as Article)))
+      : getRelatedArticles(articleSlug, 6).catch(() => []),
+    article.trending && article.trending.length > 0
+      ? Promise.resolve(article.trending.map(t => ({ ...t, title: t.title || '' } as Article)))
+      : getTrendingArticles(4, articleSlug).catch(() => []),
+  ])
+  
+  // Sidebar latest (filter out current article)
+  const sidebarLatest = latestArticles.filter((a) => a.id !== article.id).slice(0, 8)
 
   const structuredData = {
     '@context': 'https://schema.org',
@@ -1516,16 +1525,26 @@ export async function ThemeArticle({
               </button>
             </div>
 
-            <div 
-              className="article-content prose prose-lg max-w-none" 
-              dangerouslySetInnerHTML={{ __html: article.content ?? '' }} 
+            {/* Article Content with Inline Images */}
+            <Style2ArticleContent 
+              html={article.contentHtml || article.content || ''} 
+              secondImage={article.media?.images && article.media.images.length > 1 ? article.media.images[1] : null}
             />
 
             <div className="mt-8 pt-6 border-t border-zinc-200">
               <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 text-xs font-medium bg-zinc-100 text-zinc-600 rounded-full hover:bg-[hsl(var(--primary))] hover:text-white cursor-pointer transition-colors">వార్తలు</span>
-                <span className="px-3 py-1 text-xs font-medium bg-zinc-100 text-zinc-600 rounded-full hover:bg-[hsl(var(--primary))] hover:text-white cursor-pointer transition-colors">తాజా</span>
-                <span className="px-3 py-1 text-xs font-medium bg-zinc-100 text-zinc-600 rounded-full hover:bg-[hsl(var(--primary))] hover:text-white cursor-pointer transition-colors">ట్రెండింగ్</span>
+                {article.tags && article.tags.length > 0 ? (
+                  article.tags.map((tag, idx) => (
+                    <span key={idx} className="px-3 py-1 text-xs font-medium bg-zinc-100 text-zinc-600 rounded-full hover:bg-[hsl(var(--primary))] hover:text-white cursor-pointer transition-colors">
+                      #{tag}
+                    </span>
+                  ))
+                ) : (
+                  <>
+                    <span className="px-3 py-1 text-xs font-medium bg-zinc-100 text-zinc-600 rounded-full hover:bg-[hsl(var(--primary))] hover:text-white cursor-pointer transition-colors">వార్తలు</span>
+                    <span className="px-3 py-1 text-xs font-medium bg-zinc-100 text-zinc-600 rounded-full hover:bg-[hsl(var(--primary))] hover:text-white cursor-pointer transition-colors">తాజా</span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -1534,6 +1553,47 @@ export async function ThemeArticle({
             <div className="mt-8">
               <AdBanner variant="horizontal" size="medium" />
             </div>
+            
+            {/* Related Articles Section */}
+            {relatedArticles && relatedArticles.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-zinc-200">
+                <h2 className="text-xl font-bold text-zinc-900 mb-4 flex items-center gap-2">
+                  <span className="inline-block h-6 w-1 rounded-full bg-[hsl(var(--primary))]" />
+                  సంబంధిత వార్తలు
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {relatedArticles.slice(0, 6).map((relatedArticle) => {
+                    const imgUrl = (relatedArticle as Record<string, unknown>).coverImageUrl as string | undefined || relatedArticle.coverImage?.url
+                    return (
+                      <a 
+                        key={relatedArticle.id} 
+                        href={articleHref(tenantSlug, relatedArticle.slug || relatedArticle.id || '')}
+                        className="group block overflow-hidden rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow border border-zinc-100"
+                      >
+                        <div className="relative aspect-video w-full overflow-hidden">
+                          {imgUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img 
+                              src={imgUrl} 
+                              alt={relatedArticle.title || ''} 
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                              loading="lazy" 
+                            />
+                          ) : (
+                            <PlaceholderImg className="w-full h-full object-cover" />
+                          )}
+                        </div>
+                        <div className="p-3">
+                          <h3 className="text-sm font-semibold line-clamp-2 group-hover:text-[hsl(var(--primary))] transition-colors" style={{ lineHeight: '1.6' }}>
+                            {relatedArticle.title}
+                          </h3>
+                        </div>
+                      </a>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </article>
 
           <aside className="space-y-6">
@@ -1542,6 +1602,59 @@ export async function ThemeArticle({
                 <TitleList tenantSlug={tenantSlug} items={sidebarLatest} />
               </SectionCard>
             ) : null}
+            
+            {/* Must Read Section */}
+            {mustReadArticles && mustReadArticles.length > 0 && (
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200">
+                <h3 className="text-base font-bold text-amber-800 mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  తప్పక చదవండి
+                </h3>
+                <div className="space-y-2">
+                  {mustReadArticles.slice(0, 5).map((item, idx) => (
+                    <a 
+                      key={item.id || idx} 
+                      href={articleHref(tenantSlug, item.slug || item.id || '')}
+                      className="group block p-2 rounded-lg bg-white/50 hover:bg-white hover:shadow-sm transition-all"
+                    >
+                      <h4 className="text-sm font-medium text-zinc-800 group-hover:text-amber-700 line-clamp-2 transition-colors" style={{ lineHeight: '1.5' }}>
+                        {item.title}
+                      </h4>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Trending Section */}
+            {trendingArticles && trendingArticles.length > 0 && (
+              <div className="bg-gradient-to-br from-rose-50 to-red-50 rounded-xl p-4 border border-rose-200">
+                <h3 className="text-base font-bold text-rose-800 mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-rose-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
+                  </svg>
+                  ట్రెండింగ్
+                </h3>
+                <div className="space-y-2">
+                  {trendingArticles.slice(0, 4).map((item, idx) => (
+                    <a 
+                      key={item.id || idx} 
+                      href={articleHref(tenantSlug, item.slug || item.id || '')}
+                      className="group flex items-start gap-2 p-2 rounded-lg bg-white/50 hover:bg-white hover:shadow-sm transition-all"
+                    >
+                      <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-xs font-bold text-rose-600 bg-rose-100 rounded-full">
+                        {idx + 1}
+                      </span>
+                      <h4 className="text-sm font-medium text-zinc-800 group-hover:text-rose-700 line-clamp-2 transition-colors" style={{ lineHeight: '1.5' }}>
+                        {item.title}
+                      </h4>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
             
             <div className="sticky top-24">
               <AdBanner variant="sidebar" size="large" />
@@ -1552,6 +1665,68 @@ export async function ThemeArticle({
       
       <Footer settings={settings} tenantSlug={tenantSlug} />
       <MobileBottomNav tenantSlug={tenantSlug} />
+    </div>
+  )
+}
+
+// Style2 Article Content with inline image support
+function Style2ArticleContent({ html, secondImage }: { html: string; secondImage?: { url?: string; alt?: string; caption?: string } | null }) {
+  if (!html) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-zinc-500">ఆర్టికల్ కంటెంట్ లోడ్ అవుతోంది...</p>
+      </div>
+    )
+  }
+  
+  const parts = html.split(/<\/p>/i)
+  const nodes: React.ReactNode[] = []
+  let paraCount = 0
+  let imageInserted = false
+  
+  for (let i = 0; i < parts.length; i++) {
+    const chunk = parts[i].trim()
+    if (chunk.length === 0) continue
+    
+    const closed = chunk.endsWith('</p>') ? chunk : chunk + '</p>'
+    
+    nodes.push(
+      <div 
+        key={`p-${i}`} 
+        className="article-paragraph"
+        dangerouslySetInnerHTML={{ __html: closed }} 
+      />
+    )
+    
+    paraCount++
+    
+    // Insert second image after 5-6 paragraphs
+    if (!imageInserted && secondImage?.url && paraCount === 6) {
+      nodes.push(
+        <figure key="inline-image" className="my-6 rounded-lg overflow-hidden shadow-md">
+          <div className="relative aspect-video w-full bg-zinc-100">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={secondImage.url} 
+              alt={secondImage.alt || 'Article image'}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
+          {secondImage.caption && (
+            <figcaption className="px-4 py-2 text-sm text-zinc-600 italic bg-zinc-50 border-t border-zinc-200">
+              📷 {secondImage.caption}
+            </figcaption>
+          )}
+        </figure>
+      )
+      imageInserted = true
+    }
+  }
+  
+  return (
+    <div className="article-content prose prose-lg max-w-none">
+      {nodes}
     </div>
   )
 }

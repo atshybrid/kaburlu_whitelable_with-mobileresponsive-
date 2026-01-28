@@ -164,9 +164,9 @@ class RemoteDataSource implements DataSource {
     const config = await getConfig()
     const cacheTTL = getCacheTTL(config, 'article')
     
-    // 🎯 PRIMARY: Use article API with domainName parameter (backend requires this for tenant identification)
-    // API: /public/articles/{slug}?domainName={domain}
-    const primaryPath = `/public/articles/${encodeURIComponent(slug)}?domainName=${encodeURIComponent(domain)}`
+    // 🎯 PRIMARY: Use NEW SEO-friendly article API
+    // API: /public/article/{slug}?languageCode=te (returns full article with reporter, related, etc.)
+    const primaryPath = `/public/article/${encodeURIComponent(slug)}?languageCode=te`
     
     try {
       const res = await fetchJSON<unknown>(primaryPath, { 
@@ -174,15 +174,23 @@ class RemoteDataSource implements DataSource {
         revalidateSeconds: cacheTTL,
       })
       
+      // New API returns { status: "ok", article: {...}, publisher: {...}, related_articles: [...] }
       if (res && typeof res === 'object') {
+        const response = res as Record<string, unknown>
+        if (response.article && typeof response.article === 'object') {
+          // Map the new API response to our Article type
+          return normalizeNewArticleResponse(response)
+        }
+        // Fallback to direct response normalization
         return normalizeItem(res)
       }
     } catch (error) {
-      console.log(`⚠️ Primary article API failed for slug "${slug}":`, error)
+      console.log(`⚠️ New article API failed for slug "${slug}":`, error)
     }
     
-    // FALLBACK: Try alternate endpoints
+    // FALLBACK: Try legacy endpoints
     const fallbackPaths = [
+      `/public/articles/${encodeURIComponent(slug)}?domainName=${encodeURIComponent(domain)}`,
       `/public/articles/${encodeURIComponent(slug)}?languageCode=te`,
       `/public/articles?slug=${encodeURIComponent(slug)}&domainName=${encodeURIComponent(domain)}&pageSize=1`,
       `/public/articles/${encodeURIComponent(slug)}`,
@@ -227,6 +235,270 @@ class RemoteDataSource implements DataSource {
     }
     return []
   }
+}
+
+// 🎯 NEW: Fetch article page layout data (sidebar + bottom sections) in one call
+export async function getArticlePageLayout(slug: string): Promise<ArticlePageLayout | null> {
+  const domain = await currentDomain()
+  
+  try {
+    const config = await getConfig()
+    const cacheTTL = getCacheTTL(config, 'article')
+    
+    const res = await fetchJSON<unknown>(
+      `/public/articles/page-layout?slug=${encodeURIComponent(slug)}&languageCode=te`,
+      { tenantDomain: domain, revalidateSeconds: cacheTTL }
+    )
+    
+    if (res && typeof res === 'object') {
+      const response = res as Record<string, unknown>
+      if (response.layout && typeof response.layout === 'object') {
+        return normalizePageLayout(response)
+      }
+    }
+  } catch (error) {
+    console.log('⚠️ Page layout API failed:', error)
+  }
+  
+  return null
+}
+
+// 🎯 NEW: Fetch related articles
+export async function getRelatedArticles(slug: string, limit = 6): Promise<Article[]> {
+  const domain = await currentDomain()
+  
+  try {
+    const res = await fetchJSON<unknown>(
+      `/public/articles/related?slug=${encodeURIComponent(slug)}&limit=${limit}&languageCode=te`,
+      { tenantDomain: domain }
+    )
+    
+    if (res && typeof res === 'object') {
+      const response = res as Record<string, unknown>
+      const articles = response.articles
+      if (Array.isArray(articles)) {
+        return articles.map(normalizeItem)
+      }
+    }
+  } catch (error) {
+    console.log('⚠️ Related articles API failed:', error)
+  }
+  
+  return []
+}
+
+// 🎯 NEW: Fetch trending articles
+export async function getTrendingArticles(limit = 4, excludeSlug?: string): Promise<Article[]> {
+  const domain = await currentDomain()
+  
+  try {
+    let url = `/public/articles/trending?limit=${limit}&hours=24&languageCode=te`
+    if (excludeSlug) url += `&excludeSlug=${encodeURIComponent(excludeSlug)}`
+    
+    const res = await fetchJSON<unknown>(url, { tenantDomain: domain })
+    
+    if (res && typeof res === 'object') {
+      const response = res as Record<string, unknown>
+      const articles = response.articles
+      if (Array.isArray(articles)) {
+        return articles.map(normalizeItem)
+      }
+    }
+  } catch (error) {
+    console.log('⚠️ Trending articles API failed:', error)
+  }
+  
+  return []
+}
+
+// 🎯 NEW: Fetch must-read articles
+export async function getMustReadArticles(limit = 5, excludeSlug?: string): Promise<Article[]> {
+  const domain = await currentDomain()
+  
+  try {
+    let url = `/public/articles/must-read?limit=${limit}&languageCode=te`
+    if (excludeSlug) url += `&excludeSlug=${encodeURIComponent(excludeSlug)}`
+    
+    const res = await fetchJSON<unknown>(url, { tenantDomain: domain })
+    
+    if (res && typeof res === 'object') {
+      const response = res as Record<string, unknown>
+      const articles = response.articles
+      if (Array.isArray(articles)) {
+        return articles.map(normalizeItem)
+      }
+    }
+  } catch (error) {
+    console.log('⚠️ Must-read articles API failed:', error)
+  }
+  
+  return []
+}
+
+// 🎯 NEW: Fetch latest articles for sidebar
+export async function getLatestArticles(limit = 7, excludeSlug?: string): Promise<Article[]> {
+  const domain = await currentDomain()
+  
+  try {
+    let url = `/public/articles/latest?limit=${limit}&languageCode=te`
+    if (excludeSlug) url += `&excludeSlug=${encodeURIComponent(excludeSlug)}`
+    
+    const res = await fetchJSON<unknown>(url, { tenantDomain: domain })
+    
+    if (res && typeof res === 'object') {
+      const response = res as Record<string, unknown>
+      const articles = response.articles
+      if (Array.isArray(articles)) {
+        return articles.map(normalizeItem)
+      }
+    }
+  } catch (error) {
+    console.log('⚠️ Latest articles API failed:', error)
+  }
+  
+  return []
+}
+
+// Article page layout types
+export interface ArticlePageLayout {
+  side: {
+    latest: Article[]
+    mustRead: Article[]
+  }
+  bottom: {
+    related: Article[]
+    trending: Article[]
+  }
+  publisher?: {
+    id?: string
+    name?: string
+    logoUrl?: string
+  }
+}
+
+function normalizePageLayout(response: Record<string, unknown>): ArticlePageLayout {
+  const layout = response.layout as Record<string, unknown> || {}
+  const side = layout.side as Record<string, unknown> || {}
+  const bottom = layout.bottom as Record<string, unknown> || {}
+  
+  const normalizeSection = (section: unknown): Article[] => {
+    if (!section || typeof section !== 'object') return []
+    const s = section as Record<string, unknown>
+    const articles = s.articles
+    if (Array.isArray(articles)) {
+      return articles.map(normalizeItem)
+    }
+    return []
+  }
+  
+  const publisher = response.publisher as Record<string, unknown> | undefined
+  
+  return {
+    side: {
+      latest: normalizeSection(side.latest),
+      mustRead: normalizeSection(side.mustRead),
+    },
+    bottom: {
+      related: normalizeSection(bottom.related),
+      trending: normalizeSection(bottom.trending),
+    },
+    publisher: publisher ? {
+      id: typeof publisher.id === 'string' ? publisher.id : undefined,
+      name: typeof publisher.name === 'string' ? publisher.name : undefined,
+      logoUrl: typeof publisher.logo_url === 'string' ? publisher.logo_url : undefined,
+    } : undefined,
+  }
+}
+
+// Normalize the new SEO-friendly article API response
+function normalizeNewArticleResponse(response: Record<string, unknown>): Article {
+  const article = response.article as Record<string, unknown>
+  const publisher = response.publisher as Record<string, unknown> | undefined
+  const relatedArticles = response.related_articles as unknown[] | undefined
+  
+  // Map new API fields to Article type
+  const a: Record<string, unknown> = {
+    id: article.id,
+    slug: article.slug,
+    title: article.headline,
+    subtitle: article.subheadline,
+    contentHtml: article.content_html,
+    excerpt: article.excerpt,
+    
+    // Category
+    categories: article.category ? [article.category] : [],
+    
+    // Dates
+    publishedAt: (article.dateline as Record<string, unknown>)?.published_at,
+    updatedAt: (article.dateline as Record<string, unknown>)?.updated_at,
+    
+    // Author/Reporter from new API
+    reporter: article.author ? {
+      id: (article.author as Record<string, unknown>).id,
+      name: (article.author as Record<string, unknown>).name,
+      photoUrl: (article.author as Record<string, unknown>).photo_url,
+      designation: (article.author as Record<string, unknown>).designation,
+      location: {
+        state: (article.author as Record<string, unknown>).location,
+      },
+    } : null,
+    
+    // Images from new API
+    coverImage: (article.images as Record<string, unknown>)?.cover ? {
+      url: ((article.images as Record<string, unknown>).cover as Record<string, unknown>).url,
+      alt: ((article.images as Record<string, unknown>).cover as Record<string, unknown>).alt,
+    } : null,
+    
+    // Inline media images
+    media: {
+      images: Array.isArray((article.images as Record<string, unknown>)?.inline) 
+        ? ((article.images as Record<string, unknown>).inline as unknown[]).map((img: unknown) => {
+            const i = img as Record<string, unknown>
+            return { url: i.url as string, alt: i.alt as string, caption: i.caption as string }
+          })
+        : [],
+    },
+    
+    // SEO from new API
+    meta: {
+      seoTitle: (article.seo as Record<string, unknown>)?.title,
+      metaDescription: (article.seo as Record<string, unknown>)?.description,
+    },
+    
+    // JSON-LD
+    jsonLd: article.jsonLd,
+    
+    // Counts
+    viewCount: article.viewCount,
+    shareCount: article.shareCount,
+    isBreaking: article.isBreaking,
+    isLive: article.isLive,
+    tags: article.tags,
+    
+    // Publisher
+    publisher: publisher ? {
+      id: publisher.id,
+      name: publisher.name,
+      nativeName: publisher.native_name,
+      logoUrl: publisher.logo_url,
+    } : null,
+    
+    // Related articles
+    related: Array.isArray(relatedArticles) 
+      ? relatedArticles.map((r: unknown) => {
+          const rel = r as Record<string, unknown>
+          return {
+            id: rel.id,
+            slug: rel.slug,
+            title: rel.headline,
+            coverImageUrl: rel.cover_image_url,
+            publishedAt: rel.published_at,
+          }
+        })
+      : null,
+  }
+  
+  return normalizeItem(a)
 }
 
 export function getDataSource(): DataSource {
