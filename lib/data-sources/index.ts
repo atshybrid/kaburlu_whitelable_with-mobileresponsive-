@@ -165,9 +165,9 @@ class RemoteDataSource implements DataSource {
     const config = await getConfig()
     const cacheTTL = getCacheTTL(config, 'article')
     
-    // 🎯 PRIMARY: Use NEW SEO-friendly article API
-    // API: /public/article/{slug}?languageCode=te (returns full article with reporter, related, etc.)
-    const primaryPath = `/public/article/${encodeURIComponent(slug)}?languageCode=te`
+    // 🎯 PRIMARY: Use NEW SEO-friendly article API (without languageCode to let backend use domain's default)
+    // API: /public/article/{slug} (returns full article with reporter, related, etc.)
+    const primaryPath = `/public/article/${encodeURIComponent(slug)}`
     
     try {
       const res = await fetchJSON<unknown>(primaryPath, { 
@@ -247,7 +247,7 @@ export async function getArticlePageLayout(slug: string): Promise<ArticlePageLay
     const cacheTTL = getCacheTTL(config, 'article')
     
     const res = await fetchJSON<unknown>(
-      `/public/articles/page-layout?slug=${encodeURIComponent(slug)}&languageCode=te`,
+      `/public/articles/page-layout?slug=${encodeURIComponent(slug)}`,
       { tenantDomain: domain, revalidateSeconds: cacheTTL }
     )
     
@@ -270,7 +270,7 @@ export async function getRelatedArticles(slug: string, limit = 6): Promise<Artic
   
   try {
     const res = await fetchJSON<unknown>(
-      `/public/articles/related?slug=${encodeURIComponent(slug)}&limit=${limit}&languageCode=te`,
+      `/public/articles/related?slug=${encodeURIComponent(slug)}&limit=${limit}`,
       { tenantDomain: domain }
     )
     
@@ -293,7 +293,7 @@ export async function getTrendingArticles(limit = 4, excludeSlug?: string): Prom
   const domain = await currentDomain()
   
   try {
-    let url = `/public/articles/trending?limit=${limit}&hours=24&languageCode=te`
+    let url = `/public/articles/trending?limit=${limit}&hours=24`
     if (excludeSlug) url += `&excludeSlug=${encodeURIComponent(excludeSlug)}`
     
     const res = await fetchJSON<unknown>(url, { tenantDomain: domain })
@@ -317,7 +317,7 @@ export async function getMustReadArticles(limit = 5, excludeSlug?: string): Prom
   const domain = await currentDomain()
   
   try {
-    let url = `/public/articles/must-read?limit=${limit}&languageCode=te`
+    let url = `/public/articles/must-read?limit=${limit}`
     if (excludeSlug) url += `&excludeSlug=${encodeURIComponent(excludeSlug)}`
     
     const res = await fetchJSON<unknown>(url, { tenantDomain: domain })
@@ -341,7 +341,7 @@ export async function getLatestArticles(limit = 7, excludeSlug?: string): Promis
   const domain = await currentDomain()
   
   try {
-    let url = `/public/articles/latest?limit=${limit}&languageCode=te`
+    let url = `/public/articles/latest?limit=${limit}`
     if (excludeSlug) url += `&excludeSlug=${encodeURIComponent(excludeSlug)}`
     
     const res = await fetchJSON<unknown>(url, { tenantDomain: domain })

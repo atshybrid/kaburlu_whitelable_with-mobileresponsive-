@@ -29,6 +29,7 @@ export type DomainStats = {
       name: string
     }
     coverImageUrl?: string
+    coverImage?: { url?: string }
     image?: string
   }>
 }
