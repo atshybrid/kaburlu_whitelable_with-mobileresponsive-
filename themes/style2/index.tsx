@@ -10,7 +10,7 @@ import { getLatestArticles, getMustReadArticles, getRelatedArticles, getTrending
 import type { EffectiveSettings } from '@/lib/remote'
 import Link from 'next/link'
 import type { UrlObject } from 'url'
-import { articleHref, categoryHref, basePathForTenant } from '@/lib/url'
+import { articleHref, categoryHref, basePathForTenant, getCategorySlugFromArticle } from '@/lib/url'
 import { getArticlesByCategory } from '@/lib/data'
 import { getPublicHomepage, getPublicHomepageStyle2ShapeForDomain, getPublicHomepageStyle2Shape, type Style2HomepageItem, type Style2HomepageResponse, feedItemsToArticles } from '@/lib/homepage'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
@@ -78,9 +78,10 @@ function toHref(pathname: string): UrlObject {
 /* ==================== TOI-STYLE HERO FEATURE ==================== */
 
 function HeroFeature({ tenantSlug, article }: { tenantSlug: string; article: Article }) {
+  const categorySlug = getCategorySlugFromArticle(article)
   return (
     <article className="group bg-white overflow-hidden">
-      <Link href={toHref(articleHref(tenantSlug, article.slug || article.id))} className="block">
+      <Link href={toHref(articleHref(tenantSlug, article.slug || article.id, categorySlug))} className="block">
         <div className="relative aspect-[16/9] w-full overflow-hidden bg-zinc-100">
           {article.coverImage?.url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -120,9 +121,10 @@ function HeroFeature({ tenantSlug, article }: { tenantSlug: string; article: Art
 /* ==================== TOI-STYLE SECONDARY CARDS ==================== */
 
 function SecondaryCard({ tenantSlug, article }: { tenantSlug: string; article: Article }) {
+  const categorySlug = getCategorySlugFromArticle(article)
   return (
     <article className="group bg-white border-b border-zinc-100 pb-3 last:border-b-0">
-      <Link href={toHref(articleHref(tenantSlug, article.slug || article.id))} className="flex gap-3">
+      <Link href={toHref(articleHref(tenantSlug, article.slug || article.id, categorySlug))} className="flex gap-3">
         <div className="h-16 w-24 shrink-0 overflow-hidden bg-zinc-100">
           {article.coverImage?.url ? (
             // eslint-disable-next-line @next/next/no-img-element

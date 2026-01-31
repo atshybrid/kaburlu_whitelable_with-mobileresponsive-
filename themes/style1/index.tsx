@@ -9,7 +9,7 @@ import Link from 'next/link'
 import type { UrlObject } from 'url'
 import { PlaceholderImg } from '@/components/shared/PlaceholderImg'
 import { FlashTicker } from '@/components/shared/FlashTicker'
-import { articleHref, categoryHref, basePathForTenant } from '@/lib/url'
+import { articleHref, categoryHref, basePathForTenant, getCategorySlugFromArticle } from '@/lib/url'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
 import { getEffectiveSettings } from '@/lib/settings'
@@ -379,10 +379,11 @@ function HorizontalAd({ className, label = 'Horizontal Ad' }: { className?: stri
 
 function HeroLead({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
   const categoryName = a.categories?.[0]?.name || ''
+  const categorySlug = getCategorySlugFromArticle(a)
   
   return (
     <article className="group overflow-hidden rounded-2xl sm:rounded-lg bg-white shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ease-out cursor-pointer">
-      <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="block">
+      <Link href={toHref(articleHref(tenantSlug, a.slug || a.id, categorySlug))} className="block">
         <div className="relative aspect-[16/10] sm:aspect-video w-full overflow-hidden bg-zinc-100">
           {a.coverImage?.url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -423,10 +424,11 @@ function HeroLead({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
 
 function CardMedium({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
   const categoryName = a.categories?.[0]?.name || ''
+  const categorySlug = getCategorySlugFromArticle(a)
   
   return (
     <article className="group overflow-hidden rounded-xl sm:rounded-lg bg-white shadow-sm hover:shadow-lg active:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 ease-out border border-zinc-100 hover:border-red-200 cursor-pointer">
-      <Link href={toHref(articleHref(tenantSlug, a.slug || a.id))} className="block">
+      <Link href={toHref(articleHref(tenantSlug, a.slug || a.id, categorySlug))} className="block">
         <div className="relative aspect-[16/10] sm:aspect-video w-full overflow-hidden bg-zinc-100">
           {a.coverImage?.url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -650,11 +652,12 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
 
 function ListRow({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
   const categoryName = a.categories?.[0]?.name || ''
+  const categorySlug = getCategorySlugFromArticle(a)
   
   return (
     <article className="group border-b border-zinc-100 last:border-0">
       <Link 
-        href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+        href={toHref(articleHref(tenantSlug, a.slug || a.id, categorySlug))}
         className="block sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-3 py-3 sm:py-2.5 px-2 -mx-2 rounded-lg hover:bg-gradient-to-r hover:from-red-50/50 hover:to-transparent active:from-red-100/50 transition-all duration-200 cursor-pointer"
       >
         {/* Mobile: Full-width image on top */}
@@ -711,10 +714,11 @@ function ListRow({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
 // Style 1: Horizontal Card - Image left, text right (compact)
 function MobileHorizontalCard({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
   const categoryName = a.categories?.[0]?.name || ''
+  const categorySlug = getCategorySlugFromArticle(a)
   return (
     <article className="group">
       <Link 
-        href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+        href={toHref(articleHref(tenantSlug, a.slug || a.id, categorySlug))}
         className="flex gap-3 p-2 -mx-2 rounded-xl hover:bg-zinc-50 active:bg-zinc-100 transition-colors"
       >
         <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-xl bg-zinc-100">
@@ -751,10 +755,11 @@ function MobileTextCard({ tenantSlug, a, accentColor = 'red' }: { tenantSlug: st
     orange: 'border-l-orange-500 bg-orange-50/50',
   }
   const categoryName = a.categories?.[0]?.name || ''
+  const categorySlug = getCategorySlugFromArticle(a)
   return (
     <article className="group">
       <Link 
-        href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+        href={toHref(articleHref(tenantSlug, a.slug || a.id, categorySlug))}
         className={`block p-3 border-l-4 rounded-r-xl ${colors[accentColor]} hover:shadow-md active:shadow-sm transition-all`}
       >
         {categoryName && (
@@ -770,10 +775,11 @@ function MobileTextCard({ tenantSlug, a, accentColor = 'red' }: { tenantSlug: st
 
 // Style 3: Numbered Trending Card
 function MobileNumberedCard({ tenantSlug, a, number }: { tenantSlug: string; a: Article; number: number }) {
+  const categorySlug = getCategorySlugFromArticle(a)
   return (
     <article className="group">
       <Link 
-        href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+        href={toHref(articleHref(tenantSlug, a.slug || a.id, categorySlug))}
         className="flex items-start gap-3 p-2 -mx-2 rounded-xl hover:bg-zinc-50 active:bg-zinc-100 transition-colors"
       >
         <span className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white text-sm font-black shadow-md">
@@ -800,10 +806,11 @@ function MobileNumberedCard({ tenantSlug, a, number }: { tenantSlug: string; a: 
 
 // Style 4: Mini Cards Grid (2 columns)
 function MobileMiniCard({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
+  const categorySlug = getCategorySlugFromArticle(a)
   return (
     <article className="group">
       <Link 
-        href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+        href={toHref(articleHref(tenantSlug, a.slug || a.id, categorySlug))}
         className="block overflow-hidden rounded-xl bg-white border border-zinc-100 hover:shadow-lg hover:border-red-200 active:shadow-md transition-all"
       >
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100">
@@ -827,10 +834,11 @@ function MobileMiniCard({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
 // Style 5: Featured Large Card (for first/important items)
 function MobileFeaturedCard({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
   const categoryName = a.categories?.[0]?.name || ''
+  const categorySlug = getCategorySlugFromArticle(a)
   return (
     <article className="group">
       <Link 
-        href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+        href={toHref(articleHref(tenantSlug, a.slug || a.id, categorySlug))}
         className="block overflow-hidden rounded-2xl bg-white shadow-md hover:shadow-xl active:shadow-lg transition-all"
       >
         <div className="relative aspect-[16/9] w-full overflow-hidden bg-zinc-100">

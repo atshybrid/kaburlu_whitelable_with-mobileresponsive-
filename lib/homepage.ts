@@ -188,6 +188,397 @@ function domainFromHost(host: string | null) {
   return h || 'localhost'
 }
 
+// ============================================
+// 🚀 SMART HOMEPAGE API - Best Practice Implementation
+// Single optimized API call instead of multiple calls
+// ============================================
+
+export type SmartHomepageParams = {
+  latestCount?: number
+  mostReadCount?: number
+  sectionsCount?: number
+  articlesPerSection?: number
+  lang?: string
+  themeKey?: string
+}
+
+// Matches backend response structure exactly
+export type SmartHomepageArticle = {
+  id: string
+  title: string
+  slug: string
+  excerpt?: string | null
+  imageUrl?: string | null
+  categoryId?: string
+  categoryName?: string
+  categorySlug?: string
+  publishedAt?: string | null
+  readTime?: number
+  viewCount?: number
+  isBreaking?: boolean
+}
+
+export type SmartHomepageTickerItem = {
+  id: string
+  title: string
+  slug: string
+  categorySlug?: string
+  publishedAt?: string | null
+  isBreaking?: boolean
+}
+
+export type SmartHomepageSection = {
+  categoryId?: string
+  categoryName: string
+  categorySlug: string
+  categoryIcon?: string
+  articlesCount?: number
+  articles: SmartHomepageArticle[]
+}
+
+export type SmartHomepageMeta = {
+  totalArticles?: number
+  totalCategories?: number
+  lastUpdated?: string
+  cacheAge?: number
+  // Legacy fields for compatibility
+  tenant?: {
+    id?: string
+    slug?: string
+    name?: string
+    nativeName?: string
+  }
+  theme?: {
+    key?: string
+  }
+  lang?: string
+  generatedAt?: string
+}
+
+export type SmartHomepageResponse = {
+  version?: string
+  timestamp?: string
+  ticker: SmartHomepageTickerItem[]
+  latestNews: SmartHomepageArticle[]
+  mostRead: SmartHomepageArticle[]
+  sections: SmartHomepageSection[]
+  meta: SmartHomepageMeta
+}
+
+/**
+ * 🚀 getSmartHomepage - Single optimized API call for homepage data
+ * 
+ * Best Practice Benefits:
+ * - 1 API call instead of 4 parallel calls
+ * - Faster TTFB (Time to First Byte)
+ * - Single cache entry = simpler invalidation
+ * - Better error handling with automatic fallback
+ * 
+ * @param params - Configuration for homepage data
+ * @returns SmartHomepageResponse with all required data
+ */
+export async function getSmartHomepage(params?: SmartHomepageParams): Promise<SmartHomepageResponse> {
+  return _getSmartHomepage(params)
+}
+
+export async function getSmartHomepageForDomain(tenantDomain: string, params?: SmartHomepageParams): Promise<SmartHomepageResponse> {
+  return _getSmartHomepageForDomain(tenantDomain, params)
+}
+
+const _getSmartHomepage = reactCache(async (params?: SmartHomepageParams): Promise<SmartHomepageResponse> => {
+  const h = await headers()
+  const domain = domainFromHeaders(h)
+  
+  const latestCount = params?.latestCount || 12
+  const mostReadCount = params?.mostReadCount || 8
+  const sectionsCount = params?.sectionsCount || 6
+  const articlesPerSection = params?.articlesPerSection || 4
+  const lang = params?.lang || 'te'
+  const themeKey = params?.themeKey || 'style1'
+
+  const qs = new URLSearchParams({
+    latestCount: String(latestCount),
+    mostReadCount: String(mostReadCount),
+    sectionsCount: String(sectionsCount),
+    articlesPerSection: String(articlesPerSection),
+    lang,
+    themeKey,
+  })
+
+  try {
+    const response = await fetchJSON<SmartHomepageResponse>(`/public/smart-homepage?${qs.toString()}`, {
+      tenantDomain: domain,
+      revalidateSeconds: Number(process.env.REMOTE_HOMEPAGE_REVALIDATE_SECONDS || '30'),
+      tags: [`smart-homepage:${domain}:${lang}:${themeKey}`],
+    })
+
+    // Validate response has required data
+    if (!response || (!response.latestNews?.length && !response.sections?.length)) {
+      console.warn('⚠️ Smart homepage returned empty data, using fallback')
+      return await createSmartHomepageFallback(params)
+    }
+
+    // Check for wrong tenant data
+    if (isWrongTenantData(response)) {
+      console.warn('⚠️ Wrong tenant data detected in smart homepage, using fallback')
+      return await createSmartHomepageFallback(params)
+    }
+
+    return response
+  } catch (error) {
+    console.error('❌ Smart homepage API failed, using fallback:', error)
+    return await createSmartHomepageFallback(params)
+  }
+})
+
+const _getSmartHomepageForDomain = reactCache(async (tenantDomain: string, params?: SmartHomepageParams): Promise<SmartHomepageResponse> => {
+  const latestCount = params?.latestCount || 12
+  const mostReadCount = params?.mostReadCount || 8
+  const sectionsCount = params?.sectionsCount || 6
+  const articlesPerSection = params?.articlesPerSection || 4
+  const lang = params?.lang || 'te'
+  const themeKey = params?.themeKey || 'style1'
+
+  const qs = new URLSearchParams({
+    latestCount: String(latestCount),
+    mostReadCount: String(mostReadCount),
+    sectionsCount: String(sectionsCount),
+    articlesPerSection: String(articlesPerSection),
+    lang,
+    themeKey,
+  })
+
+  try {
+    const response = await fetchJSON<SmartHomepageResponse>(`/public/smart-homepage?${qs.toString()}`, {
+      tenantDomain: domainFromHost(tenantDomain),
+      revalidateSeconds: Number(process.env.REMOTE_HOMEPAGE_REVALIDATE_SECONDS || '30'),
+      tags: [`smart-homepage:${tenantDomain}:${lang}:${themeKey}`],
+    })
+
+    if (!response || (!response.latestNews?.length && !response.sections?.length)) {
+      console.warn('⚠️ Smart homepage returned empty data, using fallback')
+      return await createSmartHomepageFallback(params)
+    }
+
+    if (isWrongTenantData(response)) {
+      console.warn('⚠️ Wrong tenant data detected in smart homepage, using fallback')
+      return await createSmartHomepageFallback(params)
+    }
+
+    return response
+  } catch (error) {
+    console.error('❌ Smart homepage API failed for domain, using fallback:', error)
+    return await createSmartHomepageFallback(params)
+  }
+})
+
+/**
+ * Creates fallback response when smart-homepage API is unavailable
+ * Uses existing homepage APIs as fallback source
+ */
+async function createSmartHomepageFallback(params?: SmartHomepageParams): Promise<SmartHomepageResponse> {
+  const lang = params?.lang || 'te'
+  const themeKey = params?.themeKey || 'style1'
+  
+  try {
+    // Try to get data from existing APIs
+    const [shapedResult, homepageResult] = await Promise.all([
+      getHomepageShaped({ themeKey, lang }).catch(() => null),
+      getPublicHomepage({ v: 1, themeKey, lang }).catch(() => null),
+    ])
+
+    const shaped = shapedResult
+    const homepage = homepageResult
+
+    // Build smart homepage from existing data
+    const latestNews: SmartHomepageArticle[] = []
+    const mostRead: SmartHomepageArticle[] = []
+    const ticker: SmartHomepageTickerItem[] = []
+    const sections: SmartHomepageSection[] = []
+
+    // Helper to convert shaped article to smart article
+    const toSmartArticle = (a: HomepageShapedArticle): SmartHomepageArticle => ({
+      id: a.id,
+      title: a.title,
+      slug: a.slug || a.id,
+      excerpt: a.excerpt,
+      imageUrl: a.coverImageUrl || a.image,
+      categorySlug: a.category?.slug,
+      categoryName: a.category?.name,
+      publishedAt: a.publishedAt,
+    })
+
+    // Helper to convert to ticker item
+    const toTickerItem = (a: HomepageShapedArticle): SmartHomepageTickerItem => ({
+      id: a.id,
+      title: a.title,
+      slug: a.slug || a.id,
+      categorySlug: a.category?.slug,
+      publishedAt: a.publishedAt,
+    })
+
+    // Extract from shaped homepage
+    if (shaped) {
+      if (shaped.hero) latestNews.push(...shaped.hero.map(toSmartArticle))
+      if (shaped.topStories) latestNews.push(...shaped.topStories.map(toSmartArticle))
+      
+      if (shaped.sections) {
+        shaped.sections.forEach(s => {
+          sections.push({
+            categorySlug: s.categorySlug || s.key,
+            categoryName: s.title,
+            articles: s.items.map(toSmartArticle),
+          })
+        })
+      }
+    }
+
+    // Extract from legacy homepage feeds
+    if (homepage?.feeds) {
+      const feeds = homepage.feeds
+      
+      if (feeds.latest?.items) {
+        const latestItems = feeds.latest.items.map(feedItemToShapedArticle).map(toSmartArticle)
+        if (latestNews.length === 0) latestNews.push(...latestItems)
+      }
+      
+      if (feeds.mostRead?.items) {
+        mostRead.push(...feeds.mostRead.items.map(feedItemToShapedArticle).map(toSmartArticle))
+      }
+      
+      if (feeds.ticker?.items) {
+        ticker.push(...feeds.ticker.items.map(feedItemToShapedArticle).map(toTickerItem))
+      }
+
+      // Categories to sections
+      if (feeds.categories?.items && sections.length === 0) {
+        feeds.categories.items.forEach(catItem => {
+          sections.push({
+            categorySlug: catItem.category.slug,
+            categoryName: catItem.category.name,
+            articles: catItem.items.map(feedItemToShapedArticle).map(toSmartArticle),
+          })
+        })
+      }
+    }
+
+    // If still no data, use hardcoded fallback
+    if (latestNews.length === 0 && sections.length === 0) {
+      return await createHardcodedSmartFallback(params)
+    }
+
+    // Build ticker from latestNews if not available
+    const finalTicker = ticker.length > 0 
+      ? ticker 
+      : latestNews.slice(0, 10).map(a => ({
+          id: a.id,
+          title: a.title,
+          slug: a.slug,
+          categorySlug: a.categorySlug,
+          publishedAt: a.publishedAt,
+        }))
+
+    return {
+      version: '2.0-fallback',
+      timestamp: new Date().toISOString(),
+      latestNews: latestNews.slice(0, params?.latestCount || 12),
+      mostRead: mostRead.slice(0, params?.mostReadCount || 8),
+      ticker: finalTicker,
+      sections: sections.slice(0, params?.sectionsCount || 6),
+      meta: {
+        tenant: homepage?.tenant,
+        theme: { key: themeKey },
+        lang,
+        generatedAt: new Date().toISOString(),
+      },
+    }
+  } catch (error) {
+    console.error('❌ Smart homepage fallback also failed:', error)
+    return await createHardcodedSmartFallback(params)
+  }
+}
+
+/**
+ * Converts HomepageFeedItem to HomepageShapedArticle
+ */
+function feedItemToShapedArticle(item: HomepageFeedItem): HomepageShapedArticle {
+  const coverUrl = item.image || item.coverImageUrl || item.coverImage || undefined
+  const cat = item.category as { id?: string; slug?: string; name?: string } | undefined
+  
+  return {
+    id: item.id,
+    slug: item.slug || item.id,
+    title: item.title,
+    excerpt: item.excerpt || null,
+    coverImageUrl: coverUrl || null,
+    publishedAt: item.publishedAt || item.createdAt || null,
+    category: cat && typeof cat === 'object' ? {
+      id: String(cat.id || ''),
+      slug: String(cat.slug || ''),
+      name: String(cat.name || ''),
+    } : undefined,
+    tags: Array.isArray(item.tags) ? item.tags.map(String) : [],
+    languageCode: item.languageCode || null,
+  }
+}
+
+/**
+ * Last resort fallback with hardcoded data
+ */
+async function createHardcodedSmartFallback(params?: SmartHomepageParams): Promise<SmartHomepageResponse> {
+  const articles = await getFallbackArticles()
+  const categories = await getFallbackCategories()
+  const lang = params?.lang || 'te'
+  const themeKey = params?.themeKey || 'style1'
+
+  const smartArticles: SmartHomepageArticle[] = articles.map(a => {
+    const cat = a.category as { id?: string; slug?: string; name?: string } | undefined
+    return {
+      id: String(a.id),
+      slug: String(a.slug || a.id),
+      title: String(a.title || ''),
+      excerpt: typeof a.excerpt === 'string' ? a.excerpt : null,
+      imageUrl: typeof a.imageUrl === 'string' ? a.imageUrl : null,
+      publishedAt: typeof a.publishedAt === 'string' ? a.publishedAt : null,
+      categoryId: cat?.id,
+      categorySlug: cat?.slug,
+      categoryName: cat?.name,
+    }
+  })
+
+  const tickerItems: SmartHomepageTickerItem[] = smartArticles.slice(0, 10).map(a => ({
+    id: a.id,
+    title: a.title,
+    slug: a.slug,
+    categorySlug: a.categorySlug,
+    publishedAt: a.publishedAt,
+  }))
+
+  const sections: SmartHomepageSection[] = categories.slice(0, params?.sectionsCount || 6).map(cat => ({
+    categorySlug: cat.slug,
+    categoryName: typeof cat.name === 'string' ? cat.name : cat.slug,
+    articles: smartArticles.filter(a => a.categorySlug === cat.slug).slice(0, params?.articlesPerSection || 4),
+  }))
+
+  return {
+    version: '2.0-hardcoded',
+    timestamp: new Date().toISOString(),
+    latestNews: smartArticles.slice(0, params?.latestCount || 12),
+    mostRead: smartArticles.slice(0, params?.mostReadCount || 8),
+    ticker: tickerItems,
+    sections,
+    meta: {
+      totalArticles: articles.length,
+      totalCategories: categories.length,
+      lastUpdated: new Date().toISOString(),
+      tenant: { slug: 'demo', name: 'కబుర్లు డెమో' },
+      theme: { key: themeKey },
+      lang,
+      generatedAt: new Date().toISOString(),
+    },
+  }
+}
+
 function domainFromHeaders(h: Headers, override?: string) {
   const explicit = String(override || '').trim()
   if (explicit) return domainFromHost(explicit)
@@ -414,6 +805,95 @@ export function feedItemToArticle(item: HomepageFeedItem): Article {
 export function feedItemsToArticles(items: HomepageFeedItem[]): Article[] {
   // Filter out invalid articles to prevent 404 errors
   return items.map(feedItemToArticle).filter(isValidArticleData)
+}
+
+// ============================================
+// 🔄 SMART HOMEPAGE TO ARTICLE CONVERTERS
+// Backward compatibility helpers
+// ============================================
+
+/**
+ * Converts HomepageShapedArticle to Article format
+ * Used for backward compatibility with existing theme components
+ */
+export function shapedArticleToArticle(item: HomepageShapedArticle): Article {
+  const coverUrl = item.coverImageUrl || item.image || undefined
+  return {
+    id: item.id,
+    slug: item.slug || item.id,
+    title: item.title,
+    excerpt: item.excerpt || null,
+    coverImage: coverUrl ? { url: coverUrl } : undefined,
+    publishedAt: item.publishedAt || undefined,
+    category: item.category,
+  } as Article
+}
+
+/**
+ * Converts array of HomepageShapedArticle to Article array
+ */
+export function shapedArticlesToArticles(items: HomepageShapedArticle[]): Article[] {
+  return items.map(shapedArticleToArticle).filter(isValidArticleData)
+}
+
+/**
+ * Converts SmartHomepageArticle to Article format
+ * Used for backward compatibility with existing theme components
+ */
+export function smartArticleToArticle(item: SmartHomepageArticle): Article {
+  return {
+    id: item.id,
+    slug: item.slug || item.id,
+    title: item.title,
+    excerpt: item.excerpt || null,
+    coverImage: item.imageUrl ? { url: item.imageUrl } : undefined,
+    publishedAt: item.publishedAt || undefined,
+    category: item.categorySlug ? {
+      slug: item.categorySlug,
+      name: item.categoryName || item.categorySlug,
+    } : undefined,
+    isBreaking: item.isBreaking,
+    readingTimeMin: item.readTime,
+    viewCount: item.viewCount,
+  } as Article
+}
+
+/**
+ * Converts SmartHomepageTickerItem to Article format
+ */
+export function smartTickerToArticle(item: SmartHomepageTickerItem): Article {
+  return {
+    id: item.id,
+    slug: item.slug || item.id,
+    title: item.title,
+    publishedAt: item.publishedAt || undefined,
+    category: item.categorySlug ? { slug: item.categorySlug } : undefined,
+    isBreaking: item.isBreaking,
+  } as Article
+}
+
+/**
+ * Converts SmartHomepageResponse to legacy data structures
+ * Use this for gradual migration from old APIs to smart-homepage
+ */
+export function smartHomepageToLegacy(smart: SmartHomepageResponse): {
+  hero: Article[]
+  topStories: Article[]
+  mostRead: Article[]
+  ticker: Article[]
+  sectionDataMap: Record<string, Article[]>
+} {
+  const hero = smart.latestNews.slice(0, 1).map(smartArticleToArticle)
+  const topStories = smart.latestNews.slice(1, 6).map(smartArticleToArticle)
+  const mostRead = smart.mostRead.map(smartArticleToArticle)
+  const ticker = smart.ticker.map(smartTickerToArticle)
+  
+  const sectionDataMap: Record<string, Article[]> = {}
+  smart.sections.forEach(section => {
+    sectionDataMap[section.categorySlug] = section.articles.map(smartArticleToArticle)
+  })
+
+  return { hero, topStories, mostRead, ticker, sectionDataMap }
 }
 
 // ---- Fallback homepage response ----

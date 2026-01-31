@@ -13,25 +13,56 @@ export function categoryHref(tenantSlug: string, slug: string) {
 }
 
 /**
- * Generate article URL - supports both simple and SEO-friendly formats
+ * Generate SEO-friendly article URL
  * 
- * Simple format: /article/[slug]
- * SEO format:    /[category]/[slug] (better for SEO!)
+ * Format: /{categorySlug}/{articleSlug} (Always SEO-optimized!)
  * 
  * @param tenantSlug - Tenant identifier
  * @param slug - Article slug
- * @param categorySlug - Optional category slug for SEO-friendly URL
+ * @param categorySlug - Category slug (defaults to 'news' if not provided)
  */
-export function articleHref(tenantSlug: string, slug: string, categorySlug?: string) {
+export function articleHref(tenantSlug: string, slug: string, categorySlug?: string | null) {
   const base = basePathForTenant(tenantSlug)
   
-  // If category is provided and we're in domain mode, use SEO-friendly URL
-  if (categorySlug && !base) {
-    return `/${categorySlug}/${slug}`
-  }
+  // 🚀 Always use SEO-friendly URL: /{categorySlug}/{articleSlug}
+  // Default to 'news' category if not provided
+  const category = categorySlug || 'news'
   
-  // Fallback to simple article URL
-  return `${base}/article/${slug}`
+  if (base) {
+    // Path mode: /t/{tenant}/{category}/{article}
+    return `${base}/${category}/${slug}`
+  }
+  // Domain mode: /{category}/{article}
+  return `/${category}/${slug}`
+}
+
+/**
+ * Helper to extract category slug from Article object
+ */
+export function getCategorySlugFromArticle(article: {
+  category?: { slug?: string } | null
+  categories?: Array<{ slug?: string }> | null
+}): string | undefined {
+  return article.category?.slug || article.categories?.[0]?.slug || undefined
+}
+
+/**
+ * Generate article URL with automatic category extraction
+ * 
+ * @param tenantSlug - Tenant identifier
+ * @param article - Article object with category info
+ */
+export function articleHrefFromArticle(
+  tenantSlug: string, 
+  article: { 
+    id: string
+    slug?: string
+    category?: { slug?: string } | null
+    categories?: Array<{ slug?: string }> | null 
+  }
+): string {
+  const categorySlug = getCategorySlugFromArticle(article)
+  return articleHref(tenantSlug, article.slug || article.id, categorySlug)
 }
 
 /**

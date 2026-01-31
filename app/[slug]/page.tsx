@@ -1,3 +1,15 @@
+/**
+ * Dynamic Slug Page Handler
+ * 
+ * This handles single-segment URLs like:
+ * - /privacy-policy → Legal pages
+ * - /terms-and-conditions → Legal pages
+ * - /about → Legal pages
+ * 
+ * For two-segment URLs like /politics/article-slug,
+ * the [slug]/[articleSlug]/page.tsx handles those.
+ */
+
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { LegalPage } from '@/components/pages/LegalPage'
@@ -15,7 +27,11 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
-  if (!isLegalPageKey(slug)) return {}
+  
+  // Only legal pages are handled here
+  if (!isLegalPageKey(slug)) {
+    return { title: 'Not Found' }
+  }
 
   const tenant = await resolveTenant()
   const settings = tenant.domain ? await getEffectiveSettingsForDomain(tenant.domain) : await getEffectiveSettings()
@@ -32,7 +48,6 @@ function pickThemeKey(settings?: EffectiveSettings) {
   const requestedThemeKey: string =
     settings?.theme?.theme ||
     settings?.theme?.key ||
-    settings?.settings?.theme?.theme ||
     settings?.settings?.theme?.key ||
     'style1'
 
@@ -43,9 +58,13 @@ function pickThemeKey(settings?: EffectiveSettings) {
     | 'tv9'
 }
 
-export default async function LegalSlugPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function SlugPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  if (!isLegalPageKey(slug)) notFound()
+  
+  // Only handle legal pages - other single-segment URLs should 404
+  if (!isLegalPageKey(slug)) {
+    notFound()
+  }
 
   const pageKey = slug as LegalPageKey
 

@@ -11,6 +11,7 @@ export type LegalPageKey =
   | 'language'
   | 'location'
   | 'mobile-app'
+  | 'delete-account'
 
 export const LEGAL_PAGE_KEYS: LegalPageKey[] = [
   'about-us',
@@ -25,6 +26,7 @@ export const LEGAL_PAGE_KEYS: LegalPageKey[] = [
   'language',
   'location',
   'mobile-app',
+  'delete-account',
 ]
 
 export const LEGAL_PAGE_META: Record<LegalPageKey, { title: string; description: string }> = {
@@ -75,6 +77,10 @@ export const LEGAL_PAGE_META: Record<LegalPageKey, { title: string; description:
   'mobile-app': {
     title: 'Mobile App',
     description: 'Get the Kaburlu News mobile app and stay updated on the go.',
+  },
+  'delete-account': {
+    title: 'Account & Data Deletion',
+    description: 'Request deletion of your Kaburlu App account and associated data.',
   },
 }
 

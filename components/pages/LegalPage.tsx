@@ -336,6 +336,82 @@ export async function LegalPage({
               </ul>
             </>
           ) : null}
+
+          {pageKey === 'delete-account' ? (
+            <>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+                <h2 className="text-red-800 mt-0">Account & Data Deletion – Kaburlu App</h2>
+                <p className="text-red-700 mb-0">
+                  If you are a registered reporter or citizen reporter of Kaburlu App and want to delete your account and associated data, please follow the instructions below.
+                </p>
+              </div>
+
+              <h2>How to Request Account Deletion</h2>
+              <p>
+                To delete your account and all associated data, please send an email to:
+              </p>
+              <p className="text-center">
+                <a 
+                  href="mailto:support@kaburlutoday.com?subject=Account Deletion Request" 
+                  className="inline-block bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 transition-colors no-underline"
+                >
+                  📧 support@kaburlutoday.com
+                </a>
+              </p>
+
+              <h2>Information Required</h2>
+              <p>Please include the following details in your email:</p>
+              <ul>
+                <li><strong>Registered Mobile Number</strong> or <strong>Email ID</strong></li>
+                <li><strong>Reporter ID</strong> (if applicable)</li>
+                <li><strong>Full Name</strong> (as registered)</li>
+                <li><strong>Reason for deletion</strong> (optional)</li>
+              </ul>
+
+              <h2>What Happens Next?</h2>
+              <ul>
+                <li>Our support team will verify your identity</li>
+                <li>Your account and all associated data will be permanently deleted</li>
+                <li>You will receive a confirmation email once the deletion is complete</li>
+              </ul>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-6">
+                <p className="text-yellow-800 mb-0">
+                  <strong>⏱️ Processing Time:</strong> We will process your request within <strong>7 working days</strong>.
+                </p>
+              </div>
+
+              <h2>Data That Will Be Deleted</h2>
+              <ul>
+                <li>Your profile information (name, phone, email)</li>
+                <li>Reporter credentials and permissions</li>
+                <li>Published articles (will be transferred to anonymous/desk account)</li>
+                <li>Activity logs and analytics data</li>
+              </ul>
+
+              <h2>ఖాతా & డేటా తొలగింపు – కబుర్లు యాప్</h2>
+              <p>
+                మీరు కబుర్లు యాప్ యొక్క రిజిస్టర్డ్ రిపోర్టర్ లేదా సిటిజన్ రిపోర్టర్ అయి, మీ ఖాతా మరియు సంబంధిత డేటాను తొలగించాలనుకుంటే, దయచేసి క్రింది ఇమెయిల్‌కు అభ్యర్థన పంపండి:
+              </p>
+              <p className="text-center">
+                <strong>📧 support@kaburlutoday.com</strong>
+              </p>
+              <p>ఇమెయిల్‌లో చేర్చవలసినవి:</p>
+              <ul>
+                <li>రిజిస్టర్డ్ మొబైల్ నంబర్ / ఇమెయిల్</li>
+                <li>రిపోర్టర్ ఐడి (ఉంటే)</li>
+              </ul>
+              <p>
+                <strong>⏱️ ప్రాసెసింగ్ సమయం:</strong> మేము 7 పని దినాలలో మీ అభ్యర్థనను ప్రాసెస్ చేస్తాము.
+              </p>
+
+              <h2>Contact</h2>
+              <p>
+                For any questions about account deletion, contact us at{' '}
+                <a href="mailto:support@kaburlutoday.com">support@kaburlutoday.com</a>
+              </p>
+            </>
+          ) : null}
         </div>
       </main>
 
