@@ -11,7 +11,7 @@
 
 # Data source and remote API
 DATA_SOURCE="remote" # remote | local
-API_BASE_URL="https://app.kaburlumedia.com/api/v1"
+API_BASE_URL="https://api.kaburlumedia.com/api/v1"
 
 # ⚠️ PRODUCTION: DO NOT SET HOST or NEXT_PUBLIC_HOST
 # Let Vercel automatically detect domain from request headers

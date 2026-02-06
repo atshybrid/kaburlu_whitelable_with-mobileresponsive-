@@ -164,6 +164,163 @@ export type Style2HomepageResponse = {
   [key: string]: unknown
 }
 
+// ============================================
+// 🚀 NEW: /public/homepage/smart (2026) response
+// Single call: config + seo + sections (ticker/hero/categories/etc)
+// ============================================
+
+export type HomepageSmartV2Article = {
+  id: string
+  slug: string
+  title: string
+  coverImageUrl?: string | null
+  publishedAt?: string | null
+  viewCount?: number | null
+  category?: {
+    id?: string
+    slug?: string
+    name?: string
+  } | null
+}
+
+export type HomepageSmartV2HeroColumn = {
+  key: string
+  position?: number
+  name?: string
+  limit?: number
+  articles: HomepageSmartV2Article[]
+}
+
+export type HomepageSmartV2SectionTicker = {
+  id: string
+  key: 'ticker' | string
+  name?: string
+  visible: boolean
+  limit?: number
+  articles: HomepageSmartV2Article[]
+}
+
+export type HomepageSmartV2SectionHero = {
+  id: string
+  key: 'hero' | string
+  name?: string
+  visible: boolean
+  totalArticles?: number
+  columns: HomepageSmartV2HeroColumn[]
+}
+
+export type HomepageSmartV2CategoryBlock = {
+  slug: string
+  name: string
+  visible: boolean
+  articlesLimit?: number
+  articles: HomepageSmartV2Article[]
+}
+
+export type HomepageSmartV2SectionCategories = {
+  id: string
+  key: 'categories' | string
+  name?: string
+  visible: boolean
+  categoriesShown?: number
+  maxCategories?: number
+  articlesPerCategory?: number
+  totalArticles?: number
+  categories: HomepageSmartV2CategoryBlock[]
+}
+
+export type HomepageSmartV2SectionHgBlock = {
+  id: string
+  key: 'hgBlock' | string
+  name?: string
+  visible: boolean
+  categoriesShown?: number
+  maxCategories?: number
+  articlesPerCategory?: number
+  totalArticles?: number
+  categories: HomepageSmartV2CategoryBlock[]
+}
+
+export type HomepageSmartV2Section =
+  | HomepageSmartV2SectionTicker
+  | HomepageSmartV2SectionHero
+  | HomepageSmartV2SectionCategories
+  | HomepageSmartV2SectionHgBlock
+  | {
+      id: string
+      key: string
+      name?: string
+      visible: boolean
+      [key: string]: unknown
+    }
+
+export type HomepageSmartV2Response = {
+  config?: {
+    themeStyle?: string
+    detectedFromDomain?: string
+    sortBy?: string
+  }
+  seo?: {
+    title?: string
+    description?: string
+    keywords?: string | null
+    ogImageUrl?: string
+    ogUrl?: string
+    jsonLd?: unknown
+  }
+  sections: HomepageSmartV2Section[]
+  meta?: {
+    timestamp?: string
+    totalSections?: number
+    visibleSections?: number
+    [key: string]: unknown
+  }
+}
+
+export type HomepageSmartV2Params = {
+  lang?: string
+  sortBy?: string
+}
+
+export async function getHomepageSmartV2(params?: HomepageSmartV2Params): Promise<HomepageSmartV2Response> {
+  return _getHomepageSmartV2(params)
+}
+
+export async function getHomepageSmartV2ForDomain(
+  tenantDomain: string,
+  params?: HomepageSmartV2Params,
+): Promise<HomepageSmartV2Response> {
+  return _getHomepageSmartV2ForDomain(tenantDomain, params)
+}
+
+const _getHomepageSmartV2 = reactCache(async (params?: HomepageSmartV2Params): Promise<HomepageSmartV2Response> => {
+  const h = await headers()
+  const domain = domainFromHeaders(h)
+  const lang = params?.lang || 'te'
+  const sortBy = params?.sortBy || 'publishedAt'
+  const qs = new URLSearchParams({ lang, sortBy })
+
+  return fetchJSON<HomepageSmartV2Response>(`/public/homepage/smart?${qs.toString()}`, {
+    tenantDomain: domain,
+    revalidateSeconds: Number(process.env.REMOTE_HOMEPAGE_REVALIDATE_SECONDS || '30'),
+    tags: [`homepage-smart-v2:${domain}:${lang}:${sortBy}`],
+  })
+})
+
+const _getHomepageSmartV2ForDomain = reactCache(
+  async (tenantDomain: string, params?: HomepageSmartV2Params): Promise<HomepageSmartV2Response> => {
+    const lang = params?.lang || 'te'
+    const sortBy = params?.sortBy || 'publishedAt'
+    const qs = new URLSearchParams({ lang, sortBy })
+
+    return fetchJSON<HomepageSmartV2Response>(`/public/homepage/smart?${qs.toString()}`, {
+      tenantDomain: domainFromHost(tenantDomain),
+      revalidateSeconds: Number(process.env.REMOTE_HOMEPAGE_REVALIDATE_SECONDS || '30'),
+      tags: [`homepage-smart-v2:${tenantDomain}:${lang}:${sortBy}`],
+    })
+  },
+)
+
 function normalizeStyle2HomepageResponse(u: unknown): Style2HomepageResponse {
   if (!u || typeof u !== 'object') return {}
   const o = u as Record<string, unknown>

@@ -32,6 +32,11 @@ function getDomain(h: Headers) {
   if (process.env.HOST) {
     return process.env.HOST.split(':')[0]
   }
+
+  // Prefer the tenant header injected by `proxy.ts`/middleware (works on localhost)
+  const fromProxy = h.get('x-tenant-domain') || h.get('X-Tenant-Domain')
+  if (fromProxy) return String(fromProxy).split(':')[0]
+
   const host = h.get('host') || 'localhost'
   return host.split(':')[0]
 }

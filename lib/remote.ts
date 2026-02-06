@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.API_BASE_URL || 'https://app.kaburlumedia.com/api/v1'
+const API_BASE_URL = process.env.API_BASE_URL || 'https://api.kaburlumedia.com/api/v1'
 
 const DEFAULT_REVALIDATE_SECONDS = Number(process.env.REMOTE_REVALIDATE_SECONDS || '30')
 

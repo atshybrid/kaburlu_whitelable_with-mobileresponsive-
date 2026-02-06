@@ -7,7 +7,7 @@ import { cache as reactCache } from 'react'
 import { normalizeTenantDomain } from './remote'
 import { getConfig, getCacheTTL } from './config'
 
-const API_BASE_URL = process.env.API_BASE_URL || 'https://app.kaburlumedia.com/api/v1'
+const API_BASE_URL = process.env.API_BASE_URL || 'https://api.kaburlumedia.com/api/v1'
 
 // ============================================================================
 // Types

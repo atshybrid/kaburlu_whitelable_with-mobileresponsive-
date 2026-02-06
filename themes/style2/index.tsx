@@ -1403,7 +1403,11 @@ export async function ThemeHome({
 /* ==================== REPORTER SECTION COMPONENT ==================== */
 
 function ReporterSection({ article }: { article: Article }) {
-  const authorName = (article as { author?: { name?: string } }).author?.name || 'Kaburlu Media'
+  const authorName =
+    article.reporter?.name ||
+    (article.authors && article.authors.length > 0 ? article.authors[0]?.name : undefined) ||
+    (article as { author?: { name?: string } }).author?.name ||
+    'Kaburlu Media'
   const initials = authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   
   return (
@@ -1433,12 +1437,18 @@ export async function ThemeArticle({
 }) {
   const settings = await getEffectiveSettings().catch(() => undefined)
   const cssVars = themeCssVarsFromSettings(settings)
+
+  const embeddedMustReadList = Array.isArray((article as unknown as Record<string, unknown>)?.mustReadList)
+    ? ((article as unknown as Record<string, unknown>).mustReadList as unknown[]).map((x) => x as Article)
+    : null
   
   // 🎯 Fetch sidebar and bottom section data in parallel using new APIs
   const articleSlug = article.slug || article.id || ''
   const [latestArticles, mustReadArticles, relatedArticles, trendingArticles] = await Promise.all([
     getLatestArticles(8, articleSlug).catch(() => []),
-    getMustReadArticles(5, articleSlug).catch(() => []),
+    embeddedMustReadList && embeddedMustReadList.length > 0
+      ? Promise.resolve(embeddedMustReadList)
+      : getMustReadArticles(5, articleSlug).catch(() => []),
     article.related && article.related.length > 0 
       ? Promise.resolve(article.related.map(r => ({ ...r, title: r.title || '' } as Article)))
       : getRelatedArticles(articleSlug, 6).catch(() => []),
@@ -1466,6 +1476,24 @@ export async function ThemeArticle({
       ...(settings?.branding?.logoUrl ? { logo: { '@type': 'ImageObject', url: settings.branding.logoUrl } } : {}),
     },
   }
+
+  const contentData = (article as unknown as Record<string, unknown>)?.contentData
+  const nestedContentHtml =
+    contentData && typeof contentData === 'object' && typeof (contentData as Record<string, unknown>).contentHtml === 'string'
+      ? String((contentData as Record<string, unknown>).contentHtml)
+      : undefined
+  const nestedPlainText =
+    contentData && typeof contentData === 'object' && typeof (contentData as Record<string, unknown>).plainText === 'string'
+      ? String((contentData as Record<string, unknown>).plainText)
+      : undefined
+
+  const articleBodyHtml =
+    (typeof article.contentHtml === 'string' && article.contentHtml.trim() ? article.contentHtml : undefined) ||
+    (typeof article.content === 'string' && article.content.trim() ? article.content : undefined) ||
+    (nestedContentHtml && nestedContentHtml.trim() ? nestedContentHtml : undefined) ||
+    (nestedPlainText && nestedPlainText.trim() ? nestedPlainText : undefined) ||
+    ''
+
 
   return (
     <div className="theme-style2 pb-16 sm:pb-0" style={cssVars}>
@@ -1542,8 +1570,8 @@ export async function ThemeArticle({
 
             {/* Article Content with Inline Images */}
             <Style2ArticleContent 
-              html={article.contentHtml || article.content || ''} 
-              secondImage={article.media?.images && article.media.images.length > 1 ? article.media.images[1] : null}
+              html={articleBodyHtml} 
+              secondImage={article.media?.images && article.media.images.length > 0 ? article.media.images[0] : null}
             />
 
             <div className="mt-8 pt-6 border-t border-zinc-200">
@@ -1685,11 +1713,31 @@ export async function ThemeArticle({
 }
 
 // Style2 Article Content with inline image support
-function Style2ArticleContent({ html, secondImage }: { html: string; secondImage?: { url?: string; alt?: string; caption?: string } | null }) {
+function Style2ArticleContent({
+  html,
+  secondImage,
+}: {
+  html: string
+  secondImage?: { url?: string; alt?: string; caption?: string } | null
+}) {
   if (!html) {
     return (
       <div className="text-center py-8">
         <p className="text-zinc-500">ఆర్టికల్ కంటెంట్ లోడ్ అవుతోంది...</p>
+      </div>
+    )
+  }
+
+  const hasParagraphBlocks = /<\s*\/\s*p\s*>/i.test(html)
+  if (!hasParagraphBlocks) {
+    const looksLikeHtml = /<\s*([a-z][\w:-]*)\b/i.test(html)
+    return (
+      <div className="article-content prose prose-lg max-w-none">
+        {looksLikeHtml ? (
+          <div className="article-paragraph" dangerouslySetInnerHTML={{ __html: html }} />
+        ) : (
+          <p className="article-paragraph">{html}</p>
+        )}
       </div>
     )
   }
@@ -1714,7 +1762,7 @@ function Style2ArticleContent({ html, secondImage }: { html: string; secondImage
     )
     
     paraCount++
-    
+
     // Insert second image after 5-6 paragraphs
     if (!imageInserted && secondImage?.url && paraCount === 6) {
       nodes.push(

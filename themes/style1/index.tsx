@@ -22,7 +22,14 @@ import {
   getPublicHomepage, 
   getHomepageShaped,
   type HomepageShapedArticle,
-  feedItemsToArticles 
+  feedItemsToArticles,
+  getHomepageSmartV2,
+  type HomepageSmartV2Response,
+  type HomepageSmartV2Article,
+  type HomepageSmartV2Section,
+  type HomepageSmartV2SectionCategories,
+  type HomepageSmartV2SectionHero,
+  type HomepageSmartV2SectionTicker
 } from '@/lib/homepage'
 import { FontSizeControl, CopyLinkButton, ScrollToTopButton, StickyShareBar, ViewCounter } from '@/components/shared/ArticleEnhancements'
 import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapper'
@@ -948,6 +955,22 @@ export async function ThemeHome({
   const themeKey = settings?.theme?.theme || settings?.theme?.key || (settings?.theme?.layout as Record<string, unknown>)?.style || (settings?.settings?.theme?.layout as Record<string, unknown>)?.style || 'style1'
   const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'te'
 
+  const smartArticleToArticle = (a: HomepageSmartV2Article): Article => {
+    const imageUrl = a.coverImageUrl || null
+    const catSlug = a.category?.slug || undefined
+    const catName = a.category?.name || undefined
+    return {
+      id: a.id,
+      slug: a.slug || a.id,
+      title: a.title,
+      excerpt: '',
+      coverImage: imageUrl ? { url: imageUrl } : undefined,
+      publishedAt: a.publishedAt || undefined,
+      category: catSlug || catName ? { slug: catSlug, name: catName } : undefined,
+      categories: catSlug || catName ? [{ slug: catSlug, name: catName }] : undefined,
+    } as Article
+  }
+
   // Helper to convert shaped articles to Article format
   const shapedToArticle = (item: HomepageShapedArticle): Article => {
     // Use coverImageUrl first, then fall back to image field
@@ -967,60 +990,79 @@ export async function ThemeHome({
     }
   }
 
-  // ⚡ PERFORMANCE OPTIMIZATION: Fetch ALL data in parallel instead of sequential
-  // This reduces homepage load time from 4-6s to ~1-2s
-  const apiVersion = themeKey === 'style2' ? 2 : 1
-  
-  const [
-    shapedHomepageResult,
-    homepageResult,
-    layoutResult,
-    domainStatsResult,
-  ] = await Promise.all([
-    // Shaped homepage with structured sections
-    getHomepageShaped({ themeKey: String(themeKey), lang: String(lang) })
-      .then(data => ({ data, error: null }))
-      .catch(error => ({ data: null, error })),
-    
-    // Legacy homepage for ticker and tenant info
-    getPublicHomepage({ v: apiVersion, themeKey: String(themeKey), lang: String(lang), shape: String(themeKey) })
-      .then(data => ({ data, error: null }))
-      .catch(error => ({ data: null, error })),
-    
-    // Home layout configuration
+  // ⚡ PERFORMANCE OPTIMIZATION:
+  // Prefer the new single-call smart homepage. Only fall back to shaped+legacy if smart fails.
+  const [config, smartHomepageResult, layoutResult, domainStatsResult] = await Promise.all([
+    getConfig().catch(() => null),
+    getHomepageSmartV2({ lang: String(lang), sortBy: 'publishedAt' })
+      .then((data) => ({ data, error: null }))
+      .catch((error) => ({ data: null, error })),
     readHomeLayout(tenantSlug, 'style1')
-      .then(data => ({ data, error: null }))
+      .then((data) => ({ data, error: null }))
       .catch(() => ({ data: { sections: [] }, error: null })),
-    
-    // Domain stats for top articles modal (with 2s timeout)
     Promise.race([
-      getDomainStats(domain).then(data => ({ data, error: null })),
-      new Promise<{ data: null; error: null }>((resolve) => 
-        setTimeout(() => resolve({ data: null, error: null }), 2000)
-      ),
+      getDomainStats(domain).then((data) => ({ data, error: null })),
+      new Promise<{ data: null; error: null }>((resolve) => setTimeout(() => resolve({ data: null, error: null }), 2000)),
     ]).catch(() => ({ data: null, error: null })),
   ])
 
-  // Extract results
-  const shapedHomepage = shapedHomepageResult.data
-  const homepage = homepageResult.data
+  const smartHomepage: HomepageSmartV2Response | null = smartHomepageResult.data
   const layout = layoutResult.data
   const domainStats = domainStatsResult.data
 
-  if (shapedHomepage) {
-    console.log('✅ Shaped homepage loaded:', {
-      hasHero: !!shapedHomepage?.hero,
-      hasTopStories: !!shapedHomepage?.topStories,
-      sectionsCount: shapedHomepage?.sections?.length || 0,
-      dataKeys: Object.keys(shapedHomepage?.data || {}),
-    })
-  } else if (shapedHomepageResult.error) {
-    console.error('❌ Shaped homepage failed:', shapedHomepageResult.error)
+  let shapedHomepage: Awaited<ReturnType<typeof getHomepageShaped>> | null = null
+  let homepage: Awaited<ReturnType<typeof getPublicHomepage>> | null = null
+
+  if (!smartHomepage || !Array.isArray(smartHomepage.sections) || smartHomepage.sections.length === 0) {
+    const apiVersion = themeKey === 'style2' ? 2 : 1
+    const [shapedHomepageResult, homepageResult] = await Promise.all([
+      getHomepageShaped({ themeKey: String(themeKey), lang: String(lang) })
+        .then((data) => ({ data, error: null }))
+        .catch((error) => ({ data: null, error })),
+      getPublicHomepage({ v: apiVersion, themeKey: String(themeKey), lang: String(lang), shape: String(themeKey) })
+        .then((data) => ({ data, error: null }))
+        .catch((error) => ({ data: null, error })),
+    ])
+    shapedHomepage = shapedHomepageResult.data
+    homepage = homepageResult.data
+
+    if (shapedHomepage) {
+      console.log('✅ Shaped homepage loaded (fallback):', {
+        hasHero: !!shapedHomepage?.hero,
+        hasTopStories: !!shapedHomepage?.topStories,
+        sectionsCount: shapedHomepage?.sections?.length || 0,
+        dataKeys: Object.keys(shapedHomepage?.data || {}),
+      })
+    } else if (shapedHomepageResult.error) {
+      console.error('❌ Shaped homepage failed (fallback):', shapedHomepageResult.error)
+    }
   }
 
   // Best-practice: for root-domain home, use the tenant slug returned by backend homepage config
   // so links go to the correct tenant path.
   const tenantSlugForLinks = homepage?.tenant?.slug || tenantSlug
+
+  // ---- Smart visibility map (visible:false must hide) ----
+  const smartSectionsByKey = new Map<string, HomepageSmartV2Section>()
+  if (smartHomepage?.sections) {
+    for (const s of smartHomepage.sections) {
+      if (s && typeof s === 'object' && typeof (s as { key?: unknown }).key === 'string') {
+        smartSectionsByKey.set(String((s as { key: string }).key), s)
+      }
+    }
+  }
+
+  const smartTickerSection = smartSectionsByKey.get('ticker') as HomepageSmartV2SectionTicker | undefined
+  const smartHeroSection = smartSectionsByKey.get('hero') as HomepageSmartV2SectionHero | undefined
+  const smartCategoriesSection = smartSectionsByKey.get('categories') as HomepageSmartV2SectionCategories | undefined
+  const smartHgBlockSection = smartSectionsByKey.get('hgBlock') as { visible?: boolean } | undefined
+  const smartWebStoriesSection = smartSectionsByKey.get('webStories') as { visible?: boolean } | undefined
+
+  const showTicker = smartTickerSection ? smartTickerSection.visible !== false : true
+  const showHero = smartHeroSection ? smartHeroSection.visible !== false : true
+  const showCategories = smartCategoriesSection ? smartCategoriesSection.visible !== false : true
+  const showHgBlock = smartHgBlockSection ? smartHgBlockSection.visible !== false : true
+  const showWebStories = smartWebStoriesSection ? smartWebStoriesSection.visible !== false : true
 
   // Extract feeds from the legacy API for ticker and mostRead
   const feeds = homepage?.feeds || {}
@@ -1033,7 +1075,8 @@ export async function ThemeHome({
     : []
 
   const fallbackFeed = baseArticles.length > 0 ? baseArticles : shapedFallbackFeed
-  const tickerData = tickerItems.length > 0 ? tickerItems : fallbackFeed.slice(0, 10)
+  const smartTickerData = smartTickerSection?.articles?.length ? smartTickerSection.articles.map(smartArticleToArticle) : []
+  const tickerData = smartTickerData.length > 0 ? smartTickerData : (tickerItems.length > 0 ? tickerItems : fallbackFeed.slice(0, 10))
   const mostReadData = mostReadItems.length > 0 ? mostReadItems : fallbackFeed.slice(0, 3)
 
   // If absolutely nothing is available, show a clear technical issue.
@@ -1055,12 +1098,48 @@ export async function ThemeHome({
   }
 
   // Hero section: Use shaped homepage hero or fallback to articles
+  // Section data map is used by multiple blocks (mustRead/topViewed/category columns)
+  const sectionDataMap: Record<string, Article[]> = {}
+
   let lead: Article | undefined
   let medium: Article[]
   let small: Article[]
   let allLatest: Article[] = [] // Full continuous list for col1 & col2
 
-  if (shapedHomepage?.hero && shapedHomepage.hero.length > 0) {
+  if (smartHeroSection?.columns?.length) {
+    const col = (key: string) =>
+      smartHeroSection.columns.find((c) => String(c.key) === key)?.articles?.map(smartArticleToArticle) || []
+
+    const heroMain = col('heroMain')
+    const heroLatest = col('heroLatest')
+    const heroMustRead = col('heroMustRead')
+    const heroTop = col('heroTop')
+
+    lead = heroMain[0] || heroLatest[0] || fallbackFeed[0]
+    const mainRest = heroMain.slice(1)
+    medium = mainRest.slice(0, 2)
+    const smallFromMain = mainRest.slice(2)
+    const smallFromLatest = heroLatest.filter((a) => a.id !== lead?.id).slice(0, Math.max(0, 6 - smallFromMain.length))
+    small = [...smallFromMain, ...smallFromLatest].slice(0, 6)
+
+    const dedupe = (items: Article[]) => {
+      const seen = new Set<string>()
+      const out: Article[] = []
+      for (const a of items) {
+        if (!a?.id) continue
+        if (seen.has(a.id)) continue
+        seen.add(a.id)
+        out.push(a)
+      }
+      return out
+    }
+    allLatest = dedupe([...(lead ? [lead] : []), ...heroMain, ...heroLatest])
+
+    // Feed col-3 and col-4 through sectionDataMap so existing UI logic keeps working
+    // (col-3 reads mustRead keys; col-4 reads topViewed keys)
+    sectionDataMap['mustRead'] = heroMustRead
+    sectionDataMap['topViewed'] = heroTop
+  } else if (shapedHomepage?.hero && shapedHomepage.hero.length > 0) {
     // Use hero from shaped API
     lead = shapedToArticle(shapedHomepage.hero[0])
     
@@ -1084,7 +1163,6 @@ export async function ThemeHome({
   }
 
   // Extract sections data from shaped homepage
-  const sectionDataMap: Record<string, Article[]> = {}
   if (shapedHomepage?.sections) {
     shapedHomepage.sections.forEach(section => {
       sectionDataMap[section.key] = section.items.map(shapedToArticle)
@@ -1095,6 +1173,16 @@ export async function ThemeHome({
       sectionDataMap[key] = items.map(shapedToArticle)
     })
   }
+
+  // Smart categories: prefill sectionDataMap with backend-picked categories to avoid extra API calls.
+  const configuredCategoryColumns = (smartCategoriesSection?.categories || [])
+    .filter((c) => c && c.visible !== false)
+    .slice(0, 4)
+    .map((c) => {
+      const items = (c.articles || []).map(smartArticleToArticle).slice(0, 5)
+      sectionDataMap[String(c.slug)] = items
+      return { slug: String(c.slug), name: String(c.name || c.slug), items }
+    })
   
   // Track which category slugs are already used in homepage sections
   // This prevents duplicate categories from showing in CategoryColumns
@@ -1251,7 +1339,7 @@ export async function ThemeHome({
       case 'webStoriesArea':
         return (
           <div key={block.id} className="mt-8">
-            <WebStoriesArea tenantSlug={tenantSlugForLinks} />
+            <WebStoriesArea tenantSlug={tenantSlugForLinks} showHgBlock={showHgBlock} />
           </div>
         )
       default:
@@ -1299,6 +1387,7 @@ export async function ThemeHome({
 
     switch (section.key) {
       case 'flashTicker':
+        if (!showTicker) return null
         return {
           placement: 'outside',
           node: (
@@ -1311,6 +1400,7 @@ export async function ThemeHome({
         }
       case 'heroSection':
       case 'mainGrid4':
+        if (!showHero) return null
         // Hero + 1 Ad + 4-column category section + 1 Ad
         return { 
           placement: 'main', 
@@ -1321,16 +1411,24 @@ export async function ThemeHome({
               <div className="my-6">
                 <HorizontalAd label="Advertisement" />
               </div>
-              {/* 4-Column Category Section */}
-              <div className="mt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-                  <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} usedCategorySlugs={usedCategorySlugs} />
-                </div>
-              </div>
-              {/* 1 Horizontal Ad after Category Section */}
-              <div className="my-6">
-                <HorizontalAd label="Advertisement" />
-              </div>
+              {showCategories ? (
+                <>
+                  {/* 4-Column Category Section */}
+                  <div className="mt-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+                      {configuredCategoryColumns.length > 0 ? (
+                        <SmartCategoryColumns tenantSlug={tenantSlugForLinks} columns={configuredCategoryColumns} />
+                      ) : (
+                        <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} usedCategorySlugs={usedCategorySlugs} />
+                      )}
+                    </div>
+                  </div>
+                  {/* 1 Horizontal Ad after Category Section */}
+                  <div className="my-6">
+                    <HorizontalAd label="Advertisement" />
+                  </div>
+                </>
+              ) : null}
             </Fragment>
           )
         }
@@ -1347,6 +1445,7 @@ export async function ThemeHome({
         return null
       }
       case 'webStories': {
+        if (!showWebStories) return null
         const b = activeBlocksForSection(section).find((x) => x.type === 'webStoriesArea')
         if (!b) return null
         return { placement: 'main', node: renderBlock(b) }
@@ -1389,9 +1488,7 @@ export async function ThemeHome({
   }
   flushMain()
 
-  // 🎯 Get config for branding (logo, favicon, etc.)
-  const config = await getConfig()
-  const logoUrl = config?.branding.logo || settings?.branding?.logoUrl
+  const logoUrl = config?.branding.logoUrl || config?.branding.logo || settings?.branding?.logoUrl
   const siteName = config?.branding.siteName || title
 
   // ⚡ domainStats already fetched in parallel at the top - no extra call needed!
@@ -1419,6 +1516,14 @@ function ReporterCard({ reporter, tenantSlug }: { reporter: NonNullable<Article[
     reporter.location?.district,
     reporter.location?.state
   ].filter(Boolean).join(', ')
+
+  const statsChips: Array<{ label: string; value: string }> = []
+  if (typeof reporter.totalArticles === 'number' && reporter.totalArticles > 0) {
+    statsChips.push({ label: 'ఆర్టికల్స్', value: String(reporter.totalArticles) })
+  }
+  if (typeof reporter.totalViews === 'number' && reporter.totalViews > 0) {
+    statsChips.push({ label: 'వ్యూస్', value: reporter.totalViews.toLocaleString('en-IN') })
+  }
 
   return (
     <div className="px-6 sm:px-8 lg:px-10 py-8 bg-gradient-to-br from-zinc-50 to-white border-t border-zinc-200">
@@ -1461,7 +1566,9 @@ function ReporterCard({ reporter, tenantSlug }: { reporter: NonNullable<Article[
                   <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               </div>
-              <p className="text-sm sm:text-base font-semibold text-red-600 mb-2">{reporter.designation}</p>
+              {reporter.designation ? (
+                <p className="text-sm sm:text-base font-semibold text-red-600 mb-2">{reporter.designation}</p>
+              ) : null}
               {locationParts && (
                 <p className="text-sm text-zinc-600 flex items-center gap-1 mb-3">
                   <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1471,14 +1578,16 @@ function ReporterCard({ reporter, tenantSlug }: { reporter: NonNullable<Article[
                   {locationParts}
                 </p>
               )}
-              {reporter.totalArticles && reporter.totalArticles > 0 && (
-                <div className="inline-flex items-center gap-2 bg-red-50 text-red-700 px-4 py-2 rounded-full text-sm font-bold">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  {reporter.totalArticles} ఆర్టికల్స్ రాశారు
+              {statsChips.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  {statsChips.map((c) => (
+                    <div key={c.label} className="inline-flex items-center gap-2 bg-red-50 text-red-700 px-4 py-2 rounded-full text-sm font-bold">
+                      <span className="text-red-800">{c.value}</span>
+                      <span className="text-red-700">{c.label}</span>
+                    </div>
+                  ))}
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -1662,12 +1771,10 @@ function TrendingArticlesSidebar({ trending, tenantSlug }: { trending: Article[]
 // Article Content with Must-Read Card and In-Article Images
 function ArticleContentWithMustRead({ 
   html, 
-  mustRead, 
   tenantSlug,
   secondImage 
 }: { 
   html: string; 
-  mustRead: Article['mustRead']; 
   tenantSlug: string;
   secondImage?: { url?: string; alt?: string; caption?: string } | null;
 }) {
@@ -1680,13 +1787,28 @@ function ArticleContentWithMustRead({
       </div>
     )
   }
+
+  // Some backends return HTML without <p> blocks (e.g. <br>-based markup) or plain text.
+  // The enhanced renderer below expects </p> delimiters; when missing, render as a single block.
+  const hasParagraphBlocks = /<\s*\/\s*p\s*>/i.test(html)
+  if (!hasParagraphBlocks) {
+    const looksLikeHtml = /<\s*([a-z][\w:-]*)\b/i.test(html)
+    return (
+      <div className="article-content-enhanced px-6 sm:px-8 lg:px-10 py-8">
+        {looksLikeHtml ? (
+          <div className="article-paragraph" dangerouslySetInnerHTML={{ __html: html }} />
+        ) : (
+          <p className="article-paragraph">{html}</p>
+        )}
+      </div>
+    )
+  }
   
   const parts = html.split(/<\/p>/i)
   const nodes: ReactNode[] = []
   const every = getAdEveryN()
   let paraIndex = 0
   let actualParagraphCount = 0
-  let mustReadInserted = false
   let secondImageInserted = false
   
   for (let i = 0; i < parts.length; i++) {
@@ -1713,16 +1835,6 @@ function ArticleContentWithMustRead({
     
     actualParagraphCount++
     paraIndex++
-    
-    // Insert must-read card after 2-3 paragraphs
-    if (!mustReadInserted && mustRead && actualParagraphCount === 3) {
-      nodes.push(
-        <div key="must-read" className="my-8">
-          <MustReadCard mustRead={mustRead} tenantSlug={tenantSlug} />
-        </div>
-      )
-      mustReadInserted = true
-    }
     
     // Insert second image after 5-6 paragraphs (in the middle of article)
     if (!secondImageInserted && secondImage?.url && actualParagraphCount === 6) {
@@ -1764,82 +1876,37 @@ function ArticleContentWithMustRead({
   )
 }
 
-// Must Read Card Component
-function MustReadCard({ mustRead, tenantSlug }: { mustRead: NonNullable<Article['mustRead']>; tenantSlug: string }) {
-  return (
-    <div className="relative group">
-      {/* Must Read Label */}
-      <div className="absolute -top-3 left-4 z-10">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-1.5 text-sm font-bold text-white shadow-lg">
-          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
-          తప్పక చదవండి
-        </span>
-      </div>
-      
-      <a 
-        href={articleHref(tenantSlug, mustRead.slug || mustRead.id || '')}
-        className="block overflow-hidden rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 shadow-lg hover:shadow-xl transition-all hover:border-amber-300"
-      >
-        <div className="flex flex-col sm:flex-row gap-4 p-6">
-          {/* Must Read Image */}
-          {mustRead.coverImageUrl && (
-            <div className="shrink-0 w-full sm:w-48 aspect-video sm:aspect-square rounded-lg overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src={mustRead.coverImageUrl} 
-                alt={mustRead.title || ''} 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                loading="lazy"
-              />
-            </div>
-          )}
-          
-          {/* Must Read Content */}
-          <div className="flex-1">
-            {mustRead.category && (
-              <span className="inline-block bg-amber-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-2">
-                {extractCategoryName(mustRead.category)}
-              </span>
-            )}
-            <h3 className="text-xl sm:text-2xl font-bold text-zinc-900 group-hover:text-amber-700 leading-snug mb-2" style={{ lineHeight: '1.5' }}>
-              {mustRead.title}
-            </h3>
-            <div className="flex items-center gap-4 text-sm text-zinc-600 mt-3">
-              {mustRead.publishedAt && (
-                <span className="flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {new Date(mustRead.publishedAt).toLocaleDateString('te-IN', { month: 'short', day: 'numeric' })}
-                </span>
-              )}
-              {mustRead.viewCount && (
-                <span className="flex items-center gap-1">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  {mustRead.viewCount.toLocaleString()} చూసినవారు
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      </a>
-    </div>
-  )
-}
-
 export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }: { tenantSlug: string; title: string; article: Article; tenantDomain?: string }) {
   const settings = await getEffectiveSettings()
+
+  if (process.env.NODE_ENV !== 'production') {
+    const body = (article as unknown as { contentHtml?: unknown; content?: unknown })
+    const contentHtml = typeof body?.contentHtml === 'string' ? body.contentHtml : ''
+    const content = typeof body?.content === 'string' ? body.content : ''
+    if (!contentHtml && !content) {
+      const rawContent = (article as unknown as { [k: string]: unknown })?.content
+      const rawType = Array.isArray(rawContent) ? 'array' : typeof rawContent
+      console.warn('⚠️ [ARTICLE BODY EMPTY]', {
+        slug: article.slug,
+        id: article.id,
+        rawContentType: rawType,
+        articleKeys: Object.keys(article as unknown as Record<string, unknown>).slice(0, 30),
+        rawContentKeys: rawContent && typeof rawContent === 'object' ? Object.keys(rawContent as Record<string, unknown>).slice(0, 30) : undefined,
+      })
+    }
+  }
   
+  const embeddedMustReadList = Array.isArray((article as unknown as Record<string, unknown>)?.mustReadList)
+    ? ((article as unknown as Record<string, unknown>).mustReadList as unknown[]).map((x) => x as Article)
+    : null
+
   // 🎯 Fetch sidebar and bottom section data in parallel using new APIs
   const articleSlug = article.slug || article.id || ''
   const [latestArticles, mustReadArticles, relatedArticles, trendingArticles] = await Promise.all([
     getLatestArticles(7, articleSlug).catch(() => []),
-    getMustReadArticles(5, articleSlug).catch(() => []),
+    embeddedMustReadList && embeddedMustReadList.length > 0
+      ? Promise.resolve(embeddedMustReadList)
+      : getMustReadArticles(5, articleSlug).catch(() => []),
     // Use related from article first, otherwise fetch
     article.related && article.related.length > 0 
       ? Promise.resolve(article.related.map(r => ({ ...r, title: r.title || '' } as Article)))
@@ -1877,8 +1944,34 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
   const reporter = article.reporter
   const publisher = article.publisher
   
-  // Get must-read article (single featured article for inline display)
-  const mustRead = article.mustRead
+
+  // Robust article body extraction (some backends nest content under `article.content` object)
+  const rawContent = (article as unknown as Record<string, unknown>)?.content
+  const contentData = (article as unknown as Record<string, unknown>)?.contentData
+  const nestedContentHtml =
+    rawContent && typeof rawContent === 'object' && typeof (rawContent as Record<string, unknown>).contentHtml === 'string'
+      ? String((rawContent as Record<string, unknown>).contentHtml)
+      : undefined
+  const nestedContentHtml2 =
+    contentData && typeof contentData === 'object' && typeof (contentData as Record<string, unknown>).contentHtml === 'string'
+      ? String((contentData as Record<string, unknown>).contentHtml)
+      : undefined
+  const nestedPlainText =
+    rawContent && typeof rawContent === 'object' && typeof (rawContent as Record<string, unknown>).plainText === 'string'
+      ? String((rawContent as Record<string, unknown>).plainText)
+      : undefined
+  const nestedPlainText2 =
+    contentData && typeof contentData === 'object' && typeof (contentData as Record<string, unknown>).plainText === 'string'
+      ? String((contentData as Record<string, unknown>).plainText)
+      : undefined
+  const articleBodyHtml =
+    (typeof article.contentHtml === 'string' && article.contentHtml.trim() ? article.contentHtml : undefined) ||
+    (typeof article.content === 'string' && article.content.trim() ? article.content : undefined) ||
+    (nestedContentHtml && nestedContentHtml.trim() ? nestedContentHtml : undefined) ||
+    (nestedContentHtml2 && nestedContentHtml2.trim() ? nestedContentHtml2 : undefined) ||
+    (nestedPlainText && nestedPlainText.trim() ? nestedPlainText : undefined) ||
+    (nestedPlainText2 && nestedPlainText2.trim() ? nestedPlainText2 : undefined) ||
+    ''
   
   // Use fetched data for sidebar/bottom sections
   const trending = trendingArticles
@@ -2154,10 +2247,9 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
 
               {/* Article Content with Must-Read Card and In-Article Images */}
               <ArticleContentWithMustRead 
-                html={article.contentHtml || article.content || ''} 
-                mustRead={mustRead}
+                html={articleBodyHtml} 
                 tenantSlug={tenantSlug}
-                secondImage={article.media?.images && article.media.images.length > 1 ? article.media.images[1] : null}
+                secondImage={article.media?.images && article.media.images.length > 0 ? article.media.images[0] : null}
               />
 
               {/* Additional Images Gallery */}
@@ -2909,6 +3001,136 @@ async function MostReadSidebar({ tenantSlug, currentArticleId }: { tenantSlug: s
   )
 }
 
+function SmartCategoryColumns({
+  tenantSlug,
+  columns,
+}: {
+  tenantSlug: string
+  columns: Array<{ slug: string; name: string; items: Article[] }>
+}) {
+  if (!columns.length) return null
+
+  return (
+    <>
+      {columns.map(({ slug, name, items }, categoryIndex) => (
+        <section key={slug} className="rounded-xl bg-white shadow-sm border border-zinc-100">
+          <div className="flex items-center justify-between border-b border-zinc-100 px-3 sm:px-4 py-2.5">
+            <Link href={toHref(categoryHref(tenantSlug, slug))} className="inline-flex items-center gap-2">
+              <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
+              <span className="text-sm font-bold uppercase tracking-wide hover:text-red-600">{extractCategoryName(name)}</span>
+            </Link>
+            <Link
+              href={toHref(categoryHref(tenantSlug, slug))}
+              className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-[11px] font-semibold hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors"
+            >
+              అన్నీ →
+            </Link>
+          </div>
+
+          <div className="sm:hidden p-3 space-y-3">
+            {categoryIndex % 4 === 0 && (
+              <>
+                {items[0] && <MobileFeaturedCard tenantSlug={tenantSlug} a={items[0]} />}
+                {items.slice(1).map((a) => (
+                  <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} />
+                ))}
+              </>
+            )}
+            {categoryIndex % 4 === 1 && (
+              <>
+                {items.length >= 2 && (
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <MobileMiniCard tenantSlug={tenantSlug} a={items[0]} />
+                    <MobileMiniCard tenantSlug={tenantSlug} a={items[1]} />
+                  </div>
+                )}
+                {items.slice(2).map((a, i) => (
+                  <MobileTextCard
+                    key={a.id}
+                    tenantSlug={tenantSlug}
+                    a={a}
+                    accentColor={(['blue', 'green', 'purple'] as const)[i % 3]}
+                  />
+                ))}
+              </>
+            )}
+            {categoryIndex % 4 === 2 && (
+              <>
+                {items.map((a, i) => (
+                  <MobileNumberedCard key={a.id} tenantSlug={tenantSlug} a={a} number={i + 1} />
+                ))}
+              </>
+            )}
+            {categoryIndex % 4 === 3 && (
+              <>
+                {items[0] && <MobileFeaturedCard tenantSlug={tenantSlug} a={items[0]} />}
+                {items.length >= 3 && (
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <MobileMiniCard tenantSlug={tenantSlug} a={items[1]} />
+                    <MobileMiniCard tenantSlug={tenantSlug} a={items[2]} />
+                  </div>
+                )}
+                {items.slice(3).map((a) => (
+                  <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} />
+                ))}
+              </>
+            )}
+          </div>
+
+          <div className="hidden sm:block space-y-0 p-3">
+            {items[0] && (
+              <Link href={toHref(articleHref(tenantSlug, items[0].slug || items[0].id))} className="block group mb-3">
+                <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-zinc-100">
+                  {items[0].coverImage?.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={items[0].coverImage.url}
+                      alt={items[0].title}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <PlaceholderImg className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                </div>
+                <h3 className="mt-2 line-clamp-2 text-sm font-bold leading-snug text-zinc-900 group-hover:text-red-600 transition-colors">
+                  {items[0].title}
+                </h3>
+              </Link>
+            )}
+
+            {items.slice(1).map((a) => (
+              <Link
+                key={a.id}
+                href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+                className="grid grid-cols-[1fr_auto] items-center gap-3 py-3 border-t border-zinc-100 group"
+              >
+                <span className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-800 group-hover:text-red-600 transition-colors">
+                  {a.title}
+                </span>
+                <div className="h-14 w-20 overflow-hidden rounded-lg shrink-0 bg-zinc-100">
+                  {a.coverImage?.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={a.coverImage.url}
+                      alt={a.title}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <PlaceholderImg className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ))}
+    </>
+  )
+}
+
 async function CategoryColumns({ 
   tenantSlug, 
   sectionDataMap = {},
@@ -3175,7 +3397,7 @@ async function CategoryColumns({
   )
 } */
 
-async function WebStoriesArea({ tenantSlug }: { tenantSlug: string }) {
+async function WebStoriesArea({ tenantSlug, showHgBlock = true }: { tenantSlug: string; showHgBlock?: boolean }) {
   const cats: Category[] = await getCategoriesForNav()
   const preferred = (process.env.NEXT_PUBLIC_WEBSTORIES_CATEGORY || '').trim().toLowerCase()
   const category = preferred
@@ -3210,7 +3432,7 @@ async function WebStoriesArea({ tenantSlug }: { tenantSlug: string }) {
         )}
 
         {/* HG block below stories */}
-        <HGBlock tenantSlug={tenantSlug} />
+        {showHgBlock ? <HGBlock tenantSlug={tenantSlug} /> : null}
       </div>
 
       {/* Right: Sticky vertical ads shared for both blocks */}

@@ -12,9 +12,7 @@
  */
 
 import { cache as reactCache } from 'react'
-import { normalizeTenantDomain } from './remote'
-
-const API_BASE_URL = process.env.API_BASE_URL || 'https://app.kaburlumedia.com/api/v1'
+import { fetchJSON, normalizeTenantDomain } from './remote'
 
 // ============================================================================
 // Types (matching backend v2.0 response)
@@ -49,6 +47,9 @@ export interface TenantConfig {
     logo: string
     favicon: string
     appleTouchIcon: string
+    // v2 additions (some tenants send both)
+    logoUrl?: string
+    faviconUrl?: string
   }
   
   theme: {
@@ -273,30 +274,16 @@ async function getTargetDomain(domainOverride?: string): Promise<string> {
 // ============================================================================
 
 async function fetchConfig(tenantDomain: string): Promise<ConfigResult> {
-  const url = `${API_BASE_URL}/public/config`
-  
-  console.log(`🎯 [1st API] Calling ${url} | X-Tenant-Domain: ${tenantDomain}`)
-  
   try {
-    const res = await fetch(url, {
-      headers: {
-        'accept': 'application/json',
-        'X-Tenant-Domain': tenantDomain,
-      },
-      cache: 'no-store', // Always fetch fresh for config
+    console.log(`🎯 [1st API] Calling /public/config | X-Tenant-Domain: ${tenantDomain}`)
+
+    const config = await fetchJSON<TenantConfig>(`/public/config`, {
+      tenantDomain,
+      cache: 'no-store',
+      // Config has its own in-memory TTL; always fetch fresh per request.
       next: { revalidate: 0 },
     })
 
-    if (!res.ok) {
-      console.error(`❌ Config API failed: ${res.status} ${res.statusText}`)
-      return {
-        config: null,
-        isError: true,
-        errorMessage: `HTTP ${res.status}: ${res.statusText}`,
-      }
-    }
-
-    const config = await res.json() as TenantConfig
     console.log(`✅ Config v${config.version} loaded for ${tenantDomain}:`, config.branding.siteName)
     
     // Update cache TTL from config

@@ -12,7 +12,7 @@ export const size = {
 
 export const contentType = 'image/png'
 
-const API_BASE_URL = process.env.API_BASE_URL || 'https://app.kaburlumedia.com/api/v1'
+const API_BASE_URL = process.env.API_BASE_URL || 'https://api.kaburlumedia.com/api/v1'
 
 // Simple wrong tenant check without importing fallback-data (to avoid Node.js APIs in Edge Runtime)
 function isWrongTenantDataSimple(data: unknown): boolean {
@@ -50,7 +50,7 @@ async function getTenantConfig(domain: string): Promise<{ faviconUrl: string | n
     console.log(`[Icon] Config loaded: ${config?.branding?.siteName || config?.tenant?.displayName || 'unknown'}`)
     
     return {
-      faviconUrl: config?.branding?.favicon || null,
+      faviconUrl: config?.branding?.faviconUrl || config?.branding?.favicon || null,
       primaryColor: config?.theme?.colors?.primary || null,
       name: config?.tenant?.displayName || config?.tenant?.name || config?.branding?.siteName || null,
       displayName: config?.tenant?.nativeName || config?.tenant?.displayName || null,
@@ -68,8 +68,12 @@ export default async function Icon() {
   
   try {
     const h = await headers()
+    const tenantHeader = h.get('x-tenant-domain') || h.get('X-Tenant-Domain')
     const host = h.get('host') || 'localhost'
-    const domain = normalizeTenantDomain(host)
+    const hostDomain = normalizeTenantDomain(host)
+    const domain = normalizeTenantDomain(
+      tenantHeader || (hostDomain === 'localhost' ? (process.env.NEXT_PUBLIC_DEV_DOMAIN || 'kaburlutoday.com') : hostDomain),
+    )
     
     console.log(`[Icon] Generating icon for domain: ${domain}`)
     

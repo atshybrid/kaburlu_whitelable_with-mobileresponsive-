@@ -58,6 +58,13 @@ export function proxy(request: NextRequest) {
     tenantDomain = normalizedHost
     console.log(`🌐 [PROXY] Production domain: ${tenantDomain}`)
   }
+
+  // Make tenant domain available to downstream server code (Server Components/Route Handlers)
+  // by overriding request headers. Setting it only on the response is not sufficient.
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('X-Tenant-Domain', tenantDomain)
+  requestHeaders.set('x-tenant-domain', tenantDomain)
+  requestHeaders.set('x-pathname', request.nextUrl.pathname)
   
   // =========================================================================
   // STEP 3: Get tenant slug for URL rewriting
@@ -67,7 +74,7 @@ export function proxy(request: NextRequest) {
   if (!tenantSlug) {
     console.warn(`⚠️ Unknown domain: ${tenantDomain}, using fallback tenant`)
     // Unknown domain - use kaburlutoday as fallback and continue processing
-    const response = NextResponse.next()
+    const response = NextResponse.next({ request: { headers: requestHeaders } })
     response.headers.set('X-Tenant-Domain', tenantDomain)
     response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
     response.headers.set('Pragma', 'no-cache')
@@ -86,7 +93,7 @@ export function proxy(request: NextRequest) {
     pathname.startsWith('/t/') || // Already rewritten
     pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot)$/)
   ) {
-    const response = NextResponse.next()
+    const response = NextResponse.next({ request: { headers: requestHeaders } })
     response.headers.set('X-Tenant-Domain', tenantDomain)
     // Static files can be cached, but HTML should not
     if (!pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot)$/)) {
@@ -110,7 +117,7 @@ export function proxy(request: NextRequest) {
     internalPath = `/t/${tenantSlug}${pathname}`
   } else {
     // Other routes (legal pages, etc)
-    const response = NextResponse.next()
+    const response = NextResponse.next({ request: { headers: requestHeaders } })
     response.headers.set('x-tenant-domain', tenantDomain)
     response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
     response.headers.set('Pragma', 'no-cache')
@@ -124,7 +131,7 @@ export function proxy(request: NextRequest) {
   const url = request.nextUrl.clone()
   url.pathname = internalPath
   
-  const response = NextResponse.rewrite(url)
+  const response = NextResponse.rewrite(url, { request: { headers: requestHeaders } })
   
   // ✅ CRITICAL: Set custom header for downstream consumption
   response.headers.set('X-Tenant-Domain', tenantDomain)
@@ -145,6 +152,6 @@ export const config = {
     /*
      * Match all requests except static files
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image).*)',
   ],
 }
