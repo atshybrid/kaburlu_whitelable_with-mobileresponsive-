@@ -4,6 +4,7 @@ import type { EffectiveSettings } from '@/lib/remote'
 import { basePathForTenant, homeHref } from '@/lib/url'
 import { getDomainStats } from '@/lib/domain-stats'
 import { getTenantDomain } from '@/lib/domain-utils'
+import { getAvailableLegalPages } from '@/lib/legal-pages'
 
 function safeUrl(v: string | undefined) {
   const s = String(v || '').trim()
@@ -123,6 +124,21 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
   // Get footer sections from navigation config
   const footerSections = (effective.navigation?.footer as any)?.sections || []
   const copyrightText = (effective.navigation?.footer as any)?.copyrightText || `© ${year} ${siteName}. All rights reserved.`
+  
+  // Fetch available legal pages from API
+  let availableLegalPages: Array<{ slug: string; title: string; href: string }> = []
+  try {
+    availableLegalPages = await Promise.race([
+      getAvailableLegalPages(),
+      new Promise<Array<{ slug: string; title: string; href: string }>>((resolve) => 
+        setTimeout(() => resolve([]), 2000)
+      ) // 2s timeout
+    ])
+    console.log(`📄 [FOOTER] Available legal pages:`, availableLegalPages.map(p => p.slug))
+  } catch (error) {
+    console.error('Failed to fetch legal pages:', error)
+    availableLegalPages = []
+  }
   
   const sameAs = [facebook, x, instagram, youtube, telegram].filter(Boolean) as string[]
 
@@ -324,7 +340,7 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
               </nav>
             </div>
 
-            {/* Legal Links - From Config */}
+            {/* Legal Links - From Config or API */}
             {footerSections.length > 0 ? (
               footerSections.map((section: any, idx: number) => (
                 <div key={idx}>
@@ -348,6 +364,27 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
                   </nav>
                 </div>
               ))
+            ) : availableLegalPages.length > 0 ? (
+              <div>
+                <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
+                  <span className="w-6 h-0.5 bg-[hsl(var(--primary))]" />
+                  చట్టపరమైన
+                </h4>
+                <nav aria-label="Legal links">
+                  <ul className="space-y-2.5 text-zinc-600">
+                    {availableLegalPages.map((page) => (
+                      <li key={page.slug}>
+                        <a 
+                          className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" 
+                          href={hrefForTenant(page.href)}
+                        >
+                          {page.title}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              </div>
             ) : (
               <div>
                 <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">

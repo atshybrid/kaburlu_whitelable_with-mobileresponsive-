@@ -1401,16 +1401,18 @@ export async function ThemeHome({
       case 'heroSection':
       case 'mainGrid4':
         if (!showHero) return null
-        // Hero + 1 Ad + 4-column category section + 1 Ad
+        // Hero + 1 Ad (only if hero shown) + 4-column category section + 1 Ad (only if categories shown)
         return { 
           placement: 'main', 
           node: (
             <Fragment key={section.id}>
               {renderMainGrid(section)}
-              {/* 1 Horizontal Ad after Hero */}
-              <div className="my-6">
-                <HorizontalAd label="Advertisement" />
-              </div>
+              {/* 1 Horizontal Ad after Hero - only show if hero is visible */}
+              {showHero && (
+                <div className="my-6">
+                  <HorizontalAd label="Advertisement" />
+                </div>
+              )}
               {showCategories ? (
                 <>
                   {/* 4-Column Category Section */}
@@ -1423,7 +1425,7 @@ export async function ThemeHome({
                       )}
                     </div>
                   </div>
-                  {/* 1 Horizontal Ad after Category Section */}
+                  {/* 1 Horizontal Ad after Category Section - only show if categories visible */}
                   <div className="my-6">
                     <HorizontalAd label="Advertisement" />
                   </div>
