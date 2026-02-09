@@ -2,7 +2,7 @@ import { Footer } from '@/components/shared/Footer'
 import { Navbar } from '@/components/shared/Navbar'
 import type { EffectiveSettings } from '@/lib/remote'
 import type { LegalPageKey } from '@/lib/legal-pages'
-import { LEGAL_PAGE_META } from '@/lib/legal-pages'
+import { LEGAL_PAGE_META, fetchLegalPage } from '@/lib/legal-pages'
 
 function firstNonEmpty(...vals: Array<string | undefined | null>) {
   for (const v of vals) {
@@ -27,6 +27,9 @@ export async function LegalPage({
 }) {
   const meta = LEGAL_PAGE_META[pageKey]
 
+  // Fetch content from API
+  const apiContent = await fetchLegalPage(pageKey)
+
   const contactEmail = firstNonEmpty(settings?.contact?.email, settings?.settings?.contact?.email, process.env.NEXT_PUBLIC_CONTACT_EMAIL)
   const contactPhone = firstNonEmpty(settings?.contact?.phone, settings?.settings?.contact?.phone, process.env.NEXT_PUBLIC_CONTACT_PHONE)
   const addressCity = firstNonEmpty(settings?.contact?.city, settings?.settings?.contact?.city)
@@ -37,6 +40,26 @@ export async function LegalPage({
 
   const isStyle2 = String(themeKey || '').toLowerCase() === 'style2'
 
+  // If API content is available, render it directly
+  if (apiContent?.contentHtml) {
+    return (
+      <div>
+        <Navbar tenantSlug={tenantSlug} title={siteTitle} logoUrl={settings?.branding?.logoUrl} variant={isStyle2 ? 'style2' : 'default'} />
+
+        <main className="mx-auto max-w-3xl px-4 py-8">
+          <h1 className="mb-4 text-3xl font-extrabold leading-tight">{apiContent.title || meta.title}</h1>
+          <div 
+            className="prose max-w-none" 
+            dangerouslySetInnerHTML={{ __html: apiContent.contentHtml }}
+          />
+        </main>
+
+        <Footer settings={settings} tenantSlug={tenantSlug} />
+      </div>
+    )
+  }
+
+  // Fallback to hardcoded content if API fails
   return (
     <div>
       <Navbar tenantSlug={tenantSlug} title={siteTitle} logoUrl={settings?.branding?.logoUrl} variant={isStyle2 ? 'style2' : 'default'} />
