@@ -111,45 +111,52 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
   const siteName = firstNonEmpty(effective.branding?.siteName, effective.settings?.branding?.siteName, 'Kaburlu News')
   const logoUrl = safeUrl(firstNonEmpty(effective.branding?.logoUrl, effective.settings?.branding?.logoUrl))
 
-  // Merge contact data: API data takes priority over settings
+  // Type guard to check if API data has structured contact format
+  const hasStructuredContact = (data: typeof apiContactData): data is { contact: any } => {
+    return !!data && 'contact' in data
+  }
+
+  // Merge contact data: API data takes priority over settings (only if structured format)
+  const apiContact = hasStructuredContact(apiContactData) ? apiContactData.contact : null
+  
   const contactEmail = firstNonEmpty(
-    apiContactData?.contact?.email,
+    apiContact?.email,
     effective.contact?.email,
     effective.settings?.contact?.email,
     process.env.NEXT_PUBLIC_CONTACT_EMAIL,
     ''
   )
   const contactPhone = firstNonEmpty(
-    apiContactData?.contact?.phone,
+    apiContact?.phone,
     effective.contact?.phone,
     effective.settings?.contact?.phone,
     process.env.NEXT_PUBLIC_CONTACT_PHONE,
     ''
   )
   const contactWhatsApp = firstNonEmpty(
-    apiContactData?.contact?.whatsapp,
+    apiContact?.whatsapp,
     ''
   )
   const addressStreet = firstNonEmpty(
-    apiContactData?.contact?.address?.street,
+    apiContact?.address?.street,
     ''
   )
   const addressLocality = firstNonEmpty(
-    apiContactData?.contact?.address?.city,
+    apiContact?.address?.city,
     effective.contact?.city,
     effective.settings?.contact?.city,
     process.env.NEXT_PUBLIC_CONTACT_CITY,
     'Hyderabad'
   )
   const addressRegion = firstNonEmpty(
-    apiContactData?.contact?.address?.state,
+    apiContact?.address?.state,
     effective.contact?.region,
     effective.settings?.contact?.region,
     process.env.NEXT_PUBLIC_CONTACT_REGION,
     'Telangana'
   )
   const addressCountry = firstNonEmpty(
-    apiContactData?.contact?.address?.country,
+    apiContact?.address?.country,
     effective.contact?.country,
     effective.settings?.contact?.country,
     process.env.NEXT_PUBLIC_CONTACT_COUNTRY,
@@ -158,13 +165,13 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
 
   // Merge social media: API data takes priority
   const facebook = safeUrl(firstNonEmpty(
-    apiContactData?.contact?.socialMedia?.facebook,
+    apiContact?.socialMedia?.facebook,
     effective.social?.facebook,
     effective.settings?.social?.facebook,
     process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK
   ))
   const x = safeUrl(firstNonEmpty(
-    apiContactData?.contact?.socialMedia?.twitter,
+    apiContact?.socialMedia?.twitter,
     effective.social?.x,
     effective.social?.twitter,
     effective.settings?.social?.x,
@@ -172,19 +179,19 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
     process.env.NEXT_PUBLIC_SOCIAL_X
   ))
   const instagram = safeUrl(firstNonEmpty(
-    apiContactData?.contact?.socialMedia?.instagram,
+    apiContact?.socialMedia?.instagram,
     effective.social?.instagram,
     effective.settings?.social?.instagram,
     process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM
   ))
   const youtube = safeUrl(firstNonEmpty(
-    apiContactData?.contact?.socialMedia?.youtube,
+    apiContact?.socialMedia?.youtube,
     effective.social?.youtube,
     effective.settings?.social?.youtube,
     process.env.NEXT_PUBLIC_SOCIAL_YOUTUBE
   ))
   const telegram = safeUrl(firstNonEmpty(
-    apiContactData?.contact?.socialMedia?.telegram,
+    apiContact?.socialMedia?.telegram,
     effective.social?.telegram,
     effective.settings?.social?.telegram,
     process.env.NEXT_PUBLIC_SOCIAL_TELEGRAM
