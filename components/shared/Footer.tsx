@@ -5,6 +5,7 @@ import { basePathForTenant, homeHref } from '@/lib/url'
 import { getDomainStats } from '@/lib/domain-stats'
 import { getTenantDomain } from '@/lib/domain-utils'
 import { getAvailableLegalPages } from '@/lib/legal-pages'
+import { getContactData } from '@/lib/contact'
 
 function safeUrl(v: string | undefined) {
   const s = String(v || '').trim()
@@ -94,20 +95,100 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
   const viewCount = domainStats?.stats?.totalViews ?? 0
   const reporterCount = domainStats?.stats?.totalReporters ?? 0
 
+  // Fetch contact data from /public/contact API
+  let apiContactData = null
+  try {
+    apiContactData = await Promise.race([
+      getContactData(domain),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)) // 2s timeout
+    ])
+    console.log(`📞 [FOOTER] Contact API data fetched:`, apiContactData ? 'success' : 'timeout')
+  } catch (error) {
+    console.error('Failed to fetch contact data:', error)
+    apiContactData = null
+  }
+
   const siteName = firstNonEmpty(effective.branding?.siteName, effective.settings?.branding?.siteName, 'Kaburlu News')
   const logoUrl = safeUrl(firstNonEmpty(effective.branding?.logoUrl, effective.settings?.branding?.logoUrl))
 
-  const contactEmail = firstNonEmpty(effective.contact?.email, effective.settings?.contact?.email, process.env.NEXT_PUBLIC_CONTACT_EMAIL, '')
-  const contactPhone = firstNonEmpty(effective.contact?.phone, effective.settings?.contact?.phone, process.env.NEXT_PUBLIC_CONTACT_PHONE, '')
-  const addressLocality = firstNonEmpty(effective.contact?.city, effective.settings?.contact?.city, process.env.NEXT_PUBLIC_CONTACT_CITY, 'Hyderabad')
-  const addressRegion = firstNonEmpty(effective.contact?.region, effective.settings?.contact?.region, process.env.NEXT_PUBLIC_CONTACT_REGION, 'Telangana')
-  const addressCountry = firstNonEmpty(effective.contact?.country, effective.settings?.contact?.country, process.env.NEXT_PUBLIC_CONTACT_COUNTRY, 'IN')
+  // Merge contact data: API data takes priority over settings
+  const contactEmail = firstNonEmpty(
+    apiContactData?.contact?.email,
+    effective.contact?.email,
+    effective.settings?.contact?.email,
+    process.env.NEXT_PUBLIC_CONTACT_EMAIL,
+    ''
+  )
+  const contactPhone = firstNonEmpty(
+    apiContactData?.contact?.phone,
+    effective.contact?.phone,
+    effective.settings?.contact?.phone,
+    process.env.NEXT_PUBLIC_CONTACT_PHONE,
+    ''
+  )
+  const contactWhatsApp = firstNonEmpty(
+    apiContactData?.contact?.whatsapp,
+    ''
+  )
+  const addressStreet = firstNonEmpty(
+    apiContactData?.contact?.address?.street,
+    ''
+  )
+  const addressLocality = firstNonEmpty(
+    apiContactData?.contact?.address?.city,
+    effective.contact?.city,
+    effective.settings?.contact?.city,
+    process.env.NEXT_PUBLIC_CONTACT_CITY,
+    'Hyderabad'
+  )
+  const addressRegion = firstNonEmpty(
+    apiContactData?.contact?.address?.state,
+    effective.contact?.region,
+    effective.settings?.contact?.region,
+    process.env.NEXT_PUBLIC_CONTACT_REGION,
+    'Telangana'
+  )
+  const addressCountry = firstNonEmpty(
+    apiContactData?.contact?.address?.country,
+    effective.contact?.country,
+    effective.settings?.contact?.country,
+    process.env.NEXT_PUBLIC_CONTACT_COUNTRY,
+    'IN'
+  )
 
-  const facebook = safeUrl(firstNonEmpty(effective.social?.facebook, effective.settings?.social?.facebook, process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK))
-  const x = safeUrl(firstNonEmpty(effective.social?.x, effective.social?.twitter, effective.settings?.social?.x, effective.settings?.social?.twitter, process.env.NEXT_PUBLIC_SOCIAL_X))
-  const instagram = safeUrl(firstNonEmpty(effective.social?.instagram, effective.settings?.social?.instagram, process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM))
-  const youtube = safeUrl(firstNonEmpty(effective.social?.youtube, effective.settings?.social?.youtube, process.env.NEXT_PUBLIC_SOCIAL_YOUTUBE))
-  const telegram = safeUrl(firstNonEmpty(effective.social?.telegram, effective.settings?.social?.telegram, process.env.NEXT_PUBLIC_SOCIAL_TELEGRAM))
+  // Merge social media: API data takes priority
+  const facebook = safeUrl(firstNonEmpty(
+    apiContactData?.contact?.socialMedia?.facebook,
+    effective.social?.facebook,
+    effective.settings?.social?.facebook,
+    process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK
+  ))
+  const x = safeUrl(firstNonEmpty(
+    apiContactData?.contact?.socialMedia?.twitter,
+    effective.social?.x,
+    effective.social?.twitter,
+    effective.settings?.social?.x,
+    effective.settings?.social?.twitter,
+    process.env.NEXT_PUBLIC_SOCIAL_X
+  ))
+  const instagram = safeUrl(firstNonEmpty(
+    apiContactData?.contact?.socialMedia?.instagram,
+    effective.social?.instagram,
+    effective.settings?.social?.instagram,
+    process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM
+  ))
+  const youtube = safeUrl(firstNonEmpty(
+    apiContactData?.contact?.socialMedia?.youtube,
+    effective.social?.youtube,
+    effective.settings?.social?.youtube,
+    process.env.NEXT_PUBLIC_SOCIAL_YOUTUBE
+  ))
+  const telegram = safeUrl(firstNonEmpty(
+    apiContactData?.contact?.socialMedia?.telegram,
+    effective.social?.telegram,
+    effective.settings?.social?.telegram,
+    process.env.NEXT_PUBLIC_SOCIAL_TELEGRAM
+  ))
 
   // Get primary color for newsletter section text color logic
   const primaryColor = firstNonEmpty(
@@ -420,7 +501,10 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
-                  <span>{addressLocality}, {addressRegion}, {addressCountry}</span>
+                  <div className="flex flex-col">
+                    {addressStreet && <span>{addressStreet}</span>}
+                    <span>{addressLocality}, {addressRegion}, {addressCountry}</span>
+                  </div>
                 </div>
                 
                 {contactEmail ? (
@@ -442,6 +526,17 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
                       </svg>
                     </div>
                     <span>{contactPhone}</span>
+                  </a>
+                ) : null}
+                
+                {contactWhatsApp ? (
+                  <a href={`https://wa.me/${contactWhatsApp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 text-zinc-600 hover:text-green-600 transition-colors group">
+                    <div className="w-8 h-8 rounded-lg bg-zinc-100 border border-zinc-200 group-hover:bg-green-600 group-hover:border-transparent flex items-center justify-center shrink-0 transition-colors">
+                      <svg className="w-4 h-4 text-green-600 group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                      </svg>
+                    </div>
+                    <span>{contactWhatsApp}</span>
                   </a>
                 ) : null}
               </address>
