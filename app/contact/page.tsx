@@ -37,7 +37,10 @@ export default async function ContactPage() {
   const tenant = await resolveTenant()
   
   const contactData = await getContactData(domain)
-  const { contact } = contactData
+  const contact = contactData?.contact || {
+    title: 'Contact Us',
+    description: 'Get in touch with us',
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
