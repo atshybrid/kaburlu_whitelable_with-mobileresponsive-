@@ -398,7 +398,7 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
                     <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/terms')}>సేవా నిబంధనలు</a></li>
                     <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/disclaimer')}>నిరాకరణ</a></li>
                     <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/advertise')}>ప్రకటనలు ఇవ్వండి</a></li>
-                    <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/contact-us')}>మమ్మల్ని సంప్రదించండి</a></li>
+                    <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/contact')}>మమ్మల్ని సంప్రదించండి</a></li>
                     <li><a className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" href={hrefForTenant('/delete-account')}>ఖాతా తొలగింపు</a></li>
                   </ul>
                 </nav>
