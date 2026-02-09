@@ -148,7 +148,7 @@ export async function getAvailableLegalPages(): Promise<Array<{ slug: string; ti
   )
 
   return results
-    .filter((result): result is PromiseFulfilledResult<{ slug: string; title: string; href: string } | null> => result.status === 'fulfilled')
+    .filter((result): result is PromiseFulfilledResult<{ slug: LegalPageKey; title: string; href: string } | null> => result.status === 'fulfilled')
     .map((result) => result.value)
-    .filter((page): page is { slug: string; title: string; href: string } => page !== null)
+    .filter((page): page is { slug: LegalPageKey; title: string; href: string } => page !== null)
 }
