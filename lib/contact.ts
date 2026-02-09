@@ -41,12 +41,23 @@ export interface ContactPageData {
   }
 }
 
+// Backend API response format
+export interface BackendContactResponse {
+  slug: string
+  title: string
+  contentHtml: string
+  meta?: {
+    keywords?: string
+  }
+  updatedAt: string
+}
+
 /**
  * Fetch contact page data from backend
  * React-cached for performance
  */
 export const getContactData = reactCache(
-  async (domain: string): Promise<ContactPageData> => {
+  async (domain: string): Promise<ContactPageData | BackendContactResponse> => {
     try {
       const normalizedDomain = normalizeTenantDomain(domain)
       const url = `/public/contact?domain=${encodeURIComponent(normalizedDomain)}`
@@ -58,11 +69,12 @@ export const getContactData = reactCache(
         },
       })
 
-      return data as ContactPageData
+      // Return the data as-is - it could be either format
+      return data as BackendContactResponse
     } catch (error) {
       console.error('Failed to fetch contact data:', error)
       
-      // Return fallback data
+      // Return fallback data in old format
       return {
         contact: {
           title: 'Contact Us',

@@ -6,12 +6,17 @@
 import { Metadata } from 'next'
 import { Navbar } from '@/components/shared/Navbar'
 import { Footer } from '@/components/shared/Footer'
-import { getContactData } from '@/lib/contact'
+import { getContactData, type BackendContactResponse } from '@/lib/contact'
 import { resolveTenant } from '@/lib/tenant'
 import { getTenantDomain } from '@/lib/domain-utils'
 
 export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
+
+// Type guard to check if response is backend format
+function isBackendFormat(data: unknown): data is BackendContactResponse {
+  return !!(data && typeof data === 'object' && 'contentHtml' in data && 'slug' in data)
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const domain = await getTenantDomain()
@@ -19,9 +24,17 @@ export async function generateMetadata(): Promise<Metadata> {
   try {
     const contactData = await getContactData(domain)
     
+    if (isBackendFormat(contactData)) {
+      return {
+        title: contactData.title || 'Contact Us',
+        description: 'Get in touch with us',
+        keywords: contactData.meta?.keywords,
+      }
+    }
+    
     return {
-      title: contactData.seo?.title || contactData.contact.title || 'Contact Us',
-      description: contactData.seo?.description || contactData.contact.description || 'Get in touch with us',
+      title: contactData.seo?.title || contactData.contact?.title || 'Contact Us',
+      description: contactData.seo?.description || contactData.contact?.description || 'Get in touch with us',
       keywords: contactData.seo?.keywords,
     }
   } catch {
@@ -37,6 +50,63 @@ export default async function ContactPage() {
   const tenant = await resolveTenant()
   
   const contactData = await getContactData(domain)
+
+  // Check if it's the new backend format with HTML content
+  if (isBackendFormat(contactData)) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Navbar tenantSlug={tenant.slug} title={tenant.name} />
+        
+        <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
+          <div className="max-w-4xl mx-auto">
+            <div 
+              className="bg-white rounded-lg shadow-md p-8 md:p-12"
+              style={{
+                fontSize: '16px',
+                lineHeight: '1.8',
+                color: '#374151'
+              }}
+            >
+              <style dangerouslySetInnerHTML={{ __html: `
+                .contact-content h1 {
+                  font-size: 2rem;
+                  font-weight: 700;
+                  margin-bottom: 1rem;
+                  color: #111827;
+                }
+                .contact-content h2 {
+                  font-size: 1.5rem;
+                  font-weight: 600;
+                  margin-top: 2rem;
+                  margin-bottom: 1rem;
+                  color: #1f2937;
+                }
+                .contact-content p {
+                  margin-bottom: 1rem;
+                  line-height: 1.8;
+                }
+                .contact-content a {
+                  color: #2563eb;
+                  text-decoration: underline;
+                }
+                .contact-content a:hover {
+                  color: #1d4ed8;
+                }
+              ` }} />
+              <div 
+                className="contact-content"
+                dangerouslySetInnerHTML={{ __html: contactData.contentHtml }}
+              />
+            </div>
+          </div>
+        </main>
+
+        <Footer tenantSlug={tenant.slug} />
+      </div>
+    )
+  }
+
+  // Fallback to old format (structured data)
   const contact = contactData?.contact || {
     title: 'Contact Us',
     description: 'Get in touch with us',
