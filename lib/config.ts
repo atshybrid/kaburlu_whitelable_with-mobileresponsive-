@@ -129,12 +129,22 @@ export interface TenantConfig {
       googleTagManager: string | null
       enabled: boolean
     }
+    verification: {
+      googleSiteVerification: string | null
+      bingSiteVerification: string | null
+    }
     ads: {
       adsense: string | null
+      adManagerNetworkCode: string | null
+      googleAdsConversionId: string | null
+      googleAdsConversionLabel: string | null
       enabled: boolean
     }
     push: {
       vapidPublicKey: string | null
+      vapidPrivateKey: string | null
+      fcmSenderId: string | null
+      fcmServerKey: string | null
       enabled: boolean
     }
     social: {

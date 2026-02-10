@@ -3,6 +3,7 @@ import { getEffectiveSettings } from "@/lib/settings";
 import { getConfig, getDefaultLanguage, getDefaultLanguageDirection } from "@/lib/config";
 import { getSEOHomepage, generateJSONLD } from "@/lib/seo";
 import { ThemeColorVars } from "@/components/ConfigLoader";
+import { Analytics, SiteVerification, StructuredData } from "@/components/seo";
 import "./globals.css";
 import { OfflineDetector } from "@/components/shared/OfflineDetector";
 // Load theme styles globally so root pages can apply theme-specific classes
@@ -265,8 +266,17 @@ async function RootLayoutInner({
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
         
+        {/* � PWA Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+        
+        {/* �🔍 Site Verification for Google & Bing */}
+        <SiteVerification />
+        
         {/* 🎯 Dynamic theme colors from backend config */}
         <ThemeColorVars />
+        
+        {/* 📊 Structured Data (Schema.org JSON-LD) */}
+        <StructuredData />
         
         {/* 🎯 JSON-LD structured data for Google (Schema.org) */}
         {seoData && (
@@ -283,6 +293,10 @@ async function RootLayoutInner({
         <a href="#main-content" className="sr-only focus:not-sr-only">
           Skip to main content
         </a>
+        
+        {/* 📈 Analytics & Tag Manager */}
+        <Analytics />
+        
         {children}
         <OfflineDetector />
       </body>
