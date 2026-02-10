@@ -17,11 +17,24 @@ export async function GET() {
     const baseUrl = `${protocol}://${domain}`
     
     const robotsTxt = `# Robots.txt for ${domain}
+# Telugu News Website - Optimized for Google News
+
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /private/
 
-# Sitemap
+# Crawl Delay (optional - use if needed)
+# Crawl-delay: 1
+
+# Sitemap Index (references all sitemaps)
+Sitemap: ${baseUrl}/sitemap-index.xml
+
+# Individual Sitemaps (for direct reference)
 Sitemap: ${baseUrl}/sitemap.xml
+Sitemap: ${baseUrl}/sitemap-news.xml
 `
     
     return new NextResponse(robotsTxt, {
@@ -35,10 +48,15 @@ Sitemap: ${baseUrl}/sitemap.xml
     console.error('Error generating robots.txt:', error)
     
     // Fallback robots.txt
-    const fallbackRobots = `User-agent: *
+    const fallbackRobots = `# Robots.txt
+User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /_next/
 
+Sitemap: https://kaburlutoday.com/sitemap-index.xml
 Sitemap: https://kaburlutoday.com/sitemap.xml
+Sitemap: https://kaburlutoday.com/sitemap-news.xml
 `
     
     return new NextResponse(fallbackRobots, {
