@@ -33,11 +33,17 @@ async function loadPublicData() {
   if (cachedArticles) return cachedArticles
   
   try {
-    // In server-side context, read from file system
-    // Skip in Edge Runtime - check for process.cwd availability
-    if (typeof window === 'undefined' && typeof process !== 'undefined' && process.cwd) {
-      const fs = await import('fs/promises')
-      const path = await import('path')
+    // In server-side Node.js context only — skip Edge Runtime and browser
+    if (
+      typeof window === 'undefined' &&
+      typeof process !== 'undefined' &&
+      process.env?.NEXT_RUNTIME !== 'edge' &&
+      process.cwd
+    ) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fs = (await import('node:fs/promises')) as typeof import('fs/promises')
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const path = (await import('node:path')) as typeof import('path')
       
       // Load all category JSON files and combine them
       const allArticles: NewsArticle[] = []

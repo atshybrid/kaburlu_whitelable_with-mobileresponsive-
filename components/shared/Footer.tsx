@@ -7,6 +7,25 @@ import { getTenantDomain } from '@/lib/domain-utils'
 import { getAvailableLegalPages } from '@/lib/legal-pages'
 import { getContactData } from '@/lib/contact'
 
+interface ApiContact {
+  email?: string
+  phone?: string
+  whatsapp?: string
+  address?: {
+    street?: string
+    city?: string
+    state?: string
+    country?: string
+  }
+  socialMedia?: {
+    facebook?: string
+    twitter?: string
+    instagram?: string
+    youtube?: string
+    telegram?: string
+  }
+}
+
 function safeUrl(v: string | undefined) {
   const s = String(v || '').trim()
   return s || undefined
@@ -112,7 +131,7 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
   const logoUrl = safeUrl(firstNonEmpty(effective.branding?.logoUrl, effective.settings?.branding?.logoUrl))
 
   // Type guard to check if API data has structured contact format
-  const hasStructuredContact = (data: typeof apiContactData): data is { contact: Record<string, unknown> } => {
+  const hasStructuredContact = (data: typeof apiContactData): data is { contact: ApiContact } => {
     return !!data && 'contact' in data
   }
 
