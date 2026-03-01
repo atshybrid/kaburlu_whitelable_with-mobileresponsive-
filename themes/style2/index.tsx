@@ -75,6 +75,32 @@ function toHref(pathname: string): UrlObject {
   return { pathname }
 }
 
+function getArticleImageUrl(articleLike: Partial<Article> | Record<string, unknown>): string | undefined {
+  if (!articleLike || typeof articleLike !== 'object') return undefined
+
+  const a = articleLike as Record<string, unknown>
+  const cover = a.coverImage
+  if (cover && typeof cover === 'object') {
+    const coverObj = cover as Record<string, unknown>
+    if (typeof coverObj.url === 'string' && coverObj.url.trim()) return coverObj.url
+  }
+
+  const directCandidates = [a.coverImageUrl, a.imageUrl, a.featuredImage, a.thumbnail]
+  for (const candidate of directCandidates) {
+    if (typeof candidate === 'string' && candidate.trim()) return candidate
+  }
+
+  const image = a.image
+  if (typeof image === 'string' && image.trim()) return image
+  if (image && typeof image === 'object') {
+    const imgObj = image as Record<string, unknown>
+    if (typeof imgObj.url === 'string' && imgObj.url.trim()) return imgObj.url
+    if (typeof imgObj.src === 'string' && imgObj.src.trim()) return imgObj.src
+  }
+
+  return undefined
+}
+
 /* ==================== TOI-STYLE HERO FEATURE ==================== */
 
 function HeroFeature({ tenantSlug, article }: { tenantSlug: string; article: Article }) {
@@ -468,8 +494,8 @@ function HorizontalCardsSection({
   if (!items.length) return null
   
   return (
-    <section className="py-8 -mx-4 px-4 bg-gradient-to-r from-zinc-50 to-zinc-100">
-      <div className="max-w-7xl mx-auto">
+    <section className="py-8 px-4 sm:px-5 bg-gradient-to-r from-zinc-50 to-zinc-100 rounded-xl">
+      <div className="mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${accentColor} flex items-center justify-center`}>
             <span className="text-white text-lg">📰</span>
@@ -485,7 +511,7 @@ function HorizontalCardsSection({
           ) : null}
         </div>
         
-        <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide">
+        <div className="flex gap-4 overflow-x-auto pb-4 px-1 sm:px-0 snap-x snap-mandatory scrollbar-hide">
           {items.slice(0, 6).map((a, idx) => (
             <Link 
               key={a.id}
@@ -543,7 +569,7 @@ function SpotlightSection({
   if (!items.length) return null
   
   return (
-    <section className={`py-8 -mx-4 px-4 bg-gradient-to-br ${accentColor}`}>
+    <section className={`py-8 px-4 sm:px-5 bg-gradient-to-br ${accentColor} rounded-xl`}>
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -622,7 +648,7 @@ function NewspaperColumnsSection({
           ) : null}
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 divide-x divide-zinc-200">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:divide-x divide-zinc-200">
           {/* Column 1 */}
           <div className="space-y-6">
             {col1.map((a, idx) => (
@@ -653,7 +679,7 @@ function NewspaperColumnsSection({
           </div>
           
           {/* Column 2 */}
-          <div className="space-y-6 pl-8">
+          <div className="space-y-6 md:pl-8">
             {col2.map((a, idx) => (
               <Link 
                 key={a.id}
@@ -817,7 +843,7 @@ function FeaturedBannerSection({
   const featured = items[0]
   
   return (
-    <section className="py-8 -mx-4 px-4">
+    <section className="py-8 px-4 sm:px-5">
       <Link 
         href={toHref(articleHref(tenantSlug, featured.slug || featured.id))}
         className="group block relative overflow-hidden rounded-2xl"
@@ -1400,6 +1426,89 @@ export async function ThemeHome({
   )
 }
 
+export async function ThemeCategory({
+  tenantSlug,
+  title,
+  categorySlug,
+  categoryName,
+  articles,
+}: {
+  tenantSlug: string
+  title: string
+  categorySlug: string
+  categoryName: string
+  articles: Article[]
+  tenantDomain?: string
+}) {
+  const settings = await getEffectiveSettings().catch(() => undefined)
+  const cssVars = themeCssVarsFromSettings(settings)
+  const safeArticles = Array.isArray(articles) ? articles : []
+
+  return (
+    <div className="theme-style2 pb-16 sm:pb-0" style={cssVars}>
+      <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} variant="style2" />
+
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:py-8">
+        <div className="mb-6 rounded-xl bg-white border border-zinc-200 p-5 sm:p-6">
+          <nav className="mb-3 text-sm text-zinc-500">
+            <Link href={toHref(basePathForTenant(tenantSlug))} className="hover:text-[hsl(var(--primary))] transition-colors">హోమ్</Link>
+            <span className="mx-2">›</span>
+            <span className="text-zinc-700">{categoryName}</span>
+          </nav>
+          <h1 className="text-2xl sm:text-3xl font-bold text-black">{categoryName}</h1>
+          <p className="mt-2 text-sm sm:text-base text-zinc-600">ఈ కేటగిరీలో తాజా వార్తలు</p>
+        </div>
+
+        {safeArticles.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {safeArticles.map((item, idx) => {
+              const imgUrl = getArticleImageUrl(item)
+              const articleSlug = item.slug || item.id || `${categorySlug}-${idx}`
+              const derivedCategorySlug = getCategorySlugFromArticle(item) || categorySlug
+              return (
+                <Link
+                  key={item.id || articleSlug || idx}
+                  href={toHref(articleHref(tenantSlug, articleSlug, derivedCategorySlug))}
+                  className="group block overflow-hidden rounded-xl border border-zinc-200 bg-white hover:border-[hsl(var(--primary))] hover:shadow-md transition-all"
+                >
+                  <div className="aspect-[16/10] w-full overflow-hidden bg-zinc-100">
+                    {imgUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={imgUrl} alt={item.title || categoryName} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+                    ) : (
+                      <PlaceholderImg className="h-full w-full object-cover" />
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h2 className="text-base font-bold text-black line-clamp-2 group-hover:text-[hsl(var(--primary))] transition-colors">
+                      {item.title}
+                    </h2>
+                    {item.excerpt ? (
+                      <p className="mt-2 text-sm text-zinc-600 line-clamp-2">{item.excerpt}</p>
+                    ) : null}
+                    {item.publishedAt ? (
+                      <time className="mt-2 block text-xs text-zinc-500">
+                        {new Date(String(item.publishedAt)).toLocaleDateString('te-IN', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      </time>
+                    ) : null}
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-8 text-center text-zinc-600">
+            ఈ కేటగిరీలో ప్రస్తుతం వార్తలు లేవు.
+          </div>
+        )}
+      </main>
+
+      <Footer settings={settings} tenantSlug={tenantSlug} />
+      <MobileBottomNav tenantSlug={tenantSlug} />
+    </div>
+  )
+}
+
 /* ==================== REPORTER SECTION COMPONENT ==================== */
 
 function ReporterSection({ article }: { article: Article }) {
@@ -1444,7 +1553,7 @@ export async function ThemeArticle({
   
   // 🎯 Fetch sidebar and bottom section data in parallel using new APIs
   const articleSlug = article.slug || article.id || ''
-  const [latestArticles, mustReadArticles, relatedArticles, trendingArticles] = await Promise.all([
+  const [latestArticles, mustReadArticles, fetchedRelatedArticles, trendingArticles] = await Promise.all([
     getLatestArticles(8, articleSlug).catch(() => []),
     embeddedMustReadList && embeddedMustReadList.length > 0
       ? Promise.resolve(embeddedMustReadList)
@@ -1456,6 +1565,29 @@ export async function ThemeArticle({
       ? Promise.resolve(article.trending.map(t => ({ ...t, title: t.title || '' } as Article)))
       : getTrendingArticles(4, articleSlug).catch(() => []),
   ])
+
+  let relatedArticles = fetchedRelatedArticles.filter((a) => a.id !== article.id && a.slug !== articleSlug)
+
+  if (relatedArticles.length === 0) {
+    const categorySlug = getCategorySlugFromArticle(article)
+    if (categorySlug) {
+      const categoryFallback = await getArticlesByCategory('na', categorySlug).catch(() => [])
+      relatedArticles = categoryFallback
+        .filter((a) => a.id !== article.id && a.slug !== articleSlug)
+        .slice(0, 6)
+    }
+  }
+
+  if (relatedArticles.length === 0) {
+    const fallbackPool = [...trendingArticles, ...latestArticles]
+    const seen = new Set<string>()
+    relatedArticles = fallbackPool.filter((a) => {
+      const key = `${a.id || ''}:${a.slug || ''}`
+      if (!a.title || a.id === article.id || a.slug === articleSlug || seen.has(key)) return false
+      seen.add(key)
+      return true
+    }).slice(0, 6)
+  }
   
   // Sidebar latest (filter out current article)
   const sidebarLatest = latestArticles.filter((a) => a.id !== article.id).slice(0, 8)
@@ -1606,11 +1738,12 @@ export async function ThemeArticle({
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {relatedArticles.slice(0, 6).map((relatedArticle) => {
-                    const imgUrl = (relatedArticle as Record<string, unknown>).coverImageUrl as string | undefined || relatedArticle.coverImage?.url
+                    const imgUrl = getArticleImageUrl(relatedArticle)
+                    const relatedCategorySlug = getCategorySlugFromArticle(relatedArticle)
                     return (
-                      <a 
+                      <Link
                         key={relatedArticle.id} 
-                        href={articleHref(tenantSlug, relatedArticle.slug || relatedArticle.id || '')}
+                        href={toHref(articleHref(tenantSlug, relatedArticle.slug || relatedArticle.id || '', relatedCategorySlug))}
                         className="group block overflow-hidden rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow border border-zinc-100"
                       >
                         <div className="relative aspect-video w-full overflow-hidden">
@@ -1631,7 +1764,7 @@ export async function ThemeArticle({
                             {relatedArticle.title}
                           </h3>
                         </div>
-                      </a>
+                      </Link>
                     )
                   })}
                 </div>

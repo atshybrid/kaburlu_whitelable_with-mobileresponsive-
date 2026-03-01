@@ -203,10 +203,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Keep layout sync unless we need tenant-specific language.
-  // Note: RootLayout can be async in Next App Router.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _unused = children;
   return (
     <RootLayoutInner>{children}</RootLayoutInner>
   );

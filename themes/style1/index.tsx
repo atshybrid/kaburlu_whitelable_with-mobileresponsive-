@@ -1773,7 +1773,7 @@ function TrendingArticlesSidebar({ trending, tenantSlug }: { trending: Article[]
 // Article Content with Must-Read Card and In-Article Images
 function ArticleContentWithMustRead({ 
   html, 
-  tenantSlug,
+  tenantSlug: _tenantSlug,
   secondImage 
 }: { 
   html: string; 

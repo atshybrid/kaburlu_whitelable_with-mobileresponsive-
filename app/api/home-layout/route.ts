@@ -16,6 +16,7 @@ async function themeKeyForRequest(req: NextRequest): Promise<ThemeKey> {
   try {
     // Use new /public/config API - theme key not in config yet, fallback to style1
     const config = await getConfigForDomain(domain)
+    void config
     // For now, always return style1 until backend adds theme to config API
     return 'style1'
   } catch {

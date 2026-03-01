@@ -2,7 +2,6 @@ import { headers } from 'next/headers'
 import { normalizeTenantDomain, type EffectiveSettings } from './remote'
 import { getConfigForDomain } from './config'
 import { cache as reactCache } from 'react'
-import { isWrongTenantData } from './fallback-data'
 
 export type SettingsResult = {
   settings: EffectiveSettings
@@ -54,7 +53,7 @@ const _getSettingsResult = reactCache(async (domainOverride?: string): Promise<S
     return hit.value
   }
   
-  let result: SettingsResult = {
+  const result: SettingsResult = {
     settings: {},
     isDomainNotLinked: false,
     isApiError: false

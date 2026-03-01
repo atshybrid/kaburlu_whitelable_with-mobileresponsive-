@@ -80,7 +80,7 @@ export default async function Home() {
   
   // Check if this is an ePaper site - block NEWS layout for ePaper domains
   // Config API structure: { domain: { kind: "NEWS" | "EPAPER" } }
-  const domainKind = (settings as any)?.domain?.kind
+  const domainKind = (settings as Record<string, unknown> | undefined) && (settings as Record<string, unknown>)['domain'] && ((settings as Record<string, unknown>)['domain'] as Record<string, unknown>)['kind']
   if (domainKind === 'EPAPER' || domainKind === 'epaper') {
     return (
       <TechnicalIssues 
@@ -93,17 +93,17 @@ export default async function Home() {
   const requestedThemeKey: string =
     settings?.theme?.theme ||
     settings?.theme?.key ||
-    (settings?.theme?.layout as any)?.style ||
+    (settings?.theme?.layout as Record<string, unknown> | undefined)?.style as string ||
     settings?.settings?.theme?.theme ||
     settings?.settings?.theme?.key ||
-    (settings?.settings?.theme?.layout as any)?.style ||
+    (settings?.settings?.theme?.layout as Record<string, unknown> | undefined)?.style as string ||
     'style1'
   
   // Debug: Log theme detection
   console.log('🎨 Theme Detection:', {
     'theme.theme': settings?.theme?.theme,
     'theme.key': settings?.theme?.key,
-    'theme.layout.style': (settings?.theme?.layout as any)?.style,
+    'theme.layout.style': (settings?.theme?.layout as Record<string, unknown> | undefined)?.style,
     'requestedThemeKey': requestedThemeKey,
     'domain': tenant.domain
   })

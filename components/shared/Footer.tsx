@@ -112,7 +112,7 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
   const logoUrl = safeUrl(firstNonEmpty(effective.branding?.logoUrl, effective.settings?.branding?.logoUrl))
 
   // Type guard to check if API data has structured contact format
-  const hasStructuredContact = (data: typeof apiContactData): data is { contact: any } => {
+  const hasStructuredContact = (data: typeof apiContactData): data is { contact: Record<string, unknown> } => {
     return !!data && 'contact' in data
   }
 
@@ -210,8 +210,9 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
   const newsletterTextSubtle = isDarkPrimary ? 'text-white/70' : 'text-black/70'
 
   // Get footer sections from navigation config
-  const footerSections = (effective.navigation?.footer as any)?.sections || []
-  const copyrightText = (effective.navigation?.footer as any)?.copyrightText || `© ${year} ${siteName}. All rights reserved.`
+  const footerNav = effective.navigation?.footer as Record<string, unknown> | undefined
+  const footerSections = (footerNav?.sections as Array<Record<string, unknown>>) || []
+  const copyrightText = (footerNav?.copyrightText as string) || `© ${year} ${siteName}. All rights reserved.`
   
   // Fetch available legal pages from API
   let availableLegalPages: Array<{ slug: string; title: string; href: string }> = []
@@ -430,21 +431,21 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
 
             {/* Legal Links - From Config or API */}
             {footerSections.length > 0 ? (
-              footerSections.map((section: any, idx: number) => (
+              footerSections.map((section, idx: number) => (
                 <div key={idx}>
                   <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
                     <span className="w-6 h-0.5 bg-[hsl(var(--primary))]" />
-                    {section.title}
+                    {section.title as string}
                   </h4>
-                  <nav aria-label={section.title}>
+                  <nav aria-label={section.title as string}>
                     <ul className="space-y-2.5 text-zinc-600">
-                      {section.links?.map((link: any, linkIdx: number) => (
+                      {(section.links as Array<Record<string, unknown>> | undefined)?.map((link, linkIdx: number) => (
                         <li key={linkIdx}>
                           <a 
                             className="hover:text-[hsl(var(--primary))] hover:translate-x-1 inline-block transition-all text-sm" 
-                            href={hrefForTenant(link.href)}
+                            href={hrefForTenant(link.href as string)}
                           >
-                            {link.label}
+                            {link.label as string}
                           </a>
                         </li>
                       ))}

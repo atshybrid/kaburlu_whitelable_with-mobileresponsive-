@@ -56,7 +56,7 @@ async function loadPublicData() {
           })
           
           allArticles.push(...articles)
-        } catch (err) {
+        } catch {
           // Skip if file doesn't exist
         }
       }

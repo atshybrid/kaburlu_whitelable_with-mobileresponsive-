@@ -5,11 +5,15 @@ export function OfflineDetector() {
   const [offline, setOffline] = useState(false)
 
   useEffect(() => {
-    // Check initial state
-    setOffline(!navigator.onLine)
-
     const handleOnline = () => setOffline(false)
     const handleOffline = () => setOffline(true)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    // Sync initial state after mount
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOffline(!navigator.onLine)
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)

@@ -17,7 +17,7 @@ function toHref(pathname: string): UrlObject {
  * @param intervalMs - Interval between items (default 5000ms)
  */
 export function FlashTicker({ 
-  tenantSlug, 
+  tenantSlug: _tenantSlug, 
   basePath = '', 
   items, 
   intervalMs = 5000 
@@ -54,6 +54,7 @@ export function FlashTicker({
   
   // Set mounted on client after hydration completes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 

@@ -10,6 +10,8 @@ import type { ReactElement } from 'react'
 
 async function getThemeCategory(themeKey: string) {
   switch (themeKey) {
+    case 'style2':
+      return (await import('@/themes/style2')).ThemeCategory
     case 'toi':
       return (await import('@/themes/toi')).ThemeCategory
     default:
