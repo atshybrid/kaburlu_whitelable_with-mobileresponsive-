@@ -1067,7 +1067,7 @@ export async function ThemeHome({
   // Extract feeds from the legacy API for ticker and mostRead
   const feeds = homepage?.feeds || {}
   const tickerItems = feeds.ticker?.items ? feedItemsToArticles(feeds.ticker.items) : []
-  const mostReadItems = feeds.mostRead?.items ? feedItemsToArticles(feeds.mostRead.items).slice(0, 3) : []
+  const mostReadItems = feeds.mostRead?.items ? feedItemsToArticles(feeds.mostRead.items) : []
   
   // Use ticker from API or fallback to articles
   const shapedFallbackFeed: Article[] = shapedHomepage
@@ -1075,9 +1075,35 @@ export async function ThemeHome({
     : []
 
   const fallbackFeed = baseArticles.length > 0 ? baseArticles : shapedFallbackFeed
+  const dedupeById = (items: Article[]): Article[] => {
+    const seen = new Set<string>()
+    const out: Article[] = []
+    for (const a of items) {
+      if (!a?.id) continue
+      if (seen.has(a.id)) continue
+      seen.add(a.id)
+      out.push(a)
+    }
+    return out
+  }
+
+  const fillWithFallback = (primary: Article[], minCount: number): Article[] => {
+    const out = dedupeById(primary)
+    if (out.length >= minCount) return out.slice(0, minCount)
+
+    const seen = new Set(out.map((a) => a.id))
+    for (const a of fallbackFeed) {
+      if (!a?.id || seen.has(a.id)) continue
+      out.push(a)
+      seen.add(a.id)
+      if (out.length >= minCount) break
+    }
+    return out
+  }
+
   const smartTickerData = smartTickerSection?.articles?.length ? smartTickerSection.articles.map(smartArticleToArticle) : []
   const tickerData = smartTickerData.length > 0 ? smartTickerData : (tickerItems.length > 0 ? tickerItems : fallbackFeed.slice(0, 10))
-  const mostReadData = mostReadItems.length > 0 ? mostReadItems : fallbackFeed.slice(0, 3)
+  const mostReadData = fillWithFallback(mostReadItems, 4)
 
   // If absolutely nothing is available, show a clear technical issue.
   if (fallbackFeed.length === 0 && (!shapedHomepage || ((shapedHomepage.sections || []).length === 0))) {
@@ -1122,18 +1148,7 @@ export async function ThemeHome({
     const smallFromLatest = heroLatest.filter((a) => a.id !== lead?.id).slice(0, Math.max(0, 6 - smallFromMain.length))
     small = [...smallFromMain, ...smallFromLatest].slice(0, 6)
 
-    const dedupe = (items: Article[]) => {
-      const seen = new Set<string>()
-      const out: Article[] = []
-      for (const a of items) {
-        if (!a?.id) continue
-        if (seen.has(a.id)) continue
-        seen.add(a.id)
-        out.push(a)
-      }
-      return out
-    }
-    allLatest = dedupe([...(lead ? [lead] : []), ...heroMain, ...heroLatest])
+    allLatest = fillWithFallback([...(lead ? [lead] : []), ...heroMain, ...heroLatest], 14)
 
     // Feed col-3 and col-4 through sectionDataMap so existing UI logic keeps working
     // (col-3 reads mustRead keys; col-4 reads topViewed keys)
@@ -1148,8 +1163,8 @@ export async function ThemeHome({
     medium = topStories.slice(0, 2)
     small = topStories.slice(2, 8)
     
-    // Build continuous list: hero(1) + topStories for sequential display
-    allLatest = [lead, ...topStories]
+    // Build continuous list: hero(1) + topStories and fill to support col-2 (8 items)
+    allLatest = fillWithFallback([lead, ...topStories], 14)
   } else {
     // Fallback to legacy data
     const latestItems = feeds.latest?.items ? feedItemsToArticles(feeds.latest.items) : []
@@ -1158,8 +1173,8 @@ export async function ThemeHome({
     medium = latestData.slice(1, 3)
     small = latestData.slice(3, 9)
     
-    // Full list for continuous sequence
-    allLatest = latestData
+    // Full list for continuous sequence. Ensure enough items for col-2 (indices 6-13).
+    allLatest = fillWithFallback(latestData, 14)
   }
 
   // Extract sections data from shaped homepage
@@ -1217,7 +1232,7 @@ export async function ThemeHome({
         // Col 1: Already has heroLead + mediumCards, smallList adds 4 more = 7 total
         // Col 2: 8 latest articles
         // Col 3: "Must Read" label + 8 articles
-        // Col 4: "Top Articles" label + 2 articles
+        // Col 4: "Top Articles" label + 4 articles
         {
           const colKey = block.columnKey || ''
           
@@ -3417,6 +3432,12 @@ async function WebStoriesArea({ tenantSlug, showHgBlock = true }: { tenantSlug: 
     }))
 
   const showWebStories = process.env.NEXT_PUBLIC_WEBSTORIES_ENABLED === 'true' && storyItems.length > 0
+  const hasCategoryData = cats.length > 0
+  const showHgBlockSection = showHgBlock && hasCategoryData
+  const hasLeftContent = showWebStories || showHgBlockSection
+
+  // No category-backed content in this section: avoid rendering empty right-side ads.
+  if (!hasLeftContent) return null
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
@@ -3434,16 +3455,18 @@ async function WebStoriesArea({ tenantSlug, showHgBlock = true }: { tenantSlug: 
         )}
 
         {/* HG block below stories */}
-        {showHgBlock ? <HGBlock tenantSlug={tenantSlug} /> : null}
+        {showHgBlockSection ? <HGBlock tenantSlug={tenantSlug} /> : null}
       </div>
 
       {/* Right: Sticky vertical ads shared for both blocks */}
-      <aside className="hidden lg:block">
-        <div className="sticky top-24 space-y-4">
-          <AdBanner variant="tall" />
-          <AdBanner variant="default" />
-        </div>
-      </aside>
+      {hasCategoryData ? (
+        <aside className="hidden lg:block">
+          <div className="sticky top-24 space-y-4">
+            <AdBanner variant="tall" />
+            <AdBanner variant="default" />
+          </div>
+        </aside>
+      ) : null}
     </div>
   )
 }
