@@ -29,6 +29,8 @@ export interface ThemeCategoryProps {
   currentPage?: number
   hasNextPage?: boolean
   hasPrevPage?: boolean
+  totalPages?: number
+  totalCount?: number
 }
 
 // Theme module type definition

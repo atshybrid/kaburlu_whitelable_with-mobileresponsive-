@@ -146,6 +146,26 @@ export interface DataSource {
     tenantId?: string,
     options?: { page?: number; pageSize?: number },
   ): Promise<Article[]>
+  categoryArticlesPage(
+    tenantSlug: string,
+    categorySlug: string,
+    tenantId?: string,
+    options?: { page?: number; pageSize?: number },
+  ): Promise<CategoryArticlesPage>
+}
+
+export interface CategoryPaginationInfo {
+  page: number
+  limit: number
+  totalCount?: number
+  totalPages?: number
+  hasNext: boolean
+  hasPrev: boolean
+}
+
+export interface CategoryArticlesPage {
+  articles: Article[]
+  pagination: CategoryPaginationInfo
 }
 
 class RemoteDataSource implements DataSource {
@@ -236,6 +256,16 @@ class RemoteDataSource implements DataSource {
     _tenantId?: string,
     options?: { page?: number; pageSize?: number },
   ) {
+    const page = await this.categoryArticlesPage(_tenantSlug, categorySlug, _tenantId, options)
+    return page.articles
+  }
+
+  async categoryArticlesPage(
+    _tenantSlug: string,
+    categorySlug: string,
+    _tenantId?: string,
+    options?: { page?: number; pageSize?: number },
+  ): Promise<CategoryArticlesPage> {
     void _tenantSlug
     void _tenantId
     
@@ -246,6 +276,56 @@ class RemoteDataSource implements DataSource {
     const safePage = pageFromQuery > 0 ? Math.floor(pageFromQuery) : 1
     const pageSizeFromQuery = Number.isFinite(options?.pageSize) ? Number(options?.pageSize) : undefined
     const safePageSize = pageSizeFromQuery && pageSizeFromQuery > 0 ? Math.floor(pageSizeFromQuery) : (config?.layout.articlesPerPage || 12)
+
+    const asNum = (v: unknown) => {
+      if (typeof v === 'number' && Number.isFinite(v)) return v
+      if (typeof v === 'string') {
+        const n = Number(v)
+        if (Number.isFinite(n)) return n
+      }
+      return undefined
+    }
+
+    // Preferred API from backend contract:
+    // /public/category/{slug}/articles?page=1&limit=20
+    const preferredPath = `/public/category/${encodeURIComponent(categorySlug)}/articles?page=${safePage}&limit=${safePageSize}`
+    try {
+      const res = await fetchJSON<unknown>(preferredPath, {
+        tenantDomain: await currentDomain(),
+        revalidateSeconds: cacheTTL,
+      })
+
+      const normalized = normalizeList(res)
+      const responseObj = res && typeof res === 'object' ? (res as Record<string, unknown>) : undefined
+      const paginationObj = responseObj?.pagination && typeof responseObj.pagination === 'object'
+        ? (responseObj.pagination as Record<string, unknown>)
+        : undefined
+
+      const page = asNum(paginationObj?.page) ?? safePage
+      const limit = asNum(paginationObj?.limit) ?? safePageSize
+      const totalCount = asNum(paginationObj?.total_count) ?? asNum(paginationObj?.totalCount)
+      const totalPages = asNum(paginationObj?.total_pages) ?? asNum(paginationObj?.totalPages)
+      const hasNext = typeof paginationObj?.has_next === 'boolean'
+        ? paginationObj.has_next
+        : (typeof paginationObj?.hasNext === 'boolean' ? paginationObj.hasNext : (typeof totalPages === 'number' ? page < totalPages : normalized.length >= limit))
+      const hasPrev = typeof paginationObj?.has_prev === 'boolean'
+        ? paginationObj.has_prev
+        : (typeof paginationObj?.hasPrev === 'boolean' ? paginationObj.hasPrev : page > 1)
+
+      return {
+        articles: normalized,
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPages,
+          hasNext,
+          hasPrev,
+        },
+      }
+    } catch {
+      // continue to fallback paths
+    }
     
     const paths = [
       `/public/articles?category=${encodeURIComponent(categorySlug)}&page=${safePage}&pageSize=${safePageSize}`,
@@ -257,12 +337,29 @@ class RemoteDataSource implements DataSource {
           tenantDomain: await currentDomain(),
           revalidateSeconds: cacheTTL,
         })
-        return normalizeList(res)
+        const normalized = normalizeList(res)
+        return {
+          articles: normalized,
+          pagination: {
+            page: safePage,
+            limit: safePageSize,
+            hasNext: normalized.length >= safePageSize,
+            hasPrev: safePage > 1,
+          },
+        }
       } catch {
         // continue
       }
     }
-    return []
+    return {
+      articles: [],
+      pagination: {
+        page: safePage,
+        limit: safePageSize,
+        hasNext: false,
+        hasPrev: safePage > 1,
+      },
+    }
   }
 }
 

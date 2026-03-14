@@ -792,6 +792,7 @@ export async function ThemeCategory({
   currentPage = 1,
   hasNextPage = false,
   hasPrevPage = false,
+  totalPages,
 }: {
   tenantSlug: string
   title: string
@@ -801,6 +802,7 @@ export async function ThemeCategory({
   currentPage?: number
   hasNextPage?: boolean
   hasPrevPage?: boolean
+  totalPages?: number
 }) {
   const settings = await getEffectiveSettings()
   
@@ -852,7 +854,7 @@ export async function ThemeCategory({
               <div className="mt-8 flex items-center justify-center gap-3">
                 {hasPrevPage ? (
                   <Link
-                    href={toHref(`${categoryHref(tenantSlug, categorySlug)}?page=${currentPage - 1}`)}
+                    href={`${categoryHref(tenantSlug, categorySlug)}?page=${currentPage - 1}`}
                     className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:border-gray-400"
                   >
                     Previous
@@ -860,10 +862,10 @@ export async function ThemeCategory({
                 ) : (
                   <span className="rounded-md border border-gray-200 bg-gray-100 px-4 py-2 text-sm text-gray-400">Previous</span>
                 )}
-                <span className="text-sm text-gray-600">Page {currentPage}</span>
+                <span className="text-sm text-gray-600">Page {currentPage}{typeof totalPages === 'number' ? ` of ${totalPages}` : ''}</span>
                 {hasNextPage ? (
                   <Link
-                    href={toHref(`${categoryHref(tenantSlug, categorySlug)}?page=${currentPage + 1}`)}
+                    href={`${categoryHref(tenantSlug, categorySlug)}?page=${currentPage + 1}`}
                     className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:border-gray-400"
                   >
                     Next

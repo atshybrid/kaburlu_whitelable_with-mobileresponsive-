@@ -4,13 +4,13 @@ import { DomainNotLinked, TechnicalIssues } from '@/components/shared'
 import { ArticleGrid } from '@/components/shared/ArticleGrid'
 import { Navbar } from '@/components/shared/Navbar'
 import { Footer } from '@/components/shared/Footer'
-import { getArticlesByCategory } from '@/lib/data'
+import { getArticlesByCategoryPage } from '@/lib/data'
 import type { Article } from '@/lib/data-sources'
 import type { ReactElement } from 'react'
 import Link from 'next/link'
 import { categoryHref } from '@/lib/url'
 
-const CATEGORY_PAGE_SIZE = 12
+const CATEGORY_PAGE_SIZE = 20
 
 function parsePage(queryPage: string | string[] | undefined) {
   const raw = Array.isArray(queryPage) ? queryPage[0] : queryPage
@@ -62,13 +62,14 @@ export default async function CategoryPage({
     }
   }
   
-  const pagedArticles = await getArticlesByCategory(tenant.id, slug, {
+  const paged = await getArticlesByCategoryPage(tenant.id, slug, {
     page: currentPage,
-    pageSize: CATEGORY_PAGE_SIZE + 1,
+    pageSize: CATEGORY_PAGE_SIZE,
   })
-  const hasNextPage = pagedArticles.length > CATEGORY_PAGE_SIZE
-  const hasPrevPage = currentPage > 1
-  const articles = hasNextPage ? pagedArticles.slice(0, CATEGORY_PAGE_SIZE) : pagedArticles
+  const hasNextPage = !!paged.pagination.hasNext
+  const hasPrevPage = !!paged.pagination.hasPrev
+  const totalPages = paged.pagination.totalPages
+  const articles = paged.articles
   const categoryName = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
   // Use theme-specific category page if available
@@ -81,6 +82,7 @@ export default async function CategoryPage({
     currentPage?: number
     hasNextPage?: boolean
     hasPrevPage?: boolean
+    totalPages?: number
   }) => ReactElement | Promise<ReactElement>
   const ThemeCategory = await getThemeCategory(tenant.themeKey) as CategoryComp | null
 
@@ -95,6 +97,7 @@ export default async function CategoryPage({
         currentPage={currentPage}
         hasNextPage={hasNextPage}
         hasPrevPage={hasPrevPage}
+        totalPages={totalPages}
       />
     )
   }
@@ -118,7 +121,7 @@ export default async function CategoryPage({
             ) : (
               <span className="rounded-md border border-zinc-200 bg-zinc-100 px-4 py-2 text-sm text-zinc-400">Previous</span>
             )}
-            <span className="text-sm text-zinc-600">Page {currentPage}</span>
+            <span className="text-sm text-zinc-600">Page {currentPage}{typeof totalPages === 'number' ? ` of ${totalPages}` : ''}</span>
             {hasNextPage ? (
               <Link
                 href={`${categoryHref(tenant.slug, slug)}?page=${currentPage + 1}`}

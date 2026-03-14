@@ -1,4 +1,4 @@
-import { getDataSource, type Article } from './data-sources'
+import { getDataSource, type Article, type CategoryArticlesPage } from './data-sources'
 import { getTenantFromHeaders } from './tenant'
 
 function isMockMode() {
@@ -68,6 +68,45 @@ export async function getArticlesByCategory(
       return makeMockArticles({ count: pageSize, tenantSlug: tenant.slug, categorySlug, page })
     }
     return []
+  }
+}
+
+export async function getArticlesByCategoryPage(
+  tenantId: string,
+  categorySlug: string,
+  options?: { page?: number; pageSize?: number },
+): Promise<CategoryArticlesPage> {
+  void tenantId
+  const tenant = await getTenantFromHeaders()
+  const ds = getDataSource()
+
+  try {
+    return await ds.categoryArticlesPage(tenant.slug, categorySlug, tenant.id, options)
+  } catch {
+    const page = Number.isFinite(options?.page) ? Math.max(1, Math.floor(Number(options?.page))) : 1
+    const pageSize = Number.isFinite(options?.pageSize) ? Math.max(1, Math.floor(Number(options?.pageSize))) : 12
+
+    if (allowMockFallback()) {
+      return {
+        articles: makeMockArticles({ count: pageSize, tenantSlug: tenant.slug, categorySlug, page }),
+        pagination: {
+          page,
+          limit: pageSize,
+          hasNext: true,
+          hasPrev: page > 1,
+        },
+      }
+    }
+
+    return {
+      articles: [],
+      pagination: {
+        page,
+        limit: pageSize,
+        hasNext: false,
+        hasPrev: page > 1,
+      },
+    }
   }
 }
 
