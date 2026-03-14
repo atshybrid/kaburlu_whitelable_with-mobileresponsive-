@@ -1764,12 +1764,12 @@ export async function ThemeArticle({
 
             {article.coverImage?.url ? (
               <figure className="mb-6 -mx-4 sm:mx-0">
-                <div className="overflow-hidden">
+                <div className="overflow-hidden bg-zinc-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
                     src={article.coverImage.url} 
                     alt={article.title} 
-                    className="w-full aspect-video object-cover" 
+                    className="mx-auto w-full h-auto max-h-[75vh] object-contain object-top" 
                   />
                 </div>
               </figure>
