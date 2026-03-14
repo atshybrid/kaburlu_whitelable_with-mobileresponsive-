@@ -140,7 +140,12 @@ export interface Article {
 export interface DataSource {
   homeFeed(tenantSlug: string, tenantId?: string): Promise<Article[]>
   articleBySlug(tenantSlug: string, slug: string, tenantId?: string): Promise<Article | null>
-  articlesByCategory(tenantSlug: string, categorySlug: string, tenantId?: string): Promise<Article[]>
+  articlesByCategory(
+    tenantSlug: string,
+    categorySlug: string,
+    tenantId?: string,
+    options?: { page?: number; pageSize?: number },
+  ): Promise<Article[]>
 }
 
 class RemoteDataSource implements DataSource {
@@ -225,17 +230,26 @@ class RemoteDataSource implements DataSource {
     
     return null
   }
-  async articlesByCategory(_tenantSlug: string, categorySlug: string) {
+  async articlesByCategory(
+    _tenantSlug: string,
+    categorySlug: string,
+    _tenantId?: string,
+    options?: { page?: number; pageSize?: number },
+  ) {
     void _tenantSlug
+    void _tenantId
     
     // Get cache TTL from config
     const config = await getConfig()
     const cacheTTL = getCacheTTL(config, 'category')
-    const pageSize = config?.layout.articlesPerPage || 12
+    const pageFromQuery = Number.isFinite(options?.page) ? Number(options?.page) : 1
+    const safePage = pageFromQuery > 0 ? Math.floor(pageFromQuery) : 1
+    const pageSizeFromQuery = Number.isFinite(options?.pageSize) ? Number(options?.pageSize) : undefined
+    const safePageSize = pageSizeFromQuery && pageSizeFromQuery > 0 ? Math.floor(pageSizeFromQuery) : (config?.layout.articlesPerPage || 12)
     
     const paths = [
-      `/public/articles?category=${encodeURIComponent(categorySlug)}&page=1&pageSize=${pageSize}`,
-      `/public/categories/${encodeURIComponent(categorySlug)}/articles?page=1&pageSize=${pageSize}`,
+      `/public/articles?category=${encodeURIComponent(categorySlug)}&page=${safePage}&pageSize=${safePageSize}`,
+      `/public/categories/${encodeURIComponent(categorySlug)}/articles?page=${safePage}&pageSize=${safePageSize}`,
     ]
     for (const p of paths) {
       try {

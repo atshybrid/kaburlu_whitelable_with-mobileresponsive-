@@ -786,14 +786,21 @@ export async function ThemeArticle({
 export async function ThemeCategory({
   tenantSlug,
   title,
+  categorySlug,
   categoryName,
   articles,
+  currentPage = 1,
+  hasNextPage = false,
+  hasPrevPage = false,
 }: {
   tenantSlug: string
   title: string
   categorySlug: string
   categoryName: string
   articles: Article[]
+  currentPage?: number
+  hasNextPage?: boolean
+  hasPrevPage?: boolean
 }) {
   const settings = await getEffectiveSettings()
   
@@ -840,6 +847,32 @@ export async function ThemeCategory({
                 <SecondaryCard key={article.id} tenantSlug={tenantSlug} article={article} />
               ))}
             </div>
+
+            {(hasPrevPage || hasNextPage) && (
+              <div className="mt-8 flex items-center justify-center gap-3">
+                {hasPrevPage ? (
+                  <Link
+                    href={toHref(`${categoryHref(tenantSlug, categorySlug)}?page=${currentPage - 1}`)}
+                    className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:border-gray-400"
+                  >
+                    Previous
+                  </Link>
+                ) : (
+                  <span className="rounded-md border border-gray-200 bg-gray-100 px-4 py-2 text-sm text-gray-400">Previous</span>
+                )}
+                <span className="text-sm text-gray-600">Page {currentPage}</span>
+                {hasNextPage ? (
+                  <Link
+                    href={toHref(`${categoryHref(tenantSlug, categorySlug)}?page=${currentPage + 1}`)}
+                    className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:border-gray-400"
+                  >
+                    Next
+                  </Link>
+                ) : (
+                  <span className="rounded-md border border-gray-200 bg-gray-100 px-4 py-2 text-sm text-gray-400">Next</span>
+                )}
+              </div>
+            )}
 
             {articles.length === 0 && (
               <div className="text-center py-12 text-gray-500">

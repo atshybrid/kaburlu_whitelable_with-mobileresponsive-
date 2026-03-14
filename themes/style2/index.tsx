@@ -5,6 +5,7 @@ import { FlashTicker } from '@/components/shared/FlashTicker'
 import { PlaceholderImg } from '@/components/shared/PlaceholderImg'
 import MobileBottomNav from '@/components/shared/MobileBottomNav'
 import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapper'
+import ArticleEngagementClient from '@/components/shared/ArticleEngagementClient'
 import type { Article } from '@/lib/data-sources'
 import { getLatestArticles, getMustReadArticles, getRelatedArticles, getTrendingArticles } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
@@ -1440,6 +1441,9 @@ export async function ThemeCategory({
   categorySlug,
   categoryName,
   articles,
+  currentPage = 1,
+  hasNextPage = false,
+  hasPrevPage = false,
 }: {
   tenantSlug: string
   title: string
@@ -1447,6 +1451,9 @@ export async function ThemeCategory({
   categoryName: string
   articles: Article[]
   tenantDomain?: string
+  currentPage?: number
+  hasNextPage?: boolean
+  hasPrevPage?: boolean
 }) {
   const settings = await getEffectiveSettings().catch(() => undefined)
   const cssVars = themeCssVarsFromSettings(settings)
@@ -1468,41 +1475,71 @@ export async function ThemeCategory({
         </div>
 
         {safeArticles.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {safeArticles.map((item, idx) => {
-              const imgUrl = getArticleImageUrl(item)
-              const articleSlug = item.slug || item.id || `${categorySlug}-${idx}`
-              const derivedCategorySlug = getCategorySlugFromArticle(item) || categorySlug
-              return (
-                <Link
-                  key={item.id || articleSlug || idx}
-                  href={toHref(articleHref(tenantSlug, articleSlug, derivedCategorySlug))}
-                  className="group block overflow-hidden rounded-xl border border-zinc-200 bg-white hover:border-[hsl(var(--primary))] hover:shadow-md transition-all"
-                >
-                  <div className="aspect-[16/10] w-full overflow-hidden bg-zinc-100">
-                    {imgUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={imgUrl} alt={item.title || categoryName} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
-                    ) : (
-                      <PlaceholderImg className="h-full w-full object-cover" />
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h2 className="text-base font-bold text-black line-clamp-2 group-hover:text-[hsl(var(--primary))] transition-colors">
-                      {item.title}
-                    </h2>
-                    {item.excerpt ? (
-                      <p className="mt-2 text-sm text-zinc-600 line-clamp-2">{item.excerpt}</p>
-                    ) : null}
-                    {item.publishedAt ? (
-                      <time className="mt-2 block text-xs text-zinc-500">
-                        {new Date(String(item.publishedAt)).toLocaleDateString('te-IN', { month: 'long', day: 'numeric', year: 'numeric' })}
-                      </time>
-                    ) : null}
-                  </div>
-                </Link>
-              )
-            })}
+          <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              {safeArticles.map((item, idx) => {
+                const imgUrl = getArticleImageUrl(item)
+                const articleSlug = item.slug || item.id || `${categorySlug}-${idx}`
+                const derivedCategorySlug = getCategorySlugFromArticle(item) || categorySlug
+                return (
+                  <Link
+                    key={item.id || articleSlug || idx}
+                    href={toHref(articleHref(tenantSlug, articleSlug, derivedCategorySlug))}
+                    className="group block overflow-hidden rounded-xl border border-zinc-200 bg-white hover:border-[hsl(var(--primary))] hover:shadow-md transition-all"
+                  >
+                    <div className="aspect-[16/10] w-full overflow-hidden bg-zinc-100">
+                      {imgUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={imgUrl} alt={item.title || categoryName} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+                      ) : (
+                        <PlaceholderImg className="h-full w-full object-cover" />
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h2 className="text-base font-bold text-black line-clamp-2 group-hover:text-[hsl(var(--primary))] transition-colors">
+                        {item.title}
+                      </h2>
+                      {item.excerpt ? (
+                        <p className="mt-2 text-sm text-zinc-600 line-clamp-2">{item.excerpt}</p>
+                      ) : null}
+                      {item.publishedAt ? (
+                        <time className="mt-2 block text-xs text-zinc-500">
+                          {new Date(String(item.publishedAt)).toLocaleDateString('te-IN', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </time>
+                      ) : null}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+
+            {(hasPrevPage || hasNextPage) && (
+              <div className="mt-8 flex items-center justify-center gap-3">
+                {hasPrevPage ? (
+                  <Link
+                    href={toHref(`${categoryHref(tenantSlug, categorySlug)}?page=${currentPage - 1}`)}
+                    className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:border-zinc-400"
+                  >
+                    ← Previous
+                  </Link>
+                ) : (
+                  <span className="rounded-md border border-zinc-200 bg-zinc-100 px-4 py-2 text-sm text-zinc-400">← Previous</span>
+                )}
+
+                <span className="text-sm font-medium text-zinc-600">Page {currentPage}</span>
+
+                {hasNextPage ? (
+                  <Link
+                    href={toHref(`${categoryHref(tenantSlug, categorySlug)}?page=${currentPage + 1}`)}
+                    className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:border-zinc-400"
+                  >
+                    Next →
+                  </Link>
+                ) : (
+                  <span className="rounded-md border border-zinc-200 bg-zinc-100 px-4 py-2 text-sm text-zinc-400">Next →</span>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-8 text-center text-zinc-600">
@@ -1775,6 +1812,8 @@ export async function ThemeArticle({
             </div>
 
             <ReporterSection article={article} />
+
+            <ArticleEngagementClient articleId={article.id || article.slug || 'article'} />
 
             <div className="mt-8">
               <AdBanner variant="horizontal" size="medium" />

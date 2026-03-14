@@ -18,6 +18,8 @@ import { getArticlesByCategory } from '@/lib/data'
 import type { Article } from '@/lib/data-sources'
 import type { ReactElement } from 'react'
 import type { Metadata } from 'next'
+import Link from 'next/link'
+import { categoryHref } from '@/lib/url'
 
 // Force dynamic rendering for domain-based multitenancy
 export const dynamic = 'force-dynamic'
@@ -97,8 +99,25 @@ async function getThemeCategory(themeKey: string) {
   }
 }
 
-export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
+const CATEGORY_PAGE_SIZE = 12
+
+function parsePage(queryPage: string | string[] | undefined) {
+  const raw = Array.isArray(queryPage) ? queryPage[0] : queryPage
+  const num = Number(raw)
+  if (!Number.isFinite(num) || num < 1) return 1
+  return Math.floor(num)
+}
+
+export default async function CategoryPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
+}) {
   const { slug } = await params
+  const sp = searchParams ? await searchParams : undefined
+  const currentPage = parsePage(sp?.page)
   
   // Resolve tenant from domain header (no tenant param needed)
   const tenant = await resolveTenant()
@@ -137,15 +156,43 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   }
   
   // Fetch articles for this category
-  const articles = await getArticlesByCategory(tenant.id, slug)
+  const pagedArticles = await getArticlesByCategory(tenant.id, slug, {
+    page: currentPage,
+    pageSize: CATEGORY_PAGE_SIZE + 1,
+  })
+  const hasNextPage = pagedArticles.length > CATEGORY_PAGE_SIZE
+  const hasPrevPage = currentPage > 1
+  const articles = hasNextPage ? pagedArticles.slice(0, CATEGORY_PAGE_SIZE) : pagedArticles
   const categoryName = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
   // Use theme-specific category page if available
-  type CategoryComp = (p: { tenantSlug: string; title: string; categorySlug: string; categoryName: string; articles: Article[]; tenantDomain?: string }) => ReactElement | Promise<ReactElement>
+  type CategoryComp = (p: {
+    tenantSlug: string
+    title: string
+    categorySlug: string
+    categoryName: string
+    articles: Article[]
+    tenantDomain?: string
+    currentPage?: number
+    hasNextPage?: boolean
+    hasPrevPage?: boolean
+  }) => ReactElement | Promise<ReactElement>
   const ThemeCategory = await getThemeCategory(tenant.themeKey) as CategoryComp | null
 
   if (ThemeCategory) {
-    return <ThemeCategory tenantSlug={tenant.slug} title={tenant.name} categorySlug={slug} categoryName={categoryName} articles={articles} tenantDomain={tenant.domain || undefined} />
+    return (
+      <ThemeCategory
+        tenantSlug={tenant.slug}
+        title={tenant.name}
+        categorySlug={slug}
+        categoryName={categoryName}
+        articles={articles}
+        tenantDomain={tenant.domain || undefined}
+        currentPage={currentPage}
+        hasNextPage={hasNextPage}
+        hasPrevPage={hasPrevPage}
+      />
+    )
   }
 
   // Default fallback category page (works for style1)
@@ -158,6 +205,31 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           <p className="mt-2 text-zinc-600">Latest news and updates in {categoryName}</p>
         </div>
         <ArticleGrid tenantSlug={tenant.slug} items={articles} />
+        {(hasPrevPage || hasNextPage) && (
+          <div className="mt-8 flex items-center justify-center gap-3">
+            {hasPrevPage ? (
+              <Link
+                href={`${categoryHref(tenant.slug, slug)}?page=${currentPage - 1}`}
+                className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:border-zinc-400"
+              >
+                Previous
+              </Link>
+            ) : (
+              <span className="rounded-md border border-zinc-200 bg-zinc-100 px-4 py-2 text-sm text-zinc-400">Previous</span>
+            )}
+            <span className="text-sm text-zinc-600">Page {currentPage}</span>
+            {hasNextPage ? (
+              <Link
+                href={`${categoryHref(tenant.slug, slug)}?page=${currentPage + 1}`}
+                className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:border-zinc-400"
+              >
+                Next
+              </Link>
+            ) : (
+              <span className="rounded-md border border-zinc-200 bg-zinc-100 px-4 py-2 text-sm text-zinc-400">Next</span>
+            )}
+          </div>
+        )}
       </main>
       <Footer tenantSlug={tenant.slug} />
     </div>

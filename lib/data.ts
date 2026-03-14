@@ -46,19 +46,27 @@ export async function getArticleBySlug(tenantId: string, slug: string) {
   return null
 }
 
-export async function getArticlesByCategory(tenantId: string, categorySlug: string) {
+export async function getArticlesByCategory(
+  tenantId: string,
+  categorySlug: string,
+  options?: { page?: number; pageSize?: number },
+) {
   void tenantId
   const tenant = await getTenantFromHeaders()
   const ds = getDataSource()
 
   try {
-    const list = await ds.articlesByCategory(tenant.slug, categorySlug, tenant.id)
+    const list = await ds.articlesByCategory(tenant.slug, categorySlug, tenant.id, options)
     if (Array.isArray(list) && list.length > 0) return list
     // ✅ Return empty array if no data - category pages will show "no articles" message
     return []
   } catch {
     // Only use mock in explicit mock mode
-    if (allowMockFallback()) return makeMockArticles({ count: 12, tenantSlug: tenant.slug, categorySlug })
+    if (allowMockFallback()) {
+      const page = Number.isFinite(options?.page) ? Math.max(1, Math.floor(Number(options?.page))) : 1
+      const pageSize = Number.isFinite(options?.pageSize) ? Math.max(1, Math.floor(Number(options?.pageSize))) : 12
+      return makeMockArticles({ count: pageSize, tenantSlug: tenant.slug, categorySlug, page })
+    }
     return []
   }
 }
@@ -103,14 +111,18 @@ function makeMockArticles({
   count,
   tenantSlug,
   categorySlug,
+  page = 1,
 }: {
   count: number
   tenantSlug: string
   categorySlug?: string
+  page?: number
 }): Article[] {
   const items: Article[] = []
+  const start = (Math.max(1, page) - 1) * count
   for (let i = 0; i < count; i++) {
-    const slug = categorySlug ? `${categorySlug}-sample-${i + 1}` : `sample-${i + 1}`
+    const idx = start + i + 1
+    const slug = categorySlug ? `${categorySlug}-sample-${idx}` : `sample-${idx}`
     const a = makeMockArticle({ slug, tenantSlug })
     items.push({
       ...a,

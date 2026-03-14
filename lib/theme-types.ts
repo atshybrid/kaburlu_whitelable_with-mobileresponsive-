@@ -26,6 +26,9 @@ export interface ThemeCategoryProps {
   categorySlug: string
   categoryName: string
   articles: Article[]
+  currentPage?: number
+  hasNextPage?: boolean
+  hasPrevPage?: boolean
 }
 
 // Theme module type definition
