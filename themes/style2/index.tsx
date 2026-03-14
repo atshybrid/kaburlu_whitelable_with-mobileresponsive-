@@ -1536,20 +1536,12 @@ function ReporterSection({ article }: { article: Article }) {
             src={photoUrl}
             alt={authorName}
             style={{ width: '3.5rem', height: '3.5rem', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-            onError={(e) => {
-              const target = e.currentTarget
-              target.style.display = 'none'
-              const sibling = target.nextElementSibling as HTMLElement | null
-              if (sibling) sibling.style.display = 'flex'
-            }}
           />
-        ) : null}
-        <div
-          className="reporter-avatar"
-          style={{ display: photoUrl ? 'none' : 'flex' }}
-        >
-          {initials}
-        </div>
+        ) : (
+          <div className="reporter-avatar">
+            {initials}
+          </div>
+        )}
         <div className="reporter-details">
           <div className="reporter-name">{authorName}</div>
           <div className="reporter-role">{designation}</div>
