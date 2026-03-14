@@ -11,13 +11,96 @@ const LANGUAGE_OPTIONS: Array<{ code: string; label: string }> = [
   { code: 'mr', label: 'Marathi' },
 ]
 
+const TRANSLATE_TRACKING_PARAMS = [
+  '_x_tr_sl',
+  '_x_tr_tl',
+  '_x_tr_hl',
+  '_x_tr_pto',
+  '_x_tr_hist',
+  '_x_tr_sch',
+  '_x_tr_enc',
+  '_x_tr_url',
+]
+
+function safeDecode(value: string) {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
+function cleanTranslateParams(url: URL) {
+  for (const param of TRANSLATE_TRACKING_PARAMS) {
+    url.searchParams.delete(param)
+  }
+  return url
+}
+
+function getPreferredPageUrl(): string {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return ''
+
+  const canonical = document.querySelector('link[rel="canonical"]')?.getAttribute('href')
+  const ogUrl = document.querySelector('meta[property="og:url"]')?.getAttribute('content')
+  const candidate = (canonical || ogUrl || window.location.href || '').trim()
+
+  if (!candidate) return window.location.href
+
+  try {
+    return new URL(candidate, window.location.origin).toString()
+  } catch {
+    return window.location.href
+  }
+}
+
+function unwrapTranslatedUrl(rawUrl: string): string {
+  let current = rawUrl
+
+  for (let i = 0; i < 4; i++) {
+    let parsed: URL
+    try {
+      parsed = new URL(current)
+    } catch {
+      return current
+    }
+
+    const host = parsed.hostname.toLowerCase()
+
+    // Wrapper URL: https://translate.google.com/translate?...&u=<original-url>
+    if (host.includes('translate.google')) {
+      const nested = parsed.searchParams.get('u')
+      if (nested) {
+        current = safeDecode(nested)
+        continue
+      }
+      return cleanTranslateParams(parsed).toString()
+    }
+
+    // Proxy URL: https://example-com.translate.goog/path?..._x_tr_*
+    if (host.endsWith('.translate.goog')) {
+      const nested = parsed.searchParams.get('_x_tr_url') || parsed.searchParams.get('u')
+      if (nested) {
+        current = safeDecode(nested)
+        continue
+      }
+      return cleanTranslateParams(parsed).toString()
+    }
+
+    return cleanTranslateParams(parsed).toString()
+  }
+
+  return current
+}
+
 export default function TranslateMenuClient({ compact = false }: { compact?: boolean }) {
   const handleTranslate = (event: ChangeEvent<HTMLSelectElement>) => {
     const targetLanguage = event.target.value
     if (!targetLanguage || typeof window === 'undefined') return
 
-    const currentUrl = window.location.href
-    const translateUrl = `https://translate.google.com/translate?sl=auto&tl=${encodeURIComponent(targetLanguage)}&u=${encodeURIComponent(currentUrl)}`
+    const preferredUrl = getPreferredPageUrl()
+    const sourceUrl = unwrapTranslatedUrl(preferredUrl)
+    const translateUrl = `https://translate.google.com/translate?sl=auto&tl=${encodeURIComponent(targetLanguage)}&u=${encodeURIComponent(sourceUrl)}`
+    event.target.value = ''
     window.location.href = translateUrl
   }
 
