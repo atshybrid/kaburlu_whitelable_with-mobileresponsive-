@@ -8,6 +8,7 @@ import NavbarMenuClient from './NavbarMenuClient'
 import HeaderCollapseOnScrollClient from './HeaderCollapseOnScrollClient'
 import { MobileMenu } from './MobileMenu'
 import { SearchBar } from './SearchBar'
+import TranslateMenuClient from './TranslateMenuClient'
 import { isWrongTenantLogo } from '@/lib/fallback-data'
 
 function toHref(pathname: string): UrlObject {
@@ -171,9 +172,19 @@ export async function Navbar({
           </div>
 
           {/* Navigation row */}
-          <nav className="hidden pb-2 sm:block" aria-label="Main navigation">
-            <NavbarMenuClient items={items} />
-          </nav>
+          <div className="hidden pb-2 sm:flex sm:items-center sm:justify-between sm:gap-3">
+            <nav className="min-w-0 flex-1" aria-label="Main navigation">
+              <NavbarMenuClient items={items} />
+            </nav>
+            <div className="shrink-0">
+              <TranslateMenuClient compact />
+            </div>
+          </div>
+
+          {/* Mobile translator (right corner) */}
+          <div className="flex justify-end pb-2 sm:hidden">
+            <TranslateMenuClient compact />
+          </div>
         </div>
 
         {/* Accent strip using dynamic primary color */}
