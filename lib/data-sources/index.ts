@@ -786,9 +786,19 @@ function normalizeNewArticleResponse(response: Record<string, unknown>): Article
           return {
             id: rel.id,
             slug: rel.slug,
-            title: rel.headline,
-            coverImageUrl: rel.cover_image_url,
-            publishedAt: rel.published_at,
+            title: rel.headline || rel.title,
+            coverImageUrl:
+              str(rel.coverImageUrl) ||
+              str(rel.cover_image_url) ||
+              str(rel.imageUrl) ||
+              str(rel.image_url) ||
+              str(rel.image) ||
+              str((rel.images as Record<string, unknown>)?.cover) ||
+              str(rel.thumbnail) ||
+              str(rel.featuredImage),
+            publishedAt: rel.published_at || rel.publishedAt,
+            viewCount: rel.view_count || rel.viewCount,
+            category: rel.category ? normalizeCategory(rel.category) : undefined,
           }
         })
       : null,

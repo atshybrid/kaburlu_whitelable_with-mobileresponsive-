@@ -1512,21 +1512,70 @@ export async function ThemeCategory({
 /* ==================== REPORTER SECTION COMPONENT ==================== */
 
 function ReporterSection({ article }: { article: Article }) {
+  const reporter = article.reporter
   const authorName =
-    article.reporter?.name ||
+    reporter?.name ||
     (article.authors && article.authors.length > 0 ? article.authors[0]?.name : undefined) ||
     (article as { author?: { name?: string } }).author?.name ||
     'Kaburlu Media'
+  const designation = reporter?.designation || 'Reporter'
+  const photoUrl = reporter?.photoUrl
   const initials = authorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-  
+  const totalArticles = reporter?.totalArticles
+  const totalViews = reporter?.totalViews
+  const location = reporter?.location
+  const locationStr = [location?.district, location?.state].filter(Boolean).join(', ')
+
   return (
     <div className="reporter-section">
-      <h4>రిపోర్టర్</h4>
+      <h4>రిపోర్టర్ గురించి</h4>
       <div className="reporter-info">
-        <div className="reporter-avatar">{initials}</div>
+        {photoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={photoUrl}
+            alt={authorName}
+            style={{ width: '3.5rem', height: '3.5rem', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+            onError={(e) => {
+              const target = e.currentTarget
+              target.style.display = 'none'
+              const sibling = target.nextElementSibling as HTMLElement | null
+              if (sibling) sibling.style.display = 'flex'
+            }}
+          />
+        ) : null}
+        <div
+          className="reporter-avatar"
+          style={{ display: photoUrl ? 'none' : 'flex' }}
+        >
+          {initials}
+        </div>
         <div className="reporter-details">
           <div className="reporter-name">{authorName}</div>
-          <div className="reporter-role">Senior Correspondent</div>
+          <div className="reporter-role">{designation}</div>
+          {locationStr ? (
+            <div className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {locationStr}
+            </div>
+          ) : null}
+          {(totalArticles || totalViews) ? (
+            <div className="flex items-center gap-4 mt-2">
+              {totalArticles ? (
+                <span className="text-xs text-zinc-500">
+                  <span className="font-semibold text-zinc-700">{totalArticles.toLocaleString('te-IN')}</span> వార్తలు
+                </span>
+              ) : null}
+              {totalViews ? (
+                <span className="text-xs text-zinc-500">
+                  <span className="font-semibold text-zinc-700">{totalViews >= 1000 ? `${(totalViews / 1000).toFixed(1)}K` : totalViews.toLocaleString('te-IN')}</span> వీక్షణలు
+                </span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
@@ -1700,10 +1749,12 @@ export async function ThemeArticle({
               </button>
             </div>
 
-            {/* Article Content with Inline Images */}
+            {/* Article Content with Inline Images and Must-Read Card */}
             <Style2ArticleContent 
               html={articleBodyHtml} 
               secondImage={article.media?.images && article.media.images.length > 0 ? article.media.images[0] : null}
+              mustReadArticle={article.mustRead && (article.mustRead as Record<string, unknown>).title ? (article.mustRead as Record<string, unknown>) : (mustReadArticles && mustReadArticles.length > 0 ? mustReadArticles[0] as unknown as Record<string, unknown> : null)}
+              tenantSlug={tenantSlug}
             />
 
             <div className="mt-8 pt-6 border-t border-zinc-200">
@@ -1789,17 +1840,31 @@ export async function ThemeArticle({
                   తప్పక చదవండి
                 </h3>
                 <div className="space-y-2">
-                  {mustReadArticles.slice(0, 5).map((item, idx) => (
-                    <a 
-                      key={item.id || idx} 
-                      href={articleHref(tenantSlug, item.slug || item.id || '')}
-                      className="group block p-2 rounded-lg bg-white/50 hover:bg-white hover:shadow-sm transition-all"
-                    >
-                      <h4 className="text-sm font-medium text-zinc-800 group-hover:text-amber-700 line-clamp-2 transition-colors" style={{ lineHeight: '1.5' }}>
-                        {item.title}
-                      </h4>
-                    </a>
-                  ))}
+                  {mustReadArticles.slice(0, 5).map((item, idx) => {
+                    const mrImgUrl = getArticleImageUrl(item)
+                    const mrSlug = item.slug || item.id || ''
+                    return (
+                      <a
+                        key={item.id || idx}
+                        href={articleHref(tenantSlug, mrSlug)}
+                        className="group flex items-center gap-3 p-2 rounded-lg bg-white/50 hover:bg-white hover:shadow-sm transition-all"
+                      >
+                        {mrImgUrl ? (
+                          <div className="flex-shrink-0 w-16 h-12 rounded overflow-hidden bg-amber-100">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={mrImgUrl} alt={item.title || ''} className="w-full h-full object-cover" loading="lazy" />
+                          </div>
+                        ) : (
+                          <div className="flex-shrink-0 w-16 h-12 rounded bg-amber-100 flex items-center justify-center text-amber-400">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                          </div>
+                        )}
+                        <h4 className="flex-1 text-sm font-medium text-zinc-800 group-hover:text-amber-700 line-clamp-2 transition-colors" style={{ lineHeight: '1.5' }}>
+                          {item.title}
+                        </h4>
+                      </a>
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -1849,9 +1914,13 @@ export async function ThemeArticle({
 function Style2ArticleContent({
   html,
   secondImage,
+  mustReadArticle,
+  tenantSlug,
 }: {
   html: string
   secondImage?: { url?: string; alt?: string; caption?: string } | null
+  mustReadArticle?: Record<string, unknown> | null
+  tenantSlug?: string
 }) {
   if (!html) {
     return (
@@ -1895,6 +1964,44 @@ function Style2ArticleContent({
     )
     
     paraCount++
+
+    // Insert must-read card after 3rd paragraph
+    if (mustReadArticle && paraCount === 3) {
+      const mrTitle = typeof mustReadArticle.title === 'string' ? mustReadArticle.title : ''
+      const mrSlug = typeof mustReadArticle.slug === 'string' ? mustReadArticle.slug : (typeof mustReadArticle.id === 'string' ? mustReadArticle.id : '')
+      const mrCoverImg =
+        typeof mustReadArticle.coverImageUrl === 'string' ? mustReadArticle.coverImageUrl :
+        (mustReadArticle.coverImage && typeof mustReadArticle.coverImage === 'object' && typeof (mustReadArticle.coverImage as Record<string, unknown>).url === 'string'
+          ? String((mustReadArticle.coverImage as Record<string, unknown>).url)
+          : undefined)
+      const mrHref = tenantSlug && mrSlug ? articleHref(tenantSlug, mrSlug) : (mrSlug ? `/${mrSlug}` : '#')
+      if (mrTitle && mrSlug) {
+        nodes.push(
+          <div key="must-read-inline" className="my-6 border-l-4 border-[hsl(var(--primary))] bg-gradient-to-r from-blue-50 to-white rounded-r-xl overflow-hidden shadow-sm">
+            <a href={mrHref} className="group flex items-center gap-4 p-4 no-underline hover:bg-blue-50 transition-colors">
+              {mrCoverImg ? (
+                <div className="flex-shrink-0 w-20 h-16 rounded overflow-hidden bg-zinc-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={mrCoverImg} alt={mrTitle} className="w-full h-full object-cover" loading="lazy" />
+                </div>
+              ) : null}
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--primary))] flex items-center gap-1 mb-1">
+                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                  </svg>
+                  తప్పక చదవండి
+                </span>
+                <p className="text-sm font-semibold text-zinc-900 group-hover:text-[hsl(var(--primary))] line-clamp-2 transition-colors" style={{ lineHeight: '1.5' }}>{mrTitle}</p>
+              </div>
+              <svg className="flex-shrink-0 w-4 h-4 text-zinc-400 group-hover:text-[hsl(var(--primary))] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+        )
+      }
+    }
 
     // Insert second image after 5-6 paragraphs
     if (!imageInserted && secondImage?.url && paraCount === 6) {
