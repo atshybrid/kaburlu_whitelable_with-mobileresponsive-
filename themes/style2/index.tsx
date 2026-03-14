@@ -11,7 +11,7 @@ import { getLatestArticles, getMustReadArticles, getRelatedArticles, getTrending
 import type { EffectiveSettings } from '@/lib/remote'
 import Link from 'next/link'
 import type { UrlObject } from 'url'
-import { articleHref, categoryHref, basePathForTenant, getCategorySlugFromArticle } from '@/lib/url'
+import { articleHref, categoryHref, basePathForTenant, getCategorySlugFromArticle, homeHref } from '@/lib/url'
 import { getArticlesByCategory } from '@/lib/data'
 import { getPublicHomepage, getPublicHomepageStyle2ShapeForDomain, getPublicHomepageStyle2Shape, type Style2HomepageItem, type Style2HomepageResponse, feedItemsToArticles } from '@/lib/homepage'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
@@ -1468,7 +1468,7 @@ export async function ThemeCategory({
       <main className="mx-auto max-w-7xl px-4 py-6 sm:py-8">
         <div className="mb-6 rounded-xl bg-white border border-zinc-200 p-5 sm:p-6">
           <nav className="mb-3 text-sm text-zinc-500">
-            <Link href={toHref(basePathForTenant(tenantSlug))} className="hover:text-[hsl(var(--primary))] transition-colors">హోమ్</Link>
+            <Link href={toHref(homeHref(tenantSlug))} className="hover:text-[hsl(var(--primary))] transition-colors">హోమ్</Link>
             <span className="mx-2">›</span>
             <span className="text-zinc-700">{categoryName}</span>
           </nav>
@@ -1735,7 +1735,7 @@ export async function ThemeArticle({
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
           <article className="min-w-0">
             <nav className="mb-4 flex items-center gap-2 text-sm text-zinc-500">
-              <Link href={`/t/${tenantSlug}`} className="hover:text-[hsl(var(--primary))] transition-colors">హోమ్</Link>
+              <Link href={toHref(homeHref(tenantSlug))} className="hover:text-[hsl(var(--primary))] transition-colors">హోమ్</Link>
               <span>›</span>
               <span className="text-zinc-700">వార్త</span>
             </nav>
@@ -1885,9 +1885,9 @@ export async function ThemeArticle({
                     const mrImgUrl = getArticleImageUrl(item)
                     const mrSlug = item.slug || item.id || ''
                     return (
-                      <a
+                      <Link
                         key={item.id || idx}
-                        href={articleHref(tenantSlug, mrSlug)}
+                        href={toHref(articleHref(tenantSlug, mrSlug))}
                         className="group flex items-center gap-3 p-2 rounded-lg bg-white/50 hover:bg-white hover:shadow-sm transition-all"
                       >
                         {mrImgUrl ? (
@@ -1903,7 +1903,7 @@ export async function ThemeArticle({
                         <h4 className="flex-1 text-sm font-medium text-zinc-800 group-hover:text-amber-700 line-clamp-2 transition-colors" style={{ lineHeight: '1.5' }}>
                           {item.title}
                         </h4>
-                      </a>
+                      </Link>
                     )
                   })}
                 </div>
@@ -1921,9 +1921,9 @@ export async function ThemeArticle({
                 </h3>
                 <div className="space-y-2">
                   {trendingArticles.slice(0, 4).map((item, idx) => (
-                    <a 
+                    <Link
                       key={item.id || idx} 
-                      href={articleHref(tenantSlug, item.slug || item.id || '')}
+                      href={toHref(articleHref(tenantSlug, item.slug || item.id || ''))}
                       className="group flex items-start gap-2 p-2 rounded-lg bg-white/50 hover:bg-white hover:shadow-sm transition-all"
                     >
                       <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-xs font-bold text-rose-600 bg-rose-100 rounded-full">
@@ -1932,7 +1932,7 @@ export async function ThemeArticle({
                       <h4 className="text-sm font-medium text-zinc-800 group-hover:text-rose-700 line-clamp-2 transition-colors" style={{ lineHeight: '1.5' }}>
                         {item.title}
                       </h4>
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -2019,7 +2019,7 @@ function Style2ArticleContent({
       if (mrTitle && mrSlug) {
         nodes.push(
           <div key="must-read-inline" className="my-6 border-l-4 border-[hsl(var(--primary))] bg-gradient-to-r from-blue-50 to-white rounded-r-xl overflow-hidden shadow-sm">
-            <a href={mrHref} className="group flex items-center gap-4 p-4 no-underline hover:bg-blue-50 transition-colors">
+            <Link href={toHref(mrHref)} className="group flex items-center gap-4 p-4 no-underline hover:bg-blue-50 transition-colors">
               {mrCoverImg ? (
                 <div className="flex-shrink-0 w-20 h-16 rounded overflow-hidden bg-zinc-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -2038,7 +2038,7 @@ function Style2ArticleContent({
               <svg className="flex-shrink-0 w-4 h-4 text-zinc-400 group-hover:text-[hsl(var(--primary))] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
-            </a>
+            </Link>
           </div>
         )
       }
