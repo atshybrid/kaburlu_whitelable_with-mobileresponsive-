@@ -142,15 +142,15 @@ export async function Navbar({
           {/* Masthead (center logo) - smooth hide/show */}
           <div 
             className="overflow-hidden transition-all duration-300 ease-out
-              group-data-[collapsed=false]:max-h-24 group-data-[collapsed=false]:opacity-100 group-data-[collapsed=false]:py-4
+              group-data-[collapsed=false]:max-h-32 group-data-[collapsed=false]:opacity-100 group-data-[collapsed=false]:py-5
               group-data-[collapsed=true]:max-h-0 group-data-[collapsed=true]:opacity-0 group-data-[collapsed=true]:py-0"
           >
             <Link href={toHref(homeHref(tenantSlug))} className="flex items-center justify-center gap-3">
               {finalLogoUrl && !isWrongTenantLogo(finalLogoUrl) ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={finalLogoUrl} alt={finalTitle} className="h-12 w-auto sm:h-14" />
+                <img src={finalLogoUrl} alt={finalTitle} className="h-16 w-auto max-w-[min(72vw,460px)] object-contain sm:h-20 lg:h-24" />
               ) : (
-                <div className="text-2xl font-medium tracking-tight text-black">{finalTitle}</div>
+                <div className="text-2xl sm:text-3xl font-semibold tracking-tight text-black">{finalTitle}</div>
               )}
             </Link>
           </div>
@@ -159,12 +159,12 @@ export async function Navbar({
           <div 
             className="flex items-center overflow-hidden transition-all duration-300 ease-out
               group-data-[collapsed=false]:max-h-0 group-data-[collapsed=false]:opacity-0
-              group-data-[collapsed=true]:max-h-14 group-data-[collapsed=true]:opacity-100 group-data-[collapsed=true]:h-12"
+              group-data-[collapsed=true]:max-h-16 group-data-[collapsed=true]:opacity-100 group-data-[collapsed=true]:h-14"
           >
             <Link href={toHref(homeHref(tenantSlug))} className="flex items-center gap-2">
               {finalLogoUrl && !isWrongTenantLogo(finalLogoUrl) ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={finalLogoUrl} alt={finalTitle} className="h-8 w-auto" />
+                <img src={finalLogoUrl} alt={finalTitle} className="h-10 w-auto max-w-[220px] object-contain" />
               ) : (
                 <div className="text-lg font-medium text-black">{finalTitle}</div>
               )}
