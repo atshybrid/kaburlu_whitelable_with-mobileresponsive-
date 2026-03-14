@@ -85,7 +85,15 @@ function getArticleImageUrl(articleLike: Partial<Article> | Record<string, unkno
     if (typeof coverObj.url === 'string' && coverObj.url.trim()) return coverObj.url
   }
 
-  const directCandidates = [a.coverImageUrl, a.imageUrl, a.featuredImage, a.thumbnail]
+  const directCandidates = [
+    a.coverImageUrl,
+    a.cover_image_url,
+    a.imageUrl,
+    a.image_url,
+    a.featuredImage,
+    a.featured_image,
+    a.thumbnail,
+  ]
   for (const candidate of directCandidates) {
     if (typeof candidate === 'string' && candidate.trim()) return candidate
   }

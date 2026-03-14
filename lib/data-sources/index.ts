@@ -963,8 +963,9 @@ function normalizeItem(u: unknown): Article {
   let coverAlt: string | undefined
   let coverCaption: string | undefined
   
-  // First check coverImageUrl (used by new API)
+  // First check cover image URL fields from both camelCase and snake_case APIs
   if (typeof o.coverImageUrl === 'string') coverUrl = o.coverImageUrl
+  if (!coverUrl && typeof o.cover_image_url === 'string') coverUrl = o.cover_image_url
   
   // Then check coverImage (string or object)
   if (!coverUrl && typeof o.coverImage === 'string') {
@@ -983,6 +984,7 @@ function normalizeItem(u: unknown): Article {
     if (!coverUrl && typeof img.src === 'string') coverUrl = img.src
   }
   if (!coverUrl && typeof o.imageUrl === 'string') coverUrl = o.imageUrl
+  if (!coverUrl && typeof o.image_url === 'string') coverUrl = o.image_url
   if (!coverUrl && typeof o.featuredImage === 'string') coverUrl = o.featuredImage
   if (!coverUrl && typeof o.thumbnail === 'string') coverUrl = o.thumbnail
   
