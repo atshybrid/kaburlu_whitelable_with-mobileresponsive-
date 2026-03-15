@@ -17,4 +17,5 @@ export { OfflineDetector } from './OfflineDetector'
 export { CongratulationsOverlay, useCongratulations } from './CongratulationsOverlay'
 export { CongratulationsWrapper } from './CongratulationsWrapper'
 export * from './Skeletons'
+export { default as ArticleEngagementClient } from './ArticleEngagementClient'
 

@@ -1,4 +1,4 @@
-import { Footer, TechnicalIssues, SectionError, EmptyState, ShareButtons, ReadingProgress } from '@/components/shared'
+import { Footer, TechnicalIssues, SectionError, EmptyState, ShareButtons, ReadingProgress, ArticleEngagementClient } from '@/components/shared'
 import { Navbar } from '@/components/shared/Navbar'
 import { TopArticlesModal } from '@/components/shared/TopArticlesModal'
 import type { Article } from '@/lib/data-sources'
@@ -2325,6 +2325,11 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                   </div>
                 </div>
               )}
+
+              {/* Like / Dislike / Comments */}
+              <div className="px-6 sm:px-8 lg:px-10 pb-8">
+                <ArticleEngagementClient articleId={article.id || article.slug || ''} />
+              </div>
 
               {/* Reporter Card - Enhanced with Recent Articles */}
               {reporter ? (
