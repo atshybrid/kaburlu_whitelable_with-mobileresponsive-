@@ -1,4 +1,5 @@
 import { Footer, TechnicalIssues, SectionError, EmptyState, ShareButtons, ReadingProgress, ArticleEngagementClient } from '@/components/shared'
+import { AdSlot } from '@/components/ads/AdSlot'
 import { Navbar } from '@/components/shared/Navbar'
 import { TopArticlesModal } from '@/components/shared/TopArticlesModal'
 import type { Article } from '@/lib/data-sources'
@@ -331,57 +332,49 @@ function extractCategoryName(val: unknown): string {
   return String(val)
 }
 
-function AdBanner({ variant = 'default', className }: { variant?: 'default' | 'tall' | 'square' | 'horizontal'; className?: string }) {
-  // Map each variant to a specific gradient for consistent rendering
-  const gradientMap = {
-    default: 'from-blue-500 via-purple-500 to-pink-500',
-    tall: 'from-green-400 via-teal-500 to-blue-500',
-    square: 'from-orange-400 via-red-500 to-pink-500',
-    horizontal: 'from-indigo-500 via-purple-500 to-pink-500'
-  }
-  
-  const gradient = gradientMap[variant]
-  
-  const dimensions = {
-    default: 'h-[250px] w-[300px]',
-    tall: 'h-[600px] w-[300px]',
-    square: 'h-[250px] w-[250px]',
-    horizontal: 'h-24 md:h-32 lg:h-40 w-full'
-  }
-  
-  const adSize = {
-    default: '300×250',
-    tall: '300×600',
-    square: '250×250',
-    horizontal: '728×90 / 970×250'
-  }
-  
+// ── Real ad banner using AdSlot (maps variant → slot key + settings) ─────────
+async function AdBanner({ variant = 'default', className }: { variant?: 'default' | 'tall' | 'square' | 'horizontal'; className?: string }) {
+  const settings = await getEffectiveSettings()
+
+  // variant → AdSlotKey mapping
+  // square  = 300×250 display  → article_square
+  // horizontal = 728×90 display → article_horizontal  
+  // tall/default = 300×600/300×250 vertical → article_vertical / article_sidebar_top
+  const slotMap = {
+    square:     'article_square',
+    horizontal: 'article_horizontal',
+    tall:       'article_vertical',
+    default:    'article_sidebar_top',
+  } as const
+
+  const slot = slotMap[variant]
+
   return (
-    <div className={className}>
-      <div className={`${dimensions[variant]} overflow-hidden rounded-xl shadow-lg relative group`}>
-        <div className={`absolute inset-0 bg-linear-to-br ${gradient} opacity-90`} />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzR2Nmg2di02aC02em0wIDB2LTZoLTZ2Nmg2eiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
-        <div className="relative h-full flex flex-col items-center justify-center text-white p-6 text-center">
-          <div className="mb-3">
-            <svg className="w-12 h-12 mx-auto opacity-90 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-            </svg>
-          </div>
-          <p className="text-lg font-bold mb-1">Advertisement</p>
-          <p className="text-xs opacity-80">{adSize[variant]}</p>
-          <div className="absolute top-2 right-2">
-            <span className="text-[10px] bg-white/20 px-2 py-1 rounded-full backdrop-blur-sm">Ad</span>
-          </div>
-        </div>
-        <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
-      </div>
-    </div>
+    <AdSlot
+      slot={slot}
+      settings={settings ?? undefined}
+      className={className}
+    />
   )
 }
 
 function HorizontalAd({ className, label = 'Horizontal Ad' }: { className?: string; label?: string }) {
   void label
   return <AdBanner variant="horizontal" className={className} />
+}
+
+// Multiplex ad (autorelaxed) — shows grid/list of sponsored articles.
+// Best placement: article end (before related), homepage between sections.
+// Mobile: renders as a 2-column card grid; desktop: wider grid.
+async function MultiplexAd({ slot = 'article_multiplex_h', className }: { slot?: 'article_multiplex_h' | 'article_multiplex_v' | 'home_multiplex'; className?: string }) {
+  const settings = await getEffectiveSettings()
+  return (
+    <AdSlot
+      slot={slot}
+      settings={settings ?? undefined}
+      className={className}
+    />
+  )
 }
 
 function HeroLead({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
@@ -1442,7 +1435,7 @@ export async function ThemeHome({
                   </div>
                   {/* 1 Horizontal Ad after Category Section - only show if categories visible */}
                   <div className="my-6">
-                    <HorizontalAd label="Advertisement" />
+                    <MultiplexAd slot="home_multiplex" />
                   </div>
                 </>
               ) : null}
@@ -2340,6 +2333,12 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
             </div>
 
             {/* Related Articles */}
+            {/* Multiplex ad before related articles — engaged readers scrolled this far,
+                autorelaxed picks best grid/list layout for the device (mobile: 2-col, desktop: wider) */}
+            <div className="mt-6 mb-2">
+              <MultiplexAd slot="article_multiplex_h" />
+            </div>
+
             {related && related.length > 0 && (
               <div className="mt-8">
                 <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-8">
@@ -2651,11 +2650,23 @@ function EnhancedArticleContent({ html }: { html: string }) {
 }
 
 // Conditional Ad Banner - only shows if ad content exists
-function ConditionalAdBanner({ variant }: { variant: 'horizontal' | 'tall' }) {
-  // This component will be rendered but AdSlot handles showing/hiding based on content
+// horizontal variant → native in-article ad (fluid+layout=in-article, best CTR between paragraphs)
+// tall variant → vertical display ad (300×600 sidebar)
+async function ConditionalAdBanner({ variant }: { variant: 'horizontal' | 'tall' }) {
+  const settings = await getEffectiveSettings()
+  if (variant === 'horizontal') {
+    // Native in-article format: blends with text, best mobile CTR
+    return (
+      <AdSlot
+        slot="article_inline"
+        settings={settings ?? undefined}
+        className="overflow-hidden"
+      />
+    )
+  }
   return (
     <div className="rounded-lg overflow-hidden border border-zinc-100 bg-zinc-50">
-      <AdBanner variant={variant} />
+      <AdSlot slot="article_vertical" settings={settings ?? undefined} />
     </div>
   )
 }

@@ -51,17 +51,18 @@ export function AdSlot({
     const client = cfg.google?.client || ads.googleAdsense?.client || ''
     const slotId = cfg.google?.slot || ''
     const format = cfg.google?.format || 'auto'
+    const layout = cfg.google?.layout
     const responsive = typeof cfg.google?.responsive === 'boolean' ? cfg.google.responsive : true
 
     return (
       <div className={className} style={style} aria-label={label}>
         {ads.debug ? (
           <div className="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
-            {slot} • GOOGLE
+            {slot} • GOOGLE{layout ? ` [${layout}]` : ''}
           </div>
         ) : null}
 
-        <GoogleAdSenseUnitClient client={client} slot={slotId} format={format} responsive={responsive} />
+        <GoogleAdSenseUnitClient client={client} slot={slotId} format={format} layout={layout} responsive={responsive} />
       </div>
     )
   }

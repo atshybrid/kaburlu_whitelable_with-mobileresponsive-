@@ -25,6 +25,12 @@ export type AdSlotKey =
   | 'article_sidebar_top'
   | 'article_sidebar_bottom'
   | 'article_inline'
+  | 'article_square'
+  | 'article_horizontal'
+  | 'article_vertical'
+  | 'article_multiplex_h'   // Multiplex horizontal (grid of ads) — best at article end
+  | 'article_multiplex_v'   // Multiplex vertical (list of ads) — best in sidebar
+  | 'home_multiplex'        // Multiplex on homepage — between sections
   | 'tv9_top_banner'
   | 'tv9_sidebar_widget'
   | 'style2_article_sidebar'
@@ -160,6 +166,47 @@ export const AD_SLOTS: Record<AdSlotKey, AdSlotDefinition> = {
     type: 'sidebar',
     sizes: [{ width: 300, height: 250, label: 'Medium Rectangle' }],
   },
+  // ── 3 standard display ad types (Square / Horizontal / Vertical) ──────────
+  article_square: {
+    key: 'article_square',
+    name: 'Display: Square (300×250)',
+    type: 'inline',
+    sizes: [{ width: 300, height: 250, label: 'Medium Rectangle / Square' }],
+  },
+  article_horizontal: {
+    key: 'article_horizontal',
+    name: 'Display: Horizontal (728×90)',
+    type: 'banner',
+    sizes: [
+      { width: 728, height: 90, label: 'Leaderboard' },
+      { width: 320, height: 50, label: 'Mobile Banner' },
+    ],
+  },
+  article_vertical: {
+    key: 'article_vertical',
+    name: 'Display: Vertical (300×600)',
+    type: 'sidebar',
+    sizes: [{ width: 300, height: 600, label: 'Half Page / Vertical' }],
+  },
+  // ── Multiplex (Google autorelaxed — grid or list of sponsored content) ─────
+  article_multiplex_h: {
+    key: 'article_multiplex_h',
+    name: 'Multiplex: Horizontal grid (article end)',
+    type: 'banner',
+    sizes: [{ width: 728, height: 280, label: 'Multiplex Horizontal' }],
+  },
+  article_multiplex_v: {
+    key: 'article_multiplex_v',
+    name: 'Multiplex: Vertical list (sidebar)',
+    type: 'sidebar',
+    sizes: [{ width: 300, height: 600, label: 'Multiplex Vertical' }],
+  },
+  home_multiplex: {
+    key: 'home_multiplex',
+    name: 'Multiplex: Homepage between sections',
+    type: 'banner',
+    sizes: [{ width: 728, height: 280, label: 'Multiplex' }],
+  },
 }
 
 export type LocalAdConfig = {
@@ -176,6 +223,7 @@ export type GoogleAdConfig = {
   client?: string
   slot?: string
   format?: string
+  layout?: string   // e.g. 'in-article' for native; omit for display/multiplex
   responsive?: boolean
 }
 
@@ -197,21 +245,34 @@ export type AdsSettings = {
 // ─── Default AdSense unit IDs from Google AdSense → Ads → By ad unit ─────────
 // Map each slot key to the real AdSense unit ID + format.
 // These act as automatic defaults — backend can override per-slot via config API.
-const DEFAULT_ADSENSE_SLOTS: Partial<Record<AdSlotKey, { slot: string; format: string }>> = {
-  // In-article (best for between paragraphs)
-  article_inline:          { slot: '1733944604', format: 'fluid' },
-  // In-feed (for article card lists)
+// Slot IDs: 1733944604 (In-article) | 5842616558 (In-feed) | 5998164269 (In-feed pa)
+//           9355673582 (Vertical) | 7547767892 (Horizontal) | 3875453481 (PH_H1 display)
+// TODO: Replace 3875453481 multiplex placeholders once real multiplex units are created in AdSense
+const DEFAULT_ADSENSE_SLOTS: Partial<Record<AdSlotKey, { slot: string; format: string; layout?: string }>> = {
+  // ── In-article native (paragraphs మధ్యలో) — layout is required for this format ──
+  article_inline:          { slot: '1733944604', format: 'fluid', layout: 'in-article' },
+  // ── In-feed (homepage article card lists) ────────────────────────────────────────
   home_horizontal_1:       { slot: '5842616558', format: 'fluid' },
   home_horizontal_2:       { slot: '5842616558', format: 'fluid' },
   home_horizontal_3:       { slot: '5998164269', format: 'fluid' },
-  // Vertical / sidebar display
+  // ── Multiplex (autorelaxed = Google picks grid/list) — best at article end & homepage ──
+  article_multiplex_h:     { slot: '3875453481', format: 'autorelaxed' },  // horizontal grid
+  article_multiplex_v:     { slot: '3875453481', format: 'autorelaxed' },  // vertical list
+  home_multiplex:          { slot: '3875453481', format: 'autorelaxed' },  // between sections
+  // ── Square 300×250 ─────────────────────────────────────────────────────────────────────
+  article_square:          { slot: '9355673582', format: 'auto' },
+  // ── Horizontal 728×90 ──────────────────────────────────────────────────────────────────
+  article_horizontal:      { slot: '7547767892', format: 'auto' },
+  // ── Vertical 300×600 ───────────────────────────────────────────────────────────────────
+  article_vertical:        { slot: '9355673582', format: 'auto' },
+  // ── Sidebar / right-rail ─────────────────────────────────────────────────────────────
   article_sidebar_top:     { slot: '9355673582', format: 'auto' },
   article_sidebar_bottom:  { slot: '9355673582', format: 'auto' },
   home_right_1:            { slot: '9355673582', format: 'auto' },
   home_right_2:            { slot: '9355673582', format: 'auto' },
   tv9_sidebar_widget:      { slot: '9355673582', format: 'auto' },
   style2_article_sidebar:  { slot: '9355673582', format: 'auto' },
-  // Horizontal / banner display
+  // ── Banner / leaderboard ────────────────────────────────────────────────────────────
   home_top_banner:         { slot: '7547767892', format: 'auto' },
   home_bottom_banner:      { slot: '7547767892', format: 'auto' },
   home_left_1:             { slot: '7547767892', format: 'auto' },
@@ -246,7 +307,7 @@ export function getAdsSettings(settings?: EffectiveSettings): AdsSettings {
       if (!existing?.provider) {
         defaultSlots[key as AdSlotKey] = {
           provider: 'google',
-          google: { client, slot: def.slot, format: def.format, responsive: true },
+          google: { client, slot: def.slot, format: def.format, layout: def.layout, responsive: true },
         }
       }
     }
