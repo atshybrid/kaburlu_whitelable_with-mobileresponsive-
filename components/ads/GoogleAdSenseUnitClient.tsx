@@ -1,7 +1,7 @@
 'use client'
 
 import Script from 'next/script'
-import { useEffect } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 declare global {
   interface Window {
@@ -17,6 +17,7 @@ export function GoogleAdSenseUnitClient({
   responsive = true,
   className,
   style,
+  fallback,
 }: {
   client: string
   slot?: string   // optional — omit for auto-format responsive units
@@ -25,15 +26,41 @@ export function GoogleAdSenseUnitClient({
   responsive?: boolean
   className?: string
   style?: React.CSSProperties
+  fallback?: ReactNode
 }) {
+  const [noFill, setNoFill] = useState(false)
+  const insRef = useRef<HTMLModElement | null>(null)
+
   useEffect(() => {
+    setNoFill(false)
+    let timer: ReturnType<typeof setTimeout> | null = null
+
     try {
       window.adsbygoogle = window.adsbygoogle || []
       window.adsbygoogle.push({})
+
+      // Google may silently return no-fill; hide blank box and show fallback.
+      timer = setTimeout(() => {
+        const el = insRef.current
+        if (!el) return
+        const h = el.offsetHeight || 0
+        const hasInner = (el.innerHTML || '').trim().length > 0
+        if (h < 40 && !hasInner) {
+          setNoFill(true)
+        }
+      }, 4500)
     } catch {
-      // ignore
+      setNoFill(true)
     }
-  }, [client, slot])
+
+    return () => {
+      if (timer) clearTimeout(timer)
+    }
+  }, [client, slot, format, layout, responsive])
+
+  if (noFill) {
+    return <>{fallback ?? null}</>
+  }
 
   return (
     <>
@@ -45,6 +72,9 @@ export function GoogleAdSenseUnitClient({
         crossOrigin="anonymous"
       />
       <ins
+        ref={(el) => {
+          insRef.current = el as HTMLModElement | null
+        }}
         className={(className || 'adsbygoogle').trim()}
         style={{ display: 'block', ...(style || {}) }}
         data-ad-client={client}

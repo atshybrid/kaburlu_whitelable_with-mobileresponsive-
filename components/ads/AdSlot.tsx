@@ -119,7 +119,14 @@ export function AdSlot({
           </div>
         ) : null}
 
-        <GoogleAdSenseUnitClient client={client} slot={slotId} format={format} layout={layout} responsive={responsive} />
+        <GoogleAdSenseUnitClient
+          client={client}
+          slot={slotId}
+          format={format}
+          layout={layout}
+          responsive={responsive}
+          fallback={<FallbackAd type={def.type} label={label} />}
+        />
       </div>
     )
   }

@@ -1405,6 +1405,14 @@ export async function ThemeHome({
 
   // Pending ads array for deferred rendering
   const pendingAds: ReactNode[] = []
+  const HOME_AD_CAP = 2
+  let homeAdCount = 0
+
+  function takeHomeAd(node: ReactNode): ReactNode | null {
+    if (homeAdCount >= HOME_AD_CAP) return null
+    homeAdCount += 1
+    return node
+  }
 
   function renderSection(section: HomeSection): { placement: 'outside' | 'main'; node: ReactNode } | null {
     if (!section.isActive) return null
@@ -1433,9 +1441,11 @@ export async function ThemeHome({
               {renderMainGrid(section)}
               {/* 1 Horizontal Ad after Hero - only show if hero is visible */}
               {showHero && (
-                <div className="my-6">
-                  <HorizontalAd label="Advertisement" />
-                </div>
+                takeHomeAd(
+                  <div className="my-6 hidden lg:block">
+                    <HorizontalAd label="Advertisement" />
+                  </div>
+                )
               )}
               {showCategories ? (
                 <>
@@ -1450,9 +1460,11 @@ export async function ThemeHome({
                     </div>
                   </div>
                   {/* 1 Horizontal Ad after Category Section - only show if categories visible */}
-                  <div className="my-6">
-                    <MultiplexAd slot="home_multiplex" />
-                  </div>
+                  {takeHomeAd(
+                    <div className="my-6">
+                      <MultiplexAd slot="home_multiplex" />
+                    </div>
+                  )}
                 </>
               ) : null}
             </Fragment>
@@ -1479,9 +1491,11 @@ export async function ThemeHome({
           node: (
             <Fragment key={section.id}>
               {renderBlock(b)}
-              <div className="my-6">
-                <MultiplexAd slot="home_multiplex" />
-              </div>
+              {takeHomeAd(
+                <div className="my-6">
+                  <MultiplexAd slot="home_multiplex" />
+                </div>
+              )}
             </Fragment>
           ),
         }
