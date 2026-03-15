@@ -1791,9 +1791,8 @@ function ArticleContentWithMustRead({
   secondImage?: { url?: string; alt?: string; caption?: string } | null;
   settings?: EffectiveSettings | null;
 }) {
-  // Pre-compute ads state once so the loop can use AdSlot directly (sync)
+  // Pre-compute ads settings once so the loop can use AdSlot directly (sync)
   const adsSettings = getAdsSettings(settings ?? undefined)
-  const adsEnabled = Boolean(adsSettings.enabled && adsSettings.googleAdsense?.client)
   if (!html) {
     return (
       <div className="px-6 sm:px-8 lg:px-10 py-8">
@@ -1875,12 +1874,10 @@ function ArticleContentWithMustRead({
       secondImageInserted = true
     }
     
-    // Insert in-article ad after every N paragraphs
-    // Only inject the element if ads are actually enabled — avoids blank my-8 gutter when disabled
-    if (adsEnabled && paraIndex % every === 0 && i < parts.length - 2 && paraIndex > 2) {
+    // Insert in-article ad (or fallback house-ad) after every N paragraphs
+    // AdSlot handles both: real Google ad when enabled, fallback banner when not
+    if (paraIndex % every === 0 && i < parts.length - 2 && paraIndex > 2) {
       nodes.push(
-        // In-article native ad: blends with text, best CTR on mobile
-        // data-ad-layout="in-article" renders as a fluid native unit
         <AdSlot
           key={`ad-${i}`}
           slot="article_inline"

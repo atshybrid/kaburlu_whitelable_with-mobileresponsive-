@@ -1,6 +1,63 @@
-import { AD_SLOTS, type AdSlotKey, getAdsSettings, getSlotConfig, resolveProvider } from '@/lib/ads'
+import { AD_SLOTS, type AdSlotKey, type AdSlotType, getAdsSettings, getSlotConfig, resolveProvider } from '@/lib/ads'
 import type { EffectiveSettings } from '@/lib/remote'
 import { GoogleAdSenseUnitClient } from './GoogleAdSenseUnitClient'
+
+// ── Fallback "house ad" shown when no ad provider is configured ───────────────
+// Shown instead of returning null (blank space). Promotes the site or a CTA.
+function FallbackAd({ type, label, className, style }: {
+  type: AdSlotType
+  label: string
+  className?: string
+  style?: React.CSSProperties
+}) {
+  const isSidebar = type === 'sidebar' || type === 'widget'
+  const isInline  = type === 'inline'
+
+  if (isSidebar) {
+    return (
+      <div
+        className={`overflow-hidden rounded-xl ${className || ''}`.trim()}
+        style={style}
+        aria-label={label}
+      >
+        <div className="flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-red-600 to-orange-500 p-6 text-center text-white min-h-[200px] rounded-xl">
+          <svg className="h-8 w-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <p className="text-sm font-bold leading-snug">తాజా వార్తలు మిస్ అవ్వకండి!</p>
+          <p className="text-xs opacity-90 leading-relaxed">నోటిఫికేషన్లు ఆన్ చేయండి &amp; అప్‌డేట్ అవుతూ ఉండండి</p>
+          <span className="mt-1 inline-block rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold backdrop-blur-sm">సభ్యత్వం పొందండి →</span>
+        </div>
+      </div>
+    )
+  }
+
+  // Banner / inline — horizontal layout
+  const minH = isInline ? '90px' : '80px'
+  return (
+    <div
+      className={`overflow-hidden rounded-xl ${className || ''}`.trim()}
+      style={style}
+      aria-label={label}
+    >
+      <div
+        className="flex items-center justify-between gap-4 bg-gradient-to-r from-red-600 to-orange-500 px-6 py-4 text-white"
+        style={{ minHeight: minH }}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <svg className="h-8 w-8 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6" />
+          </svg>
+          <div className="min-w-0">
+            <p className="text-sm font-bold leading-tight">తాజా వార్తలు, అప్‌డేట్స్ అన్నీ మీ దగ్గర!</p>
+            <p className="mt-0.5 text-xs opacity-90">రోజువారీ వార్తలు మీ ఇన్‌బాక్స్‌కి పొందండి</p>
+          </div>
+        </div>
+        <span className="shrink-0 rounded-full bg-white/20 px-4 py-2 text-xs font-semibold whitespace-nowrap backdrop-blur-sm">ఇప్పుడే చదవండి →</span>
+      </div>
+    </div>
+  )
+}
 
 export function AdSlot({
   slot,
@@ -81,5 +138,6 @@ export function AdSlot({
     )
   }
 
-  return null
+  // No ad provider configured → show branded fallback house-ad instead of blank space
+  return <FallbackAd type={def.type} label={label} className={className} style={style} />
 }
