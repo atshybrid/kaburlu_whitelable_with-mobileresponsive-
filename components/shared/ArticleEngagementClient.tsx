@@ -58,6 +58,7 @@ export default function ArticleEngagementClient({ articleId }: { articleId: stri
   // login modal
   const [showLogin, setShowLogin] = useState(false)
   const [gsiReady, setGsiReady] = useState(false)
+  const [signInError, setSignInError] = useState<string | null>(null)
   const gBtnRef = useRef<HTMLDivElement>(null)
 
   // ── Load reaction counts (+ user's own reaction if logged in) ──────────────
@@ -93,11 +94,13 @@ export default function ArticleEngagementClient({ articleId }: { articleId: stri
   // ── Initialize + render Google Sign-In button when modal opens ─────────────
   useEffect(() => {
     if (!showLogin || !gsiReady || !googleClientId || !gBtnRef.current) return
+    setSignInError(null)
     try {
       window.google?.accounts.id.initialize({
         client_id: googleClientId,
         auto_select: false,
         callback: async (response: { credential: string }) => {
+          setSignInError(null)
           // Decode Google ID token payload to extract name & picture
           let displayName: string | undefined
           let photoUrl: string | undefined
@@ -107,15 +110,21 @@ export default function ArticleEngagementClient({ articleId }: { articleId: stri
             photoUrl = payload.picture
           } catch { /* ignore — backend handles missing fields */ }
 
-          const res = await fetch('/api/reader/google-signin', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ googleIdToken: response.credential, displayName, photoUrl }),
-          })
-          const data = await res.json()
-          if (data.success && data.jwt && data.user) {
-            login(data.jwt, data.user)
-            setShowLogin(false)
+          try {
+            const res = await fetch('/api/reader/google-signin', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ googleIdToken: response.credential, displayName, photoUrl }),
+            })
+            const data = await res.json()
+            if (data.success && data.jwt && data.user) {
+              login(data.jwt, data.user)
+              setShowLogin(false)
+            } else {
+              setSignInError(data.message || 'Sign-in failed. Please try again.')
+            }
+          } catch {
+            setSignInError('Network error. Please check your connection and try again.')
           }
         },
       })
@@ -204,11 +213,11 @@ export default function ArticleEngagementClient({ articleId }: { articleId: stri
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* Load Google Identity Services lazily — only when googleClientId is available */}
+      {/* Load Google Identity Services — afterInteractive so it's ready quickly */}
       {googleClientId && (
         <Script
           src="https://accounts.google.com/gsi/client"
-          strategy="lazyOnload"
+          strategy="afterInteractive"
           onLoad={() => setGsiReady(true)}
         />
       )}
@@ -397,14 +406,14 @@ export default function ArticleEngagementClient({ articleId }: { articleId: stri
           role="dialog"
           aria-modal="true"
           aria-label="Sign in"
-          onClick={() => setShowLogin(false)}
+          onClick={() => { setShowLogin(false); setSignInError(null) }}
         >
           <div
             className="relative w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              onClick={() => setShowLogin(false)}
+              onClick={() => { setShowLogin(false); setSignInError(null) }}
               className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
               aria-label="Close"
             >
@@ -421,6 +430,12 @@ export default function ArticleEngagementClient({ articleId }: { articleId: stri
               <p className="mt-2 text-sm text-zinc-500">
                 Like చేయడానికి, కామెంట్ చేయడానికి Google తో లాగిన్ అవ్వండి
               </p>
+
+              {signInError && (
+                <div className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 border border-red-200">
+                  {signInError}
+                </div>
+              )}
 
               <div className="mt-6 flex justify-center">
                 {googleClientId ? (
