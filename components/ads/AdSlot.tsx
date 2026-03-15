@@ -74,6 +74,7 @@ export function AdSlot({
   const def = AD_SLOTS[slot]
   const cfg = getSlotConfig(ads, slot)
   const provider = resolveProvider(ads, slot)
+  const showHouseFallback = process.env.NEXT_PUBLIC_ADS_SHOW_HOUSE_FALLBACK === 'true'
 
   const label = (cfg.label || def.name || 'Advertisement').trim()
 
@@ -113,7 +114,10 @@ export function AdSlot({
 
     // Incomplete Google config would render an empty box; fallback immediately.
     if (!client || !slotId) {
-      return <FallbackAd type={def.type} label={label} className={className} style={style} />
+      if (showHouseFallback) {
+        return <FallbackAd type={def.type} label={label} className={className} style={style} />
+      }
+      return null
     }
 
     return (
@@ -130,7 +134,7 @@ export function AdSlot({
           format={format}
           layout={layout}
           responsive={responsive}
-          fallback={<FallbackAd type={def.type} label={label} />}
+          fallback={showHouseFallback ? <FallbackAd type={def.type} label={label} /> : null}
         />
       </div>
     )
@@ -151,5 +155,8 @@ export function AdSlot({
   }
 
   // No ad provider configured → show branded fallback house-ad instead of blank space
-  return <FallbackAd type={def.type} label={label} className={className} style={style} />
+  if (showHouseFallback) {
+    return <FallbackAd type={def.type} label={label} className={className} style={style} />
+  }
+  return null
 }
