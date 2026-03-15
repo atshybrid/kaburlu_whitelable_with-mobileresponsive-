@@ -75,6 +75,14 @@ export function AdSlot({
   const cfg = getSlotConfig(ads, slot)
   const provider = resolveProvider(ads, slot)
   const showHouseFallback = process.env.NEXT_PUBLIC_ADS_SHOW_HOUSE_FALLBACK === 'true'
+  // When house-fallback is disabled, avoid reserving large empty space on no-fill.
+  const effectiveClassName = showHouseFallback
+    ? className
+    : (className || '')
+        .replace(/\bmin-h-\[[^\]]+\]\b/g, '')
+        .replace(/\bmin-h-\S+\b/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
 
   const label = (cfg.label || def.name || 'Advertisement').trim()
 
@@ -84,7 +92,7 @@ export function AdSlot({
     const alt = cfg.local?.alt || label
 
     return (
-      <div className={className} style={style} aria-label={label}>
+      <div className={effectiveClassName} style={style} aria-label={label}>
         {ads.debug ? (
           <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-wide text-zinc-400">
             {cfg.local?.logoUrl ? (
@@ -115,13 +123,13 @@ export function AdSlot({
     // Incomplete Google config would render an empty box; fallback immediately.
     if (!client || !slotId) {
       if (showHouseFallback) {
-        return <FallbackAd type={def.type} label={label} className={className} style={style} />
+        return <FallbackAd type={def.type} label={label} className={effectiveClassName} style={style} />
       }
       return null
     }
 
     return (
-      <div className={className} style={style} aria-label={label}>
+      <div className={effectiveClassName} style={style} aria-label={label}>
         {ads.debug ? (
           <div className="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
             {slot} • GOOGLE{layout ? ` [${layout}]` : ''}
@@ -143,7 +151,7 @@ export function AdSlot({
   if (ads.debug) {
     const primary = def.sizes[0]
     return (
-      <div className={className} style={style} aria-label={label}>
+      <div className={effectiveClassName} style={style} aria-label={label}>
         <div className="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
           {slot} • DISABLED
         </div>
@@ -156,7 +164,7 @@ export function AdSlot({
 
   // No ad provider configured → show branded fallback house-ad instead of blank space
   if (showHouseFallback) {
-    return <FallbackAd type={def.type} label={label} className={className} style={style} />
+    return <FallbackAd type={def.type} label={label} className={effectiveClassName} style={style} />
   }
   return null
 }
