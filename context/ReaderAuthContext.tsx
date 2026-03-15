@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, type ReactNode } from 'react'
 
 export interface ReaderUser {
   userId: string
@@ -32,22 +32,23 @@ export function ReaderAuthProvider({
   children: ReactNode
   googleClientId?: string | null
 }) {
-  const [user, setUser] = useState<ReaderUser | null>(null)
-  const [jwt, setJwt] = useState<string | null>(null)
-
-  // Restore session from localStorage on first mount
-  useEffect(() => {
+  const [user, setUser] = useState<ReaderUser | null>(() => {
+    if (typeof window === 'undefined') return null
     try {
-      const storedJwt = localStorage.getItem('reader_jwt')
-      const storedUser = localStorage.getItem('reader_user')
-      if (storedJwt && storedUser) {
-        setJwt(storedJwt)
-        setUser(JSON.parse(storedUser) as ReaderUser)
-      }
+      const raw = localStorage.getItem('reader_user')
+      return raw ? (JSON.parse(raw) as ReaderUser) : null
     } catch {
-      // ignore parse/storage errors
+      return null
     }
-  }, [])
+  })
+  const [jwt, setJwt] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null
+    try {
+      return localStorage.getItem('reader_jwt')
+    } catch {
+      return null
+    }
+  })
 
   function login(token: string, userData: ReaderUser) {
     try {

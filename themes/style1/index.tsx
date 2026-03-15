@@ -1792,7 +1792,7 @@ function ArticleContentWithMustRead({
   settings?: EffectiveSettings | null;
 }) {
   // Pre-compute ads settings once so the loop can use AdSlot directly (sync)
-  const adsSettings = getAdsSettings(settings ?? undefined)
+  const _adsSettings = getAdsSettings(settings ?? undefined)
   if (!html) {
     return (
       <div className="px-6 sm:px-8 lg:px-10 py-8">
