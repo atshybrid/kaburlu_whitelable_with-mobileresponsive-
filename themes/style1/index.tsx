@@ -371,13 +371,9 @@ function HorizontalAd({ className, label = 'Horizontal Ad', slot = 'home_mid' }:
 // Mobile: renders as a 2-column card grid; desktop: wider grid.
 async function MultiplexAd({ slot = 'article_multiplex_h', className }: { slot?: 'article_multiplex_h' | 'article_multiplex_v' | 'home_multiplex'; className?: string }) {
   const settings = await getEffectiveSettings()
-  const hasDedicatedMultiplex = Boolean(process.env.NEXT_PUBLIC_ADSENSE_MULTIPLEX_SLOT)
-  const resolvedSlot = hasDedicatedMultiplex
-    ? slot
-    : (slot === 'home_multiplex' ? 'home_horizontal_2' : 'article_horizontal')
   return (
     <AdSlot
-      slot={resolvedSlot}
+      slot={slot}
       settings={settings ?? undefined}
       className={className}
     />
@@ -1289,6 +1285,9 @@ export async function ThemeHome({
             return (
               <div key={block.id} className="flex flex-col flex-1">
                 <section className="rounded-xl bg-white p-4">
+                  <div className="mb-3 overflow-hidden rounded-lg">
+                    <AdBanner variant="square" className="min-h-[250px]" />
+                  </div>
                   <h3 className="mb-3 text-sm font-bold uppercase tracking-wide flex items-center gap-2">
                     <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
                     Top Articles
@@ -1441,11 +1440,11 @@ export async function ThemeHome({
           node: (
             <Fragment key={section.id}>
               {renderMainGrid(section)}
-              {/* 1 Horizontal Ad after Hero - only show if hero is visible */}
+              {/* Multiplex after hero section (homepage high-intent placement) */}
               {showHero && (
                 takeHomeAd(
                   <div className="my-6">
-                    <HorizontalAd label="Advertisement" slot="home_top" />
+                    <MultiplexAd slot="home_multiplex" className="min-h-[160px] sm:min-h-[200px]" />
                   </div>
                 )
               )}
@@ -1464,7 +1463,7 @@ export async function ThemeHome({
                   {/* 1 Horizontal Ad after Category Section - only show if categories visible */}
                   {takeHomeAd(
                     <div className="my-6">
-                      <MultiplexAd slot="home_multiplex" />
+                      <MultiplexAd slot="home_multiplex" className="min-h-[160px] sm:min-h-[200px]" />
                     </div>
                   )}
                 </>
@@ -1495,7 +1494,7 @@ export async function ThemeHome({
               {renderBlock(b)}
               {takeHomeAd(
                 <div className="my-6">
-                  <MultiplexAd slot="home_multiplex" />
+                  <MultiplexAd slot="home_multiplex" className="min-h-[160px] sm:min-h-[200px]" />
                 </div>
               )}
             </Fragment>
@@ -3529,8 +3528,8 @@ async function WebStoriesArea({ tenantSlug, showHgBlock = true }: { tenantSlug: 
       {hasCategoryData ? (
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-4">
-            <AdBanner variant="tall" />
-            <AdBanner variant="default" />
+            <AdBanner variant="tall" className="min-h-[300px]" />
+            <AdBanner variant="square" className="min-h-[250px]" />
           </div>
         </aside>
       ) : null}
