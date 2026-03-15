@@ -18,7 +18,7 @@ export function GoogleAdSenseUnitClient({
   style,
 }: {
   client: string
-  slot: string
+  slot?: string   // optional — omit for auto-format responsive units
   format?: string
   responsive?: boolean
   className?: string
@@ -46,7 +46,7 @@ export function GoogleAdSenseUnitClient({
         className={(className || 'adsbygoogle').trim()}
         style={{ display: 'block', ...(style || {}) }}
         data-ad-client={client}
-        data-ad-slot={slot}
+        {...(slot ? { 'data-ad-slot': slot } : {})}
         data-ad-format={format}
         data-full-width-responsive={responsive ? 'true' : 'false'}
       />

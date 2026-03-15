@@ -238,8 +238,11 @@ export function resolveProvider(settings: AdsSettings, slot: AdSlotKey): AdProvi
   if (provider === 'google') {
     const client = cfg.google?.client || settings.googleAdsense?.client
     if (cfg.google?.enabled === false) return 'none'
-    if (!client || !cfg.google?.slot) return 'none'
+    if (!client) return 'none'
     return 'google'
   }
+  // Auto-fallback: if ads are enabled and a global AdSense client ID exists,
+  // render a responsive Google ad unit even without explicit per-slot config.
+  if (settings.googleAdsense?.client) return 'google'
   return 'none'
 }

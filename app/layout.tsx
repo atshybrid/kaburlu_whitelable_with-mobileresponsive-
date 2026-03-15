@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from 'next/script';
 import { getEffectiveSettings } from "@/lib/settings";
 import { getConfig, getDefaultLanguage, getDefaultLanguageDirection } from "@/lib/config";
 import { getSEOHomepage, generateJSONLD } from "@/lib/seo";
@@ -263,6 +264,14 @@ async function RootLayoutInner({
       vapidKey
   )
 
+  // AdSense: accept both field names backend may send
+  const adsConfig = config?.integrations?.ads
+  const adsenseClient =
+    adsConfig?.adsense ||
+    ((adsConfig as Record<string, unknown>)?.adsenseClientId as string) ||
+    null
+  const adsEnabled = Boolean(adsConfig?.enabled && adsenseClient)
+
   return (
     <html lang={languageCode} dir={langDirection} data-lang={languageCode} className={fontClasses}>
       <head>
@@ -301,6 +310,18 @@ async function RootLayoutInner({
         
         {/* 📈 Analytics & Tag Manager */}
         <Analytics />
+
+        {/* 💰 AdSense Auto Ads — Google places ads automatically across the page */}
+        {adsEnabled && adsenseClient && (
+          <Script
+            id="adsense-auto-ads"
+            async
+            strategy="afterInteractive"
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(adsenseClient)}`}
+            crossOrigin="anonymous"
+          />
+        )}
+
         <WebPushManager
           vapidPublicKey={vapidKey}
           fcmSenderId={pushConfig?.fcmSenderId || null}

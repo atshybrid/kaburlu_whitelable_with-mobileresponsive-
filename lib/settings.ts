@@ -104,9 +104,17 @@ const _getSettingsResult = reactCache(async (domainOverride?: string): Promise<S
         },
       },
       ads: {
-        enabled: Boolean(config.integrations?.ads?.adsense),
+        // adsenseClientId is the newer field name backend sends; adsense is legacy name — accept both
+        enabled: Boolean(
+          config.integrations?.ads?.enabled ||
+          config.integrations?.ads?.adsense ||
+          (config.integrations?.ads as Record<string, unknown>)?.adsenseClientId
+        ),
         googleAdsense: {
-          client: config.integrations?.ads?.adsense || '',
+          client:
+            config.integrations?.ads?.adsense ||
+            ((config.integrations?.ads as Record<string, unknown>)?.adsenseClientId as string) ||
+            '',
         },
       },
       social: {
