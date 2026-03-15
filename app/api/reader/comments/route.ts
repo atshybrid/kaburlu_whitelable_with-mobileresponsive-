@@ -14,6 +14,21 @@ function authHeader(request: NextRequest): string | null {
   return request.headers.get('Authorization') || null
 }
 
+// Backend comment has user.profile.{fullName, profilePictureUrl}
+// Frontend expects user.{displayName, photoUrl}
+function normalizeComment(c: Record<string, unknown>): Record<string, unknown> {
+  const user = (c.user ?? {}) as Record<string, unknown>
+  const profile = (user.profile ?? {}) as Record<string, unknown>
+  return {
+    ...c,
+    user: {
+      id: user.id,
+      displayName: (user.displayName as string) ?? (profile.fullName as string) ?? 'Reader',
+      photoUrl: (user.photoUrl as string) ?? (profile.profilePictureUrl as string) ?? null,
+    },
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -39,8 +54,11 @@ export async function GET(request: NextRequest) {
 
     if (!upstream.ok) return NextResponse.json({ comments: [] })
 
-    const data = await upstream.json()
-    return NextResponse.json(data)
+    const raw = await upstream.json()
+    // Backend returns { success: true, data: [...comments] }
+    const comments = (Array.isArray(raw?.data) ? raw.data : Array.isArray(raw) ? raw : [])
+      .map((c: Record<string, unknown>) => normalizeComment(c))
+    return NextResponse.json({ comments })
   } catch {
     return NextResponse.json({ comments: [] })
   }
@@ -74,16 +92,18 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ articleId: body.articleId, content: body.content.trim() }),
     })
 
-    const data = await upstream.json()
+    const raw = await upstream.json()
 
     if (!upstream.ok) {
       return NextResponse.json(
-        { error: data?.message || 'Comment failed' },
+        { error: raw?.message || raw?.error || 'Comment failed' },
         { status: upstream.status }
       )
     }
 
-    return NextResponse.json(data)
+    // Backend returns { success: true, data: commentObject }; normalize to { comment }
+    const commentData = normalizeComment(raw?.data ?? raw)
+    return NextResponse.json({ comment: commentData })
   } catch (error) {
     console.error('❌ /api/reader/comments POST error:', error)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })

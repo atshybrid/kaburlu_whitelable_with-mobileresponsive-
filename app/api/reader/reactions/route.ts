@@ -54,8 +54,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ reaction: 'NONE', likeCount: 0, dislikeCount: 0 })
     }
 
-    const data = await upstream.json()
-    return NextResponse.json(data)
+    const raw = await upstream.json()
+    // Backend returns { success, data: { reaction, counts: { likes, dislikes } } }
+    const d = raw?.data ?? raw
+    return NextResponse.json({
+      reaction: d?.reaction ?? 'NONE',
+      likeCount: d?.counts?.likes ?? d?.likeCount ?? 0,
+      dislikeCount: d?.counts?.dislikes ?? d?.dislikeCount ?? 0,
+    })
   } catch {
     return NextResponse.json({ reaction: 'NONE', likeCount: 0, dislikeCount: 0 })
   }
@@ -89,16 +95,22 @@ export async function PUT(request: NextRequest) {
       body: JSON.stringify({ articleId: body.articleId, reaction: body.reaction }),
     })
 
-    const data = await upstream.json()
+    const raw = await upstream.json()
 
     if (!upstream.ok) {
       return NextResponse.json(
-        { error: data?.message || 'Reaction failed' },
+        { error: raw?.message || raw?.error || 'Reaction failed' },
         { status: upstream.status }
       )
     }
 
-    return NextResponse.json(data)
+    // Backend returns { success, data: { reaction, counts: { likes, dislikes } } }
+    const d = raw?.data ?? raw
+    return NextResponse.json({
+      reaction: d?.reaction ?? 'NONE',
+      likeCount: d?.counts?.likes ?? d?.likeCount ?? 0,
+      dislikeCount: d?.counts?.dislikes ?? d?.dislikeCount ?? 0,
+    })
   } catch (error) {
     console.error('❌ /api/reader/reactions PUT error:', error)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
