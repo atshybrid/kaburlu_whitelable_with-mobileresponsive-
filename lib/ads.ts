@@ -249,6 +249,14 @@ type BackendSimpleSlot = {
 }
 
 const BACKEND_SLOT_ALIASES: Record<string, AdSlotKey[]> = {
+  // Generic display keys from backend (v2 simplified payload)
+  display_square: ['article_square'],
+  display_horizontal: ['home_top_banner', 'home_bottom_banner', 'home_horizontal_1', 'home_horizontal_2', 'home_horizontal_3', 'article_horizontal'],
+  display_vertical: ['home_right_1', 'home_right_2', 'style2_article_sidebar', 'article_vertical', 'article_sidebar_top', 'article_sidebar_bottom'],
+  in_article: ['article_inline'],
+  multiplex_horizontal: ['home_multiplex', 'article_multiplex_h'],
+  multiplex_vertical: ['article_multiplex_v'],
+
   // Home-top should feed both banner and leaderboard placements used by themes.
   home_top: ['home_top_banner', 'home_horizontal_1'],
   home_mid: ['home_horizontal_2', 'home_horizontal_3'],

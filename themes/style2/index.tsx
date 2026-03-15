@@ -2050,7 +2050,7 @@ function Style2ArticleContent({
       nodes.push(
         <AdSlot
           key={`inline-ad-early-${i}`}
-          slot="article_horizontal"
+          slot="article_inline"
           settings={settings ?? undefined}
           className="my-6"
         />

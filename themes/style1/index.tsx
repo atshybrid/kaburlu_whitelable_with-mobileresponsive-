@@ -1935,7 +1935,7 @@ function ArticleContentWithMustRead({
       nodes.push(
         <AdSlot
           key={`ad-early-${i}`}
-          slot="article_horizontal"
+          slot="article_inline"
           settings={settings ?? undefined}
           className="my-6 overflow-hidden"
         />
@@ -2650,7 +2650,7 @@ function HorizontalInlineAd() {
         
         {/* Ad Container */}
         <div className="overflow-hidden rounded-2xl shadow-md bg-linear-to-br from-zinc-50 to-white border border-zinc-200">
-          <AdBanner variant="horizontal" />
+          <ConditionalAdBanner variant="horizontal" />
         </div>
       </div>
     </div>
