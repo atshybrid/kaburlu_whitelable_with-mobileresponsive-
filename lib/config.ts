@@ -148,6 +148,10 @@ export interface TenantConfig {
       fcmServerKey: string | null
       enabled: boolean
     }
+    auth: {
+      googleClientId: string | null
+      googleEnabled: boolean
+    }
     social: {
       facebookAppId: string | null
       twitterHandle: string | null

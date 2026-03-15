@@ -7,6 +7,7 @@ import { ThemeColorVars } from "@/components/ConfigLoader";
 import { Analytics, SiteVerification, StructuredData, WebPushManager } from "@/components/seo";
 import "./globals.css";
 import { OfflineDetector } from "@/components/shared/OfflineDetector";
+import { ReaderAuthProvider } from '@/context/ReaderAuthContext';
 // Load theme styles globally so root pages can apply theme-specific classes
 import "@/themes/style1/theme.css";
 import "@/themes/style2/theme.css";
@@ -271,6 +272,7 @@ async function RootLayoutInner({
     ((adsConfig as Record<string, unknown>)?.adsenseClientId as string) ||
     null
   const adsEnabled = Boolean(adsConfig?.enabled && adsenseClient)
+  const googleClientId = config?.integrations?.auth?.googleClientId ?? null
 
   return (
     <html lang={languageCode} dir={langDirection} data-lang={languageCode} className={fontClasses}>
@@ -328,8 +330,10 @@ async function RootLayoutInner({
           enabled={isPushEnabled}
         />
         
-        {children}
-        <OfflineDetector />
+        <ReaderAuthProvider googleClientId={googleClientId}>
+          {children}
+          <OfflineDetector />
+        </ReaderAuthProvider>
       </body>
     </html>
   );
