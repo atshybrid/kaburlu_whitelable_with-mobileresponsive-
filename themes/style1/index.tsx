@@ -14,6 +14,7 @@ import { articleHref, categoryHref, basePathForTenant, getCategorySlugFromArticl
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
 import { getEffectiveSettings } from '@/lib/settings'
+import { getAdsSettings } from '@/lib/ads'
 import { getConfig } from '@/lib/config'
 import { WebStoriesPlayer } from '@/components/shared/WebStoriesPlayer'
 import { WebStoriesGrid } from '@/components/shared/WebStoriesGrid'
@@ -1782,12 +1783,17 @@ function TrendingArticlesSidebar({ trending, tenantSlug }: { trending: Article[]
 function ArticleContentWithMustRead({ 
   html, 
   tenantSlug: _tenantSlug,
-  secondImage 
+  secondImage,
+  settings,
 }: { 
   html: string; 
   tenantSlug: string;
   secondImage?: { url?: string; alt?: string; caption?: string } | null;
+  settings?: EffectiveSettings | null;
 }) {
+  // Pre-compute ads state once so the loop can use AdSlot directly (sync)
+  const adsSettings = getAdsSettings(settings ?? undefined)
+  const adsEnabled = Boolean(adsSettings.enabled && adsSettings.googleAdsense?.client)
   if (!html) {
     return (
       <div className="px-6 sm:px-8 lg:px-10 py-8">
@@ -1869,12 +1875,18 @@ function ArticleContentWithMustRead({
       secondImageInserted = true
     }
     
-    // Insert ad after every N paragraphs, but not at the very end and not right after first paragraph
-    if (paraIndex % every === 0 && i < parts.length - 2 && paraIndex > 2) {
+    // Insert in-article ad after every N paragraphs
+    // Only inject the element if ads are actually enabled — avoids blank my-8 gutter when disabled
+    if (adsEnabled && paraIndex % every === 0 && i < parts.length - 2 && paraIndex > 2) {
       nodes.push(
-        <div key={`ad-${i}`} className="my-8">
-          <ConditionalAdBanner variant="horizontal" />
-        </div>
+        // In-article native ad: blends with text, best CTR on mobile
+        // data-ad-layout="in-article" renders as a fluid native unit
+        <AdSlot
+          key={`ad-${i}`}
+          slot="article_inline"
+          settings={settings ?? undefined}
+          className="my-8 overflow-hidden"
+        />
       )
     }
   }
@@ -2250,9 +2262,8 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
 
               {/* Top Ad - Above Content */}
               <div className="px-6 sm:px-8 lg:px-10 pt-8">
-                <div className="rounded-xl overflow-hidden shadow-sm border border-zinc-200">
-                  <AdBanner variant="horizontal" />
-                </div>
+                {/* No border wrapper — AdSlot returns null when disabled, border would create blank box */}
+                <AdBanner variant="horizontal" />
               </div>
 
               {/* Article Content with Must-Read Card and In-Article Images */}
@@ -2260,6 +2271,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 html={articleBodyHtml} 
                 tenantSlug={tenantSlug}
                 secondImage={article.media?.images && article.media.images.length > 0 ? article.media.images[0] : null}
+                settings={settings}
               />
 
               {/* Additional Images Gallery */}
@@ -2295,9 +2307,8 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
 
               {/* Bottom Ad */}
               <div className="px-6 sm:px-8 lg:px-10 pb-8">
-                <div className="rounded-xl overflow-hidden shadow-sm border border-zinc-200">
-                  <AdBanner variant="horizontal" />
-                </div>
+                {/* No border wrapper — AdSlot returns null when disabled, border would create blank box */}
+                <AdSlot slot="article_inline" settings={settings ?? undefined} />
               </div>
 
               {/* Tags */}
@@ -2649,26 +2660,14 @@ function EnhancedArticleContent({ html }: { html: string }) {
   return <>{nodes}</>
 }
 
-// Conditional Ad Banner - only shows if ad content exists
-// horizontal variant → native in-article ad (fluid+layout=in-article, best CTR between paragraphs)
-// tall variant → vertical display ad (300×600 sidebar)
+// Conditional Ad Banner — used only for tall (sidebar) variant now.
+// Horizontal in-article ads are handled directly via AdSlot in ArticleContentWithMustRead.
 async function ConditionalAdBanner({ variant }: { variant: 'horizontal' | 'tall' }) {
   const settings = await getEffectiveSettings()
-  if (variant === 'horizontal') {
-    // Native in-article format: blends with text, best mobile CTR
-    return (
-      <AdSlot
-        slot="article_inline"
-        settings={settings ?? undefined}
-        className="overflow-hidden"
-      />
-    )
+  if (variant === 'tall') {
+    return <AdSlot slot="article_vertical" settings={settings ?? undefined} />
   }
-  return (
-    <div className="rounded-lg overflow-hidden border border-zinc-100 bg-zinc-50">
-      <AdSlot slot="article_vertical" settings={settings ?? undefined} />
-    </div>
-  )
+  return <AdSlot slot="article_inline" settings={settings ?? undefined} className="overflow-hidden" />
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -256,9 +256,13 @@ const DEFAULT_ADSENSE_SLOTS: Partial<Record<AdSlotKey, { slot: string; format: s
   home_horizontal_2:       { slot: '5842616558', format: 'fluid' },
   home_horizontal_3:       { slot: '5998164269', format: 'fluid' },
   // ── Multiplex (autorelaxed = Google picks grid/list) — best at article end & homepage ──
-  article_multiplex_h:     { slot: '3875453481', format: 'autorelaxed' },  // horizontal grid
-  article_multiplex_v:     { slot: '3875453481', format: 'autorelaxed' },  // vertical list
-  home_multiplex:          { slot: '3875453481', format: 'autorelaxed' },  // between sections
+  // NOTE: Using format="auto" until real Multiplex ad units are created in AdSense dashboard.
+  // "autorelaxed" requires a dedicated Multiplex unit ID; using it with Display units
+  // causes Google to reserve height (~250px) but never fill it → blank space.
+  // Once you create Multiplex units in AdSense, set format: 'autorelaxed' and update slot IDs.
+  article_multiplex_h:     { slot: '7547767892', format: 'auto' },   // placeholder: use real multiplex ID
+  article_multiplex_v:     { slot: '9355673582', format: 'auto' },   // placeholder: use real multiplex ID
+  home_multiplex:          { slot: '5842616558', format: 'fluid' },  // in-feed unit works here
   // ── Square 300×250 ─────────────────────────────────────────────────────────────────────
   article_square:          { slot: '9355673582', format: 'auto' },
   // ── Horizontal 728×90 ──────────────────────────────────────────────────────────────────
