@@ -30,7 +30,12 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
         'X-Tenant-Domain': tenantDomain,
       },
-      body: JSON.stringify({ googleIdToken: body.googleIdToken }),
+      // Forward name/picture so backend can upsert the reader profile
+      body: JSON.stringify({
+        googleIdToken: body.googleIdToken,
+        displayName: body.displayName ?? undefined,
+        photoUrl: body.photoUrl ?? undefined,
+      }),
     })
 
     const data = await upstream.json()

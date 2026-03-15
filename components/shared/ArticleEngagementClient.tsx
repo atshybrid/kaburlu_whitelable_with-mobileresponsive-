@@ -98,10 +98,19 @@ export default function ArticleEngagementClient({ articleId }: { articleId: stri
         client_id: googleClientId,
         auto_select: false,
         callback: async (response: { credential: string }) => {
+          // Decode Google ID token payload to extract name & picture
+          let displayName: string | undefined
+          let photoUrl: string | undefined
+          try {
+            const payload = JSON.parse(atob(response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+            displayName = payload.name || payload.given_name
+            photoUrl = payload.picture
+          } catch { /* ignore — backend handles missing fields */ }
+
           const res = await fetch('/api/reader/google-signin', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ googleIdToken: response.credential }),
+            body: JSON.stringify({ googleIdToken: response.credential, displayName, photoUrl }),
           })
           const data = await res.json()
           if (data.success && data.jwt && data.user) {
