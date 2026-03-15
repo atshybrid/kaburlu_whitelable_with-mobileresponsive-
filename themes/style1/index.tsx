@@ -369,9 +369,13 @@ function HorizontalAd({ className, label = 'Horizontal Ad' }: { className?: stri
 // Mobile: renders as a 2-column card grid; desktop: wider grid.
 async function MultiplexAd({ slot = 'article_multiplex_h', className }: { slot?: 'article_multiplex_h' | 'article_multiplex_v' | 'home_multiplex'; className?: string }) {
   const settings = await getEffectiveSettings()
+  const hasDedicatedMultiplex = Boolean(process.env.NEXT_PUBLIC_ADSENSE_MULTIPLEX_SLOT)
+  const resolvedSlot = hasDedicatedMultiplex
+    ? slot
+    : (slot === 'home_multiplex' ? 'home_horizontal_2' : 'article_horizontal')
   return (
     <AdSlot
-      slot={slot}
+      slot={resolvedSlot}
       settings={settings ?? undefined}
       className={className}
     />
@@ -1381,18 +1385,17 @@ export async function ThemeHome({
     const visibleCols = cols.filter((c) => (blocksByCol.get(c.key) || []).length > 0)
     if (visibleCols.length === 0) return null
 
-    const lgGridClass =
-      visibleCols.length >= 4 ? 'lg:grid-cols-4' :
-      visibleCols.length === 3 ? 'lg:grid-cols-3' :
-      visibleCols.length === 2 ? 'lg:grid-cols-2' :
-      'lg:grid-cols-1'
-
     const smGridClass = visibleCols.length >= 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-1'
+    const lgWidthClass =
+      visibleCols.length >= 4 ? 'lg:w-1/4' :
+      visibleCols.length === 3 ? 'lg:w-1/3' :
+      visibleCols.length === 2 ? 'lg:w-1/2' :
+      'lg:w-full'
 
     return (
-      <div key={section.id} className={`grid grid-cols-1 ${smGridClass} gap-4 ${lgGridClass} lg:gap-6 items-stretch`}>
+      <div key={section.id} className={`grid grid-cols-1 ${smGridClass} gap-4 lg:flex lg:items-start lg:gap-6`}>
         {visibleCols.map((c) => (
-          <div key={c.key} id={c.key === 'col-1' ? 'left-col' : undefined} className={colClass(c.key)}>
+          <div key={c.key} id={c.key === 'col-1' ? 'left-col' : undefined} className={`${colClass(c.key)} ${lgWidthClass}`}>
             {(blocksByCol.get(c.key) || []).map((b) => renderBlock(b))}
           </div>
         ))}
@@ -1847,6 +1850,7 @@ function ArticleContentWithMustRead({
   let paraIndex = 0
   let actualParagraphCount = 0
   let secondImageInserted = false
+  let inlineAdsInserted = 0
   
   for (let i = 0; i < parts.length; i++) {
     const chunk = parts[i].trim()
@@ -1907,6 +1911,20 @@ function ArticleContentWithMustRead({
           className="my-8 overflow-hidden"
         />
       )
+      inlineAdsInserted++
+    }
+
+    // Short articles were missing ads often; force one early inline slot after 2nd paragraph.
+    if (inlineAdsInserted === 0 && actualParagraphCount === 2 && i < parts.length - 1) {
+      nodes.push(
+        <AdSlot
+          key={`ad-early-${i}`}
+          slot="article_horizontal"
+          settings={settings ?? undefined}
+          className="my-6 overflow-hidden"
+        />
+      )
+      inlineAdsInserted++
     }
   }
   
@@ -2596,8 +2614,8 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
 
 function getAdEveryN() {
   const raw = Number(process.env.NEXT_PUBLIC_ARTICLE_AD_EVERY_N_PARAGRAPHS || '6')
-  if (Number.isFinite(raw) && raw >= 1) return Math.max(5, Math.floor(raw))
-  return 6
+  if (Number.isFinite(raw) && raw >= 1) return Math.max(3, Math.floor(raw))
+  return 4
 }
 
 function HorizontalInlineAd() {

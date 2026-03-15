@@ -262,7 +262,7 @@ async function AdBanner({
   const settings = await getEffectiveSettings().catch(() => undefined)
 
   const slotMap = {
-    horizontal: 'home_multiplex',
+    horizontal: 'article_horizontal',
     leaderboard: 'home_horizontal_1',
     sidebar: 'style2_article_sidebar',
   } as const
@@ -286,7 +286,11 @@ async function AdBanner({
 
 async function MultiplexAd({ slot = 'article_multiplex_h', className }: { slot?: 'article_multiplex_h' | 'home_multiplex'; className?: string }) {
   const settings = await getEffectiveSettings().catch(() => undefined)
-  return <AdSlot slot={slot} settings={settings ?? undefined} className={className} />
+  const hasDedicatedMultiplex = Boolean(process.env.NEXT_PUBLIC_ADSENSE_MULTIPLEX_SLOT)
+  const resolvedSlot = hasDedicatedMultiplex
+    ? slot
+    : (slot === 'home_multiplex' ? 'home_horizontal_2' : 'article_horizontal')
+  return <AdSlot slot={resolvedSlot} settings={settings ?? undefined} className={className} />
 }
 
 /* ==================== SECTION COMPONENTS ==================== */
@@ -1777,6 +1781,7 @@ export async function ThemeArticle({
               secondImage={article.media?.images && article.media.images.length > 0 ? article.media.images[0] : null}
               mustReadArticle={article.mustRead && (article.mustRead as Record<string, unknown>).title ? (article.mustRead as Record<string, unknown>) : (mustReadArticles && mustReadArticles.length > 0 ? mustReadArticles[0] as unknown as Record<string, unknown> : null)}
               tenantSlug={tenantSlug}
+              settings={settings}
             />
 
             <div className="mt-8 pt-6 border-t border-zinc-200">
@@ -1941,11 +1946,13 @@ function Style2ArticleContent({
   secondImage,
   mustReadArticle,
   tenantSlug,
+  settings,
 }: {
   html: string
   secondImage?: { url?: string; alt?: string; caption?: string } | null
   mustReadArticle?: Record<string, unknown> | null
   tenantSlug?: string
+  settings?: EffectiveSettings | null
 }) {
   if (!html) {
     return (
@@ -1973,6 +1980,7 @@ function Style2ArticleContent({
   const nodes: React.ReactNode[] = []
   let paraCount = 0
   let imageInserted = false
+  let inlineAdsInserted = 0
   
   for (let i = 0; i < parts.length; i++) {
     const chunk = parts[i].trim()
@@ -2049,6 +2057,32 @@ function Style2ArticleContent({
         </figure>
       )
       imageInserted = true
+    }
+
+    // Keep ad density moderate: one inline ad after every 4 paragraphs.
+    if (paraCount % 4 === 0 && i < parts.length - 1) {
+      nodes.push(
+        <AdSlot
+          key={`inline-ad-${i}`}
+          slot="article_inline"
+          settings={settings ?? undefined}
+          className="my-6"
+        />
+      )
+      inlineAdsInserted++
+    }
+
+    // For shorter articles, force a single visible ad after paragraph 2.
+    if (inlineAdsInserted === 0 && paraCount === 2 && i < parts.length - 1) {
+      nodes.push(
+        <AdSlot
+          key={`inline-ad-early-${i}`}
+          slot="article_horizontal"
+          settings={settings ?? undefined}
+          className="my-6"
+        />
+      )
+      inlineAdsInserted++
     }
   }
   
