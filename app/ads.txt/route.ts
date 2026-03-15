@@ -27,9 +27,13 @@ export async function GET() {
       })
     }
 
+    // ads.txt format requires "pub-XXXXXXX" — strip the "ca-" prefix if present
+    // e.g. "ca-pub-5191460803448280" → "pub-5191460803448280"
+    const adsTxtId = publisherId.startsWith('ca-') ? publisherId.slice(3) : publisherId
+
     // Standard IAB ads.txt entry for Google AdSense
     const content = [
-      `google.com, ${publisherId}, DIRECT, f08c47fec0942fa0`,
+      `google.com, ${adsTxtId}, DIRECT, f08c47fec0942fa0`,
       '', // trailing newline
     ].join('\n')
 
