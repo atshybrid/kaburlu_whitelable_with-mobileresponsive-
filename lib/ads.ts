@@ -194,6 +194,31 @@ export type AdsSettings = {
   slots?: Partial<Record<AdSlotKey, SlotAdConfig>>
 }
 
+// ─── Default AdSense unit IDs from Google AdSense → Ads → By ad unit ─────────
+// Map each slot key to the real AdSense unit ID + format.
+// These act as automatic defaults — backend can override per-slot via config API.
+const DEFAULT_ADSENSE_SLOTS: Partial<Record<AdSlotKey, { slot: string; format: string }>> = {
+  // In-article (best for between paragraphs)
+  article_inline:          { slot: '1733944604', format: 'fluid' },
+  // In-feed (for article card lists)
+  home_horizontal_1:       { slot: '5842616558', format: 'fluid' },
+  home_horizontal_2:       { slot: '5842616558', format: 'fluid' },
+  home_horizontal_3:       { slot: '5998164269', format: 'fluid' },
+  // Vertical / sidebar display
+  article_sidebar_top:     { slot: '9355673582', format: 'auto' },
+  article_sidebar_bottom:  { slot: '9355673582', format: 'auto' },
+  home_right_1:            { slot: '9355673582', format: 'auto' },
+  home_right_2:            { slot: '9355673582', format: 'auto' },
+  tv9_sidebar_widget:      { slot: '9355673582', format: 'auto' },
+  style2_article_sidebar:  { slot: '9355673582', format: 'auto' },
+  // Horizontal / banner display
+  home_top_banner:         { slot: '7547767892', format: 'auto' },
+  home_bottom_banner:      { slot: '7547767892', format: 'auto' },
+  home_left_1:             { slot: '7547767892', format: 'auto' },
+  home_left_2:             { slot: '7547767892', format: 'auto' },
+  tv9_top_banner:          { slot: '7547767892', format: 'auto' },
+}
+
 function pickAdsFromSettings(settings?: EffectiveSettings): AdsSettings | undefined {
   const a = (settings as unknown as { ads?: AdsSettings })?.ads
   const legacy = (settings as unknown as { settings?: { ads?: AdsSettings } })?.settings?.ads
@@ -212,11 +237,27 @@ export function getAdsSettings(settings?: EffectiveSettings): AdsSettings {
   const clientFromEnv = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
   const client = fromRemote.googleAdsense?.client || clientFromEnv
 
+  // Build default slot configs from DEFAULT_ADSENSE_SLOTS — only for slots the
+  // backend hasn't explicitly configured. Backend config always wins.
+  const defaultSlots: Partial<Record<AdSlotKey, SlotAdConfig>> = {}
+  if (client) {
+    for (const [key, def] of Object.entries(DEFAULT_ADSENSE_SLOTS)) {
+      const existing = fromRemote.slots?.[key as AdSlotKey]
+      if (!existing?.provider) {
+        defaultSlots[key as AdSlotKey] = {
+          provider: 'google',
+          google: { client, slot: def.slot, format: def.format, responsive: true },
+        }
+      }
+    }
+  }
+
   return {
     enabled,
     debug,
     googleAdsense: { client },
-    slots: fromRemote.slots || {},
+    // backend slots override defaults
+    slots: { ...defaultSlots, ...(fromRemote.slots || {}) },
   }
 }
 
@@ -241,8 +282,5 @@ export function resolveProvider(settings: AdsSettings, slot: AdSlotKey): AdProvi
     if (!client) return 'none'
     return 'google'
   }
-  // Auto-fallback: if ads are enabled and a global AdSense client ID exists,
-  // render a responsive Google ad unit even without explicit per-slot config.
-  if (settings.googleAdsense?.client) return 'google'
   return 'none'
 }
