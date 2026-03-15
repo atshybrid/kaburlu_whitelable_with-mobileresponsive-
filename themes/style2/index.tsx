@@ -1198,7 +1198,7 @@ export async function ThemeHome({
           </div>
         </div>
 
-        {/* Mid-page Ad Banner */}
+        {/* Hero follow-up monetization: one strong unit */}
         <div className="my-8">
           <AdBanner variant="leaderboard" size="small" />
         </div>
@@ -1243,11 +1243,6 @@ export async function ThemeHome({
           />
         ) : null}
 
-        {/* Ad Banner */}
-        <div className="my-6">
-          <AdBanner variant="horizontal" size="medium" />
-        </div>
-
         {/* Style 3: Horizontal Scroll Cards (Rose theme) */}
         {categoryData[1]?.items?.length > 0 ? (
           <HorizontalCardsSection 
@@ -1270,10 +1265,10 @@ export async function ThemeHome({
           />
         ) : null}
 
-        {/* Ad Banner */}
-        {categoryData[2]?.items?.length > 0 ? (
+        {/* Mid-sections monetization: single bridge ad for the top content cluster */}
+        {(categoryData[0]?.items?.length > 0 || categoryData[1]?.items?.length > 0 || categoryData[2]?.items?.length > 0) ? (
           <div className="my-6">
-            <AdBanner variant="leaderboard" size="small" />
+            <AdBanner variant="horizontal" size="medium" />
           </div>
         ) : null}
 
@@ -1313,13 +1308,6 @@ export async function ThemeHome({
           </>
         ) : null}
 
-        {/* Ad Banner */}
-        {extraCategoryData.length > 0 ? (
-          <div className="my-6">
-            <AdBanner variant="sidebar" size="medium" />
-          </div>
-        ) : null}
-
         {/* Style 6: Photo Gallery Section */}
         {categoryData[4]?.items?.length > 0 ? (
           <PhotoGallerySection 
@@ -1328,13 +1316,6 @@ export async function ThemeHome({
             href={categoryData[4].href}
             items={categoryData[4].items}
           />
-        ) : null}
-
-        {/* Ad Banner */}
-        {categoryData[4]?.items?.length > 0 ? (
-          <div className="my-6">
-            <AdBanner variant="leaderboard" size="small" />
-          </div>
         ) : null}
 
         {/* Style 7: Timeline Section */}
@@ -1354,13 +1335,6 @@ export async function ThemeHome({
             title={extraCategoryData[2].title}
             items={[extraCategoryData[2].items[0]]}
           />
-        ) : null}
-
-        {/* Ad Banner */}
-        {extraCategoryData[2]?.items?.length > 0 ? (
-          <div className="my-6">
-            <AdBanner variant="horizontal" size="medium" />
-          </div>
         ) : null}
 
         {/* Style 9: Two Compact Lists Side by Side */}
@@ -1388,25 +1362,24 @@ export async function ThemeHome({
           </div>
         ) : null}
 
+        {/* Lower-page monetization: one ad before final placements */}
+        {(categoryData[4]?.items?.length > 0 || categoryData[5]?.items?.length > 0 || extraCategoryData[2]?.items?.length > 0 || extraCategoryData[3]?.items?.length > 0 || extraCategoryData[4]?.items?.length > 0) ? (
+          <div className="my-6">
+            <AdBanner variant="leaderboard" size="small" />
+          </div>
+        ) : null}
+
         {/* Mobile: keep one low-friction multiplex block */}
-        <div className="mt-8 lg:hidden">
+        <div className="mt-6 lg:hidden">
           <MultiplexAd slot="home_multiplex" className="min-h-[180px]" />
         </div>
 
-        {/* Desktop: richer ad stack */}
-        <div className="mt-10 space-y-6 hidden lg:block">
-          {/* Large Premium Ad Banner */}
-          <AdBanner variant="leaderboard" size="large" />
-          
-          {/* Three Ad Banners in a Row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <AdBanner variant="sidebar" size="medium" />
-            <AdBanner variant="horizontal" size="medium" />
+        {/* Desktop: high-visibility but limited stack */}
+        <div className="mt-10 hidden lg:block">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_320px]">
+            <AdBanner variant="leaderboard" size="large" />
             <AdBanner variant="sidebar" size="medium" />
           </div>
-          
-          {/* Final Wide Banner */}
-          <AdBanner variant="horizontal" size="medium" />
         </div>
       </main>
 
