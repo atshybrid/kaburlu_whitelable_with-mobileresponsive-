@@ -1377,9 +1377,21 @@ export async function ThemeHome({
       return 'space-y-6 flex flex-col'
     }
 
+    // Avoid rendering empty columns (causes visible blank spaces on homepage)
+    const visibleCols = cols.filter((c) => (blocksByCol.get(c.key) || []).length > 0)
+    if (visibleCols.length === 0) return null
+
+    const lgGridClass =
+      visibleCols.length >= 4 ? 'lg:grid-cols-4' :
+      visibleCols.length === 3 ? 'lg:grid-cols-3' :
+      visibleCols.length === 2 ? 'lg:grid-cols-2' :
+      'lg:grid-cols-1'
+
+    const smGridClass = visibleCols.length >= 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-1'
+
     return (
-      <div key={section.id} className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6 items-stretch">
-        {cols.map((c) => (
+      <div key={section.id} className={`grid grid-cols-1 ${smGridClass} gap-4 ${lgGridClass} lg:gap-6 items-stretch`}>
+        {visibleCols.map((c) => (
           <div key={c.key} id={c.key === 'col-1' ? 'left-col' : undefined} className={colClass(c.key)}>
             {(blocksByCol.get(c.key) || []).map((b) => renderBlock(b))}
           </div>
@@ -1459,7 +1471,17 @@ export async function ThemeHome({
         if (!showWebStories) return null
         const b = activeBlocksForSection(section).find((x) => x.type === 'webStoriesArea')
         if (!b) return null
-        return { placement: 'main', node: renderBlock(b) }
+        return {
+          placement: 'main',
+          node: (
+            <Fragment key={section.id}>
+              {renderBlock(b)}
+              <div className="my-6">
+                <MultiplexAd slot="home_multiplex" />
+              </div>
+            </Fragment>
+          ),
+        }
       }
       default:
         return null
@@ -2338,15 +2360,14 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
               ) : publisher ? (
                 <PublisherCard publisher={publisher} />
               ) : null}
+
+              {/* Multiplex directly after reporter/publisher card for high-intent readers */}
+              <div className="px-6 sm:px-8 lg:px-10 pb-8 pt-2">
+                <MultiplexAd slot="article_multiplex_h" />
+              </div>
             </div>
 
             {/* Related Articles */}
-            {/* Multiplex ad before related articles — engaged readers scrolled this far,
-                autorelaxed picks best grid/list layout for the device (mobile: 2-col, desktop: wider) */}
-            <div className="mt-6 mb-2">
-              <MultiplexAd slot="article_multiplex_h" />
-            </div>
-
             {related && related.length > 0 && (
               <div className="mt-8">
                 <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-8">

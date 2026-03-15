@@ -302,6 +302,10 @@ export function getAdsSettings(settings?: EffectiveSettings): AdsSettings {
   const clientFromEnv = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
   const client = fromRemote.googleAdsense?.client || clientFromEnv
 
+  // Optional dedicated Multiplex unit ID (from AdSense "Multiplex ad unit")
+  // When set, multiplex slots use format="autorelaxed" for better fill quality.
+  const multiplexSlotFromEnv = process.env.NEXT_PUBLIC_ADSENSE_MULTIPLEX_SLOT?.trim()
+
   // Build default slot configs from DEFAULT_ADSENSE_SLOTS — only for slots the
   // backend hasn't explicitly configured. Backend config always wins.
   const defaultSlots: Partial<Record<AdSlotKey, SlotAdConfig>> = {}
@@ -309,9 +313,18 @@ export function getAdsSettings(settings?: EffectiveSettings): AdsSettings {
     for (const [key, def] of Object.entries(DEFAULT_ADSENSE_SLOTS)) {
       const existing = fromRemote.slots?.[key as AdSlotKey]
       if (!existing?.provider) {
+        const isMultiplexKey =
+          key === 'article_multiplex_h' ||
+          key === 'article_multiplex_v' ||
+          key === 'home_multiplex'
+
+        const resolvedGoogle = isMultiplexKey && multiplexSlotFromEnv
+          ? { client, slot: multiplexSlotFromEnv, format: 'autorelaxed', responsive: true }
+          : { client, slot: def.slot, format: def.format, layout: def.layout, responsive: true }
+
         defaultSlots[key as AdSlotKey] = {
           provider: 'google',
-          google: { client, slot: def.slot, format: def.format, layout: def.layout, responsive: true },
+          google: resolvedGoogle,
         }
       }
     }

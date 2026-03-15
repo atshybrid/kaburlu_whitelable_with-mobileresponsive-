@@ -6,6 +6,7 @@ import { PlaceholderImg } from '@/components/shared/PlaceholderImg'
 import MobileBottomNav from '@/components/shared/MobileBottomNav'
 import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapper'
 import ArticleEngagementClient from '@/components/shared/ArticleEngagementClient'
+import { AdSlot } from '@/components/ads/AdSlot'
 import type { Article } from '@/lib/data-sources'
 import { getLatestArticles, getMustReadArticles, getRelatedArticles, getTrendingArticles } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
@@ -249,66 +250,43 @@ function LatestNewsWidget({ tenantSlug, items }: { tenantSlug: string; items: Ar
   )
 }
 
-/* ==================== ATTRACTIVE AD BANNERS ==================== */
+/* ==================== REAL ADS (AdSlot-backed) ==================== */
 
-function AdBanner({ 
+async function AdBanner({
   variant = 'horizontal',
-  size = 'medium'
-}: { 
+  size = 'medium',
+}: {
   variant?: 'horizontal' | 'sidebar' | 'leaderboard'
   size?: 'small' | 'medium' | 'large'
 }) {
-  const heights = {
-    small: 100,
-    medium: 160,
-    large: 280
-  }
-  
-  // Bright colorful gradient backgrounds
-  const gradientStyles = {
-    horizontal: 'bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500',
-    sidebar: 'bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600',
-    leaderboard: 'bg-gradient-to-r from-amber-400 via-orange-500 to-red-500'
-  }
-  
+  const settings = await getEffectiveSettings().catch(() => undefined)
+
+  const slotMap = {
+    horizontal: 'home_multiplex',
+    leaderboard: 'home_horizontal_1',
+    sidebar: 'style2_article_sidebar',
+  } as const
+
+  const sizeClass =
+    size === 'large' ? 'min-h-[280px]' :
+    size === 'small' ? 'min-h-[90px]' :
+    'min-h-[140px]'
+
+  // Keep mobile experience clean: hide heavy sidebars on small screens.
+  const responsiveClass = variant === 'sidebar' ? 'hidden lg:block' : ''
+
   return (
-    <div 
-      className={`relative overflow-hidden rounded-xl ${gradientStyles[variant]} shadow-lg`}
-      style={{ minHeight: `${heights[size]}px` }}
-    >
-      {/* Decorative patterns */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full translate-y-1/2 -translate-x-1/2" />
-      </div>
-      
-      <div className="relative h-full w-full flex flex-col items-center justify-center text-center p-5">
-        <div className="absolute top-2 right-3 px-2 py-0.5 bg-white/20 rounded text-[10px] uppercase tracking-wider text-white font-medium">
-          ప్రకటన
-        </div>
-        
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-12 h-12 rounded-full bg-white/30 backdrop-blur flex items-center justify-center shadow-lg">
-            <span className="text-2xl">📢</span>
-          </div>
-          <div className="text-left">
-            <span className="text-xl font-bold text-white drop-shadow-md">మీ బ్రాండ్ ఇక్కడ</span>
-            <p className="text-sm text-white/90">లక్షలాది రీడర్లకు చేరుకోండి</p>
-          </div>
-        </div>
-        
-        <a 
-          href="mailto:ads@kaburlumedia.com?subject=Advertisement Inquiry" 
-          className="mt-3 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-gray-900 text-sm font-bold hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl hover:scale-105"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-          ప్రకటనల కోసం సంప్రదించండి
-        </a>
-      </div>
-    </div>
+    <AdSlot
+      slot={slotMap[variant]}
+      settings={settings ?? undefined}
+      className={`${sizeClass} ${responsiveClass}`.trim()}
+    />
   )
+}
+
+async function MultiplexAd({ slot = 'article_multiplex_h', className }: { slot?: 'article_multiplex_h' | 'home_multiplex'; className?: string }) {
+  const settings = await getEffectiveSettings().catch(() => undefined)
+  return <AdSlot slot={slot} settings={settings ?? undefined} className={className} />
 }
 
 /* ==================== SECTION COMPONENTS ==================== */
@@ -1406,8 +1384,13 @@ export async function ThemeHome({
           </div>
         ) : null}
 
-        {/* ===== FINAL AD BANNERS SECTION ===== */}
-        <div className="mt-10 space-y-6">
+        {/* Mobile: keep one low-friction multiplex block */}
+        <div className="mt-8 lg:hidden">
+          <MultiplexAd slot="home_multiplex" className="min-h-[180px]" />
+        </div>
+
+        {/* Desktop: richer ad stack */}
+        <div className="mt-10 space-y-6 hidden lg:block">
           {/* Large Premium Ad Banner */}
           <AdBanner variant="leaderboard" size="large" />
           
@@ -1815,11 +1798,12 @@ export async function ThemeArticle({
 
             <ReporterSection article={article} />
 
-            <ArticleEngagementClient articleId={article.id || article.slug || 'article'} />
-
-            <div className="mt-8">
-              <AdBanner variant="horizontal" size="medium" />
+            {/* Multiplex below reporter card: high-intent users, low irritation format */}
+            <div className="mt-6">
+              <MultiplexAd slot="article_multiplex_h" className="min-h-[180px]" />
             </div>
+
+            <ArticleEngagementClient articleId={article.id || article.slug || 'article'} />
             
             {/* Related Articles Section */}
             {relatedArticles && relatedArticles.length > 0 && (
