@@ -142,6 +142,7 @@ export interface TenantConfig {
     }
     push: {
       vapidPublicKey: string | null
+      webPushVapidPublicKey?: string | null  // backend sends both; prefer this if present
       vapidPrivateKey: string | null
       fcmSenderId: string | null
       fcmServerKey: string | null

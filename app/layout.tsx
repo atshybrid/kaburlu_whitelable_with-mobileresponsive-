@@ -3,7 +3,7 @@ import { getEffectiveSettings } from "@/lib/settings";
 import { getConfig, getDefaultLanguage, getDefaultLanguageDirection } from "@/lib/config";
 import { getSEOHomepage, generateJSONLD } from "@/lib/seo";
 import { ThemeColorVars } from "@/components/ConfigLoader";
-import { Analytics, SiteVerification, StructuredData } from "@/components/seo";
+import { Analytics, SiteVerification, StructuredData, WebPushManager } from "@/components/seo";
 import "./globals.css";
 import { OfflineDetector } from "@/components/shared/OfflineDetector";
 // Load theme styles globally so root pages can apply theme-specific classes
@@ -254,6 +254,15 @@ async function RootLayoutInner({
     notoNastaliqUrdu.variable,
   ].join(' ');
 
+  const pushConfig = config?.integrations?.push
+  // webPushVapidPublicKey is the preferred field; vapidPublicKey is the fallback
+  const vapidKey = pushConfig?.webPushVapidPublicKey || pushConfig?.vapidPublicKey || null
+  const isPushEnabled = Boolean(
+    config?.features?.pwaPushNotifications &&
+      pushConfig?.enabled &&
+      vapidKey
+  )
+
   return (
     <html lang={languageCode} dir={langDirection} data-lang={languageCode} className={fontClasses}>
       <head>
@@ -292,6 +301,11 @@ async function RootLayoutInner({
         
         {/* 📈 Analytics & Tag Manager */}
         <Analytics />
+        <WebPushManager
+          vapidPublicKey={vapidKey}
+          fcmSenderId={pushConfig?.fcmSenderId || null}
+          enabled={isPushEnabled}
+        />
         
         {children}
         <OfflineDetector />

@@ -1,33 +1,35 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
-/**
- * Web Push Notification Manager
- * 
- * Handles FCM (Firebase Cloud Messaging) and VAPID web push notifications.
- * 
- * Features:
- * - Request notification permission
- * - Subscribe to push notifications
- * - Handle push events
- * 
- * Usage:
- * ```tsx
- * import { WebPushManager } from '@/components/seo/WebPushManager'
- * 
- * <WebPushManager 
- *   vapidPublicKey="YOUR_VAPID_KEY"
- *   fcmSenderId="YOUR_FCM_SENDER_ID"
- * />
- * ```
- */
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface WebPushManagerProps {
   vapidPublicKey?: string | null
   fcmSenderId?: string | null
   enabled?: boolean
 }
+
+// Subscription state: null = loading/checking, false = not subscribed, true = subscribed
+type SubscribedState = boolean | null
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = window.atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i)
+  return outputArray
+}
+
+async function getServiceWorkerReg() {
+  if (!('serviceWorker' in navigator)) return null
+  return navigator.serviceWorker.ready
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export function WebPushManager({
   vapidPublicKey,
@@ -36,111 +38,133 @@ export function WebPushManager({
 }: WebPushManagerProps) {
   const [permission, setPermission] = useState<NotificationPermission>('default')
   const [isSupported, setIsSupported] = useState(false)
+  const [isSubscribed, setIsSubscribed] = useState<SubscribedState>(null) // null = still checking
+  const [isBusy, setIsBusy] = useState(false)
 
-  // Check if browser supports notifications on mount
+  // ── 1. Detect browser support + current permission ──────────────────────────
   useEffect(() => {
-    const checkSupport = () => {
-      if (typeof window !== 'undefined' && 'Notification' in window) {
-        setIsSupported(true)
-        setPermission(Notification.permission)
-      }
-    }
-    checkSupport()
+    if (typeof window === 'undefined') return
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return
+    setIsSupported(true)
+    setPermission(Notification.permission)
   }, [])
 
+  // ── 2. Register SW + check existing subscription on mount ───────────────────
   useEffect(() => {
-    if (!enabled || !isSupported || !vapidPublicKey) {
-      return
-    }
+    if (!enabled || !isSupported || !vapidPublicKey) return
 
-    // Register service worker for push notifications
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then((registration) => {
-          console.log('✅ Service Worker registered:', registration)
-        })
-        .catch((error) => {
-          console.error('❌ Service Worker registration failed:', error)
-        })
-    }
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then(async (reg) => {
+        console.log('✅ Service Worker registered')
+        // Browser-local check — no backend call needed
+        const existing = await reg.pushManager.getSubscription()
+        setIsSubscribed(existing !== null)
+
+        // Silent re-sync: if already subscribed, re-POST to backend (upsert safe)
+        if (existing) {
+          void syncSubscriptionToBackend(existing, fcmSenderId ?? null)
+        }
+      })
+      .catch((err) => console.error('❌ SW registration failed:', err))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, isSupported, vapidPublicKey])
 
-  const requestPermission = async () => {
-    if (!isSupported) return
+  // ── 3. Subscribe ─────────────────────────────────────────────────────────────
+  const handleSubscribe = useCallback(async () => {
+    if (!enabled || !vapidPublicKey || isBusy) return
 
     try {
-      const permission = await Notification.requestPermission()
-      setPermission(permission)
+      setIsBusy(true)
+      const currentPermission = await Notification.requestPermission()
+      setPermission(currentPermission)
+      if (currentPermission !== 'granted') return
 
-      if (permission === 'granted') {
-        console.log('✅ Notification permission granted')
-        await subscribeToPush()
+      const reg = await getServiceWorkerReg()
+      if (!reg) return
+
+      const existing = await reg.pushManager.getSubscription()
+      const sub =
+        existing ??
+        (await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
+        }))
+
+      await syncSubscriptionToBackend(sub, fcmSenderId ?? null)
+      setIsSubscribed(true)
+      console.log('✅ Push subscribed')
+    } catch (err) {
+      console.error('❌ Subscribe error:', err)
+    } finally {
+      setIsBusy(false)
+    }
+  }, [enabled, fcmSenderId, isBusy, vapidPublicKey])
+
+  // ── 4. Unsubscribe ────────────────────────────────────────────────────────────
+  const handleUnsubscribe = useCallback(async () => {
+    if (isBusy) return
+    try {
+      setIsBusy(true)
+      const reg = await getServiceWorkerReg()
+      if (!reg) return
+
+      const sub = await reg.pushManager.getSubscription()
+      if (sub) {
+        // Notify backend first (so it marks isActive=false)
+        await fetch('/api/push/unsubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        })
+        await sub.unsubscribe()
       }
-    } catch (error) {
-      console.error('❌ Error requesting notification permission:', error)
+
+      setIsSubscribed(false)
+      console.log('✅ Push unsubscribed')
+    } catch (err) {
+      console.error('❌ Unsubscribe error:', err)
+    } finally {
+      setIsBusy(false)
     }
-  }
+  }, [isBusy])
 
-  const subscribeToPush = async () => {
-    if (!vapidPublicKey || !('serviceWorker' in navigator)) return
+  // ── Render ────────────────────────────────────────────────────────────────────
+  if (!enabled || !isSupported || permission === 'denied') return null
 
-    try {
-      const registration = await navigator.serviceWorker.ready
-      
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
-      })
-
-      // Send subscription to your backend
-      await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          subscription,
-          fcmSenderId,
-        }),
-      })
-
-      console.log('✅ Push subscription successful')
-    } catch (error) {
-      console.error('❌ Push subscription failed:', error)
-    }
-  }
-
-  if (!enabled || !isSupported) {
-    return null
-  }
+  // Still checking browser subscription — show nothing yet
+  if (isSubscribed === null) return null
 
   return (
-    <>
-      {/* Hidden component - manages push notifications */}
-      {permission === 'default' && (
-        <button
-          onClick={requestPermission}
-          className="hidden"
-          aria-label="Enable push notifications"
-        />
-      )}
-    </>
+    <button
+      onClick={isSubscribed ? handleUnsubscribe : handleSubscribe}
+      disabled={isBusy}
+      className="fixed bottom-4 right-4 z-[70] flex items-center gap-1.5 rounded-full bg-black px-4 py-2 text-sm font-medium text-white shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+      aria-label={isSubscribed ? 'Disable push notifications' : 'Enable push notifications'}
+    >
+      {isBusy
+        ? '...'
+        : isSubscribed
+          ? '🔔 Notifications On'
+          : '🔕 Enable Notifications'}
+    </button>
   )
 }
 
-/**
- * Convert VAPID key from base64 to Uint8Array
- */
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+// ─── Backend sync (silent upsert) ─────────────────────────────────────────────
 
-  const rawData = window.atob(base64)
-  const outputArray = new Uint8Array(rawData.length)
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i)
+async function syncSubscriptionToBackend(
+  sub: PushSubscription,
+  fcmSenderId: string | null,
+): Promise<void> {
+  try {
+    const response = await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: sub, fcmSenderId }),
+    })
+    if (!response.ok) throw new Error(`API ${response.status}`)
+  } catch (err) {
+    console.warn('⚠️ Push sync to backend failed (non-fatal):', err)
   }
-  return outputArray as Uint8Array
 }
