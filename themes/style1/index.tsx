@@ -334,7 +334,7 @@ function extractCategoryName(val: unknown): string {
 }
 
 // ── Real ad banner using AdSlot (maps variant → slot key + settings) ─────────
-async function AdBanner({ variant = 'default', className }: { variant?: 'default' | 'tall' | 'square' | 'horizontal'; className?: string }) {
+async function AdBanner({ variant = 'default', className }: { variant?: 'default' | 'tall' | 'square' | 'horizontal' | 'home_top' | 'home_mid'; className?: string }) {
   const settings = await getEffectiveSettings()
 
   // variant → AdSlotKey mapping
@@ -346,6 +346,8 @@ async function AdBanner({ variant = 'default', className }: { variant?: 'default
     horizontal: 'article_horizontal',
     tall:       'article_vertical',
     default:    'article_sidebar_top',
+    home_top:   'home_horizontal_1',
+    home_mid:   'home_horizontal_2',
   } as const
 
   const slot = slotMap[variant]
@@ -359,9 +361,9 @@ async function AdBanner({ variant = 'default', className }: { variant?: 'default
   )
 }
 
-function HorizontalAd({ className, label = 'Horizontal Ad' }: { className?: string; label?: string }) {
+function HorizontalAd({ className, label = 'Horizontal Ad', slot = 'home_mid' }: { className?: string; label?: string; slot?: 'home_top' | 'home_mid' }) {
   void label
-  return <AdBanner variant="horizontal" className={className} />
+  return <AdBanner variant={slot} className={className} />
 }
 
 // Multiplex ad (autorelaxed) — shows grid/list of sponsored articles.
@@ -1443,7 +1445,7 @@ export async function ThemeHome({
               {showHero && (
                 takeHomeAd(
                   <div className="my-6">
-                    <HorizontalAd label="Advertisement" />
+                    <HorizontalAd label="Advertisement" slot="home_top" />
                   </div>
                 )
               )}

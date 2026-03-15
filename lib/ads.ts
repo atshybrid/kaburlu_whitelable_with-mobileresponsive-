@@ -242,6 +242,106 @@ export type AdsSettings = {
   slots?: Partial<Record<AdSlotKey, SlotAdConfig>>
 }
 
+type BackendSimpleSlot = {
+  slotId?: string
+  format?: string
+  enabled?: boolean
+}
+
+const BACKEND_SLOT_ALIASES: Record<string, AdSlotKey[]> = {
+  // Home-top should feed both banner and leaderboard placements used by themes.
+  home_top: ['home_top_banner', 'home_horizontal_1'],
+  home_mid: ['home_horizontal_2', 'home_horizontal_3'],
+  // Single backend key to drive homepage sidebar in both style1 and style2 contexts.
+  home_sidebar: ['home_right_1', 'home_right_2', 'style2_article_sidebar', 'article_vertical', 'article_sidebar_top'],
+  article_top: ['article_horizontal'],
+  article_mid: ['article_inline'],
+  article_multiplex: ['article_multiplex_h', 'article_multiplex_v'],
+  category_top: ['home_horizontal_1'],
+  category_mid: ['home_horizontal_2', 'home_horizontal_3'],
+}
+
+function isAdSlotKey(value: string): value is AdSlotKey {
+  return value in AD_SLOTS
+}
+
+function normalizeSlotConfig(input: unknown, fallbackClient?: string): SlotAdConfig | undefined {
+  if (!input || typeof input !== 'object') return undefined
+
+  const raw = input as Record<string, unknown>
+  const hasStructuredConfig =
+    Object.prototype.hasOwnProperty.call(raw, 'provider') ||
+    Object.prototype.hasOwnProperty.call(raw, 'google') ||
+    Object.prototype.hasOwnProperty.call(raw, 'local')
+
+  if (hasStructuredConfig) {
+    const cfg = raw as SlotAdConfig
+    if (cfg.provider === 'google' || cfg.google?.slot) {
+      return {
+        ...cfg,
+        google: {
+          ...cfg.google,
+          client: cfg.google?.client || fallbackClient,
+        },
+      }
+    }
+    return cfg
+  }
+
+  const simple = raw as BackendSimpleSlot
+  const slotId = typeof simple.slotId === 'string' ? simple.slotId.trim() : ''
+  if (!slotId) {
+    if (typeof simple.enabled === 'boolean') {
+      return {
+        enabled: simple.enabled,
+        provider: simple.enabled ? 'google' : 'none',
+      }
+    }
+    return undefined
+  }
+
+  return {
+    enabled: typeof simple.enabled === 'boolean' ? simple.enabled : true,
+    provider: 'google',
+    google: {
+      client: fallbackClient,
+      slot: slotId,
+      format: typeof simple.format === 'string' ? simple.format : 'auto',
+      responsive: true,
+    },
+  }
+}
+
+function normalizeRemoteAds(rawAds?: AdsSettings): AdsSettings | undefined {
+  if (!rawAds || typeof rawAds !== 'object') return undefined
+
+  const src = rawAds as AdsSettings & { adsenseClientId?: string; slots?: Record<string, unknown> }
+  const client =
+    (typeof src.googleAdsense?.client === 'string' && src.googleAdsense.client.trim())
+      ? src.googleAdsense.client.trim()
+      : (typeof src.adsenseClientId === 'string' ? src.adsenseClientId.trim() : undefined)
+
+  const normalizedSlots: Partial<Record<AdSlotKey, SlotAdConfig>> = {}
+  const incomingSlots = src.slots && typeof src.slots === 'object' ? src.slots : {}
+
+  for (const [rawKey, rawValue] of Object.entries(incomingSlots)) {
+    const config = normalizeSlotConfig(rawValue, client)
+    if (!config) continue
+
+    const mappedKeys = BACKEND_SLOT_ALIASES[rawKey] || (isAdSlotKey(rawKey) ? [rawKey] : [])
+    for (const key of mappedKeys) {
+      normalizedSlots[key] = config
+    }
+  }
+
+  return {
+    enabled: src.enabled,
+    debug: src.debug,
+    googleAdsense: { client },
+    slots: normalizedSlots,
+  }
+}
+
 // ─── Default AdSense unit IDs from Google AdSense → Ads → By ad unit ─────────
 // Map each slot key to the real AdSense unit ID + format.
 // These act as automatic defaults — backend can override per-slot via config API.
@@ -287,7 +387,7 @@ const DEFAULT_ADSENSE_SLOTS: Partial<Record<AdSlotKey, { slot: string; format: s
 function pickAdsFromSettings(settings?: EffectiveSettings): AdsSettings | undefined {
   const a = (settings as unknown as { ads?: AdsSettings })?.ads
   const legacy = (settings as unknown as { settings?: { ads?: AdsSettings } })?.settings?.ads
-  return a || legacy
+  return normalizeRemoteAds(a || legacy)
 }
 
 export function getAdsSettings(settings?: EffectiveSettings): AdsSettings {
@@ -298,13 +398,19 @@ export function getAdsSettings(settings?: EffectiveSettings): AdsSettings {
   const frontendOwnedEnv = process.env.NEXT_PUBLIC_ADS_FRONTEND_OWNED
   const frontendOwned = frontendOwnedEnv ? (frontendOwnedEnv === '1' || frontendOwnedEnv === 'true') : true
 
+  // Auto-switch to backend-driven slots when config API provides tenant slot mappings.
+  const remoteSlots = fromRemote.slots || {}
+  const hasRemoteSlots = Object.keys(remoteSlots).length > 0
+  const preferRemote = hasRemoteSlots
+  const useFrontendOwned = frontendOwned && !preferRemote
+
   const enabledFromEnv = enabledEnv === '1' || enabledEnv === 'true'
-  const enabled = frontendOwned
+  const enabled = useFrontendOwned
     ? (enabledEnv ? enabledFromEnv : true)
     : (typeof fromRemote.enabled === 'boolean' ? fromRemote.enabled : enabledFromEnv)
 
   const debugFromEnv = debugEnv === '1' || debugEnv === 'true'
-  const debug = frontendOwned
+  const debug = useFrontendOwned
     ? (debugEnv ? debugFromEnv : !!fromRemote.debug)
     : (typeof fromRemote.debug === 'boolean' ? fromRemote.debug : debugFromEnv)
 
@@ -336,8 +442,7 @@ export function getAdsSettings(settings?: EffectiveSettings): AdsSettings {
     }
   }
 
-  const remoteSlots = fromRemote.slots || {}
-  const mergedSlots = frontendOwned ? defaultSlots : { ...defaultSlots, ...remoteSlots }
+  const mergedSlots = useFrontendOwned ? defaultSlots : { ...defaultSlots, ...remoteSlots }
 
   return {
     enabled,

@@ -71,6 +71,11 @@ const _getSettingsResult = reactCache(async (domainOverride?: string): Promise<S
     }
     
     // Map new config format to old EffectiveSettings format
+    const integrationsAds = (config.integrations?.ads as Record<string, unknown>) || {}
+    const integrationsAdsense =
+      (typeof integrationsAds.adsense === 'string' ? integrationsAds.adsense : '') ||
+      (typeof integrationsAds.adsenseClientId === 'string' ? integrationsAds.adsenseClientId : '')
+
     result.settings = {
       seo: {
         defaultMetaTitle: config.seo?.meta?.title || '',
@@ -111,11 +116,9 @@ const _getSettingsResult = reactCache(async (domainOverride?: string): Promise<S
           (config.integrations?.ads as Record<string, unknown>)?.adsenseClientId
         ),
         googleAdsense: {
-          client:
-            config.integrations?.ads?.adsense ||
-            ((config.integrations?.ads as Record<string, unknown>)?.adsenseClientId as string) ||
-            '',
+          client: integrationsAdsense,
         },
+        slots: (integrationsAds.slots as Record<string, unknown> | undefined) as unknown as NonNullable<EffectiveSettings['ads']>['slots'],
       },
       social: {
         facebook: config.social?.facebook || '',
