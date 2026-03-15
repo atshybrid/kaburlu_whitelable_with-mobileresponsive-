@@ -14,7 +14,7 @@ function authHeader(request: NextRequest): string | null {
   return request.headers.get('Authorization') || null
 }
 
-// Backend comment has user.profile.{fullName, profilePictureUrl}
+// Backend comment has user.profile.{fullName, profilePhotoUrl}
 // Frontend expects user.{displayName, photoUrl}
 function normalizeComment(c: Record<string, unknown>): Record<string, unknown> {
   const user = (c.user ?? {}) as Record<string, unknown>
@@ -24,7 +24,7 @@ function normalizeComment(c: Record<string, unknown>): Record<string, unknown> {
     user: {
       id: user.id,
       displayName: (user.displayName as string) ?? (profile.fullName as string) ?? 'Reader',
-      photoUrl: (user.photoUrl as string) ?? (profile.profilePictureUrl as string) ?? null,
+      photoUrl: (user.photoUrl as string) ?? (profile.profilePhotoUrl as string) ?? null,
     },
   }
 }

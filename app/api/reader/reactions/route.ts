@@ -28,24 +28,20 @@ export async function GET(request: NextRequest) {
 
     const jwt = authHeader(request)
 
-    // If no JWT, just return zeroes — reactions require auth
-    if (!jwt) {
-      return NextResponse.json({ reaction: 'NONE', likeCount: 0, dislikeCount: 0 })
-    }
-
     const backendBase = process.env.API_BASE_URL || ''
     if (!backendBase) {
       return NextResponse.json({ reaction: 'NONE', likeCount: 0, dislikeCount: 0 })
     }
 
     const tenantDomain = await getTenantDomain()
+    // JWT is optional — counts are always returned; user's own reaction is included only when logged in
+    const reqHeaders: Record<string, string> = { 'X-Tenant-Domain': tenantDomain }
+    if (jwt) reqHeaders['Authorization'] = jwt
+
     const upstream = await fetch(
       `${backendBase}/reactions/article/${encodeURIComponent(articleId)}`,
       {
-        headers: {
-          Authorization: jwt,
-          'X-Tenant-Domain': tenantDomain,
-        },
+        headers: reqHeaders,
         cache: 'no-store',
       }
     )
