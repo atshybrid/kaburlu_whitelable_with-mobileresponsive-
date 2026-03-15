@@ -1405,7 +1405,7 @@ export async function ThemeHome({
 
   // Pending ads array for deferred rendering
   const pendingAds: ReactNode[] = []
-  const HOME_AD_CAP = Number(process.env.NEXT_PUBLIC_HOME_AD_CAP || '3')
+  const HOME_AD_CAP = Number(process.env.NEXT_PUBLIC_HOME_AD_CAP || '4')
   let homeAdCount = 0
 
   function takeHomeAd(node: ReactNode): ReactNode | null {
@@ -1442,7 +1442,7 @@ export async function ThemeHome({
               {/* 1 Horizontal Ad after Hero - only show if hero is visible */}
               {showHero && (
                 takeHomeAd(
-                  <div className="my-6 hidden lg:block">
+                  <div className="my-6">
                     <HorizontalAd label="Advertisement" />
                   </div>
                 )
