@@ -1405,7 +1405,7 @@ export async function ThemeHome({
 
   // Pending ads array for deferred rendering
   const pendingAds: ReactNode[] = []
-  const HOME_AD_CAP = 2
+  const HOME_AD_CAP = Number(process.env.NEXT_PUBLIC_HOME_AD_CAP || '3')
   let homeAdCount = 0
 
   function takeHomeAd(node: ReactNode): ReactNode | null {

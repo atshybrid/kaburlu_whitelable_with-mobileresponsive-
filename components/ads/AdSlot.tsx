@@ -111,6 +111,11 @@ export function AdSlot({
     const layout = cfg.google?.layout
     const responsive = typeof cfg.google?.responsive === 'boolean' ? cfg.google.responsive : true
 
+    // Incomplete Google config would render an empty box; fallback immediately.
+    if (!client || !slotId) {
+      return <FallbackAd type={def.type} label={label} className={className} style={style} />
+    }
+
     return (
       <div className={className} style={style} aria-label={label}>
         {ads.debug ? (
