@@ -1,6 +1,5 @@
 import { Footer, TechnicalIssues, SectionError, EmptyState, ShareButtons, ReadingProgress, ArticleEngagementClient } from '@/components/shared'
 import { AdSlot } from '@/components/ads/AdSlot'
-import type { AdSlotKey } from '@/lib/ads'
 import { Navbar } from '@/components/shared/Navbar'
 import { TopArticlesModal } from '@/components/shared/TopArticlesModal'
 import type { Article } from '@/lib/data-sources'
@@ -372,20 +371,9 @@ function HorizontalAd({ className, label = 'Horizontal Ad', slot = 'home_mid' }:
 // Mobile: renders as a 2-column card grid; desktop: wider grid.
 async function MultiplexAd({ slot = 'article_multiplex_h', className }: { slot?: 'article_multiplex_h' | 'article_multiplex_v' | 'home_multiplex'; className?: string }) {
   const settings = await getEffectiveSettings()
-  // When no dedicated Multiplex ad unit is configured in AdSense (format="autorelaxed"),
-  // fall back to regular display/in-feed slots that are already working.
-  // This mirrors the same logic in style2 to prevent blank spaces.
-  const hasDedicatedMultiplex = Boolean(process.env.NEXT_PUBLIC_ADSENSE_MULTIPLEX_SLOT)
-  const resolvedSlot: AdSlotKey = hasDedicatedMultiplex
-    ? slot
-    : slot === 'home_multiplex'
-      ? 'home_horizontal_2'
-      : slot === 'article_multiplex_v'
-        ? 'article_sidebar_top'
-        : 'article_inline'
   return (
     <AdSlot
-      slot={resolvedSlot}
+      slot={slot}
       settings={settings ?? undefined}
       className={className}
     />
