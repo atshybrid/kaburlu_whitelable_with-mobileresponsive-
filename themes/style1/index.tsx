@@ -1547,7 +1547,21 @@ export async function ThemeHome({
   return (
     <div className="theme-style1">
       <Navbar tenantSlug={tenantSlugForLinks} title={siteName} logoUrl={logoUrl} />
+      {/* Top Leaderboard Banner — best CTR placement, sits right below navbar */}
+      {/* Desktop: 728×90 Leaderboard | Mobile: 320×100 Large Banner */}
+      <div className="bg-white border-b border-zinc-100">
+        <div className="mx-auto max-w-7xl px-3 sm:px-4 py-2 flex justify-center">
+          <AdSlot slot="home_top_banner" settings={settings ?? undefined} className="w-full overflow-hidden" />
+        </div>
+      </div>
       {rendered}
+      {/* Bottom Leaderboard Banner — high-viewability placement before footer */}
+      {/* Desktop: 728×90 | Mobile: 320×100 */}
+      <div className="bg-white border-t border-zinc-100 mt-4">
+        <div className="mx-auto max-w-7xl px-3 sm:px-4 py-3 flex justify-center">
+          <AdSlot slot="home_bottom_banner" settings={settings ?? undefined} className="w-full overflow-hidden" />
+        </div>
+      </div>
       <MobileBottomNav tenantSlug={tenantSlugForLinks} />
       <Footer settings={settings} tenantSlug={tenantSlugForLinks} />
       {domainStats?.topArticles && domainStats.topArticles.length > 0 && (
@@ -2398,6 +2412,11 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
               <div className="px-6 sm:px-8 lg:px-10 pb-8 pt-2">
                 <MultiplexAd slot="article_multiplex_h" />
               </div>
+
+              {/* Mobile-only: Vertical multiplex after article body (sidebar is hidden on mobile) */}
+              <div className="lg:hidden px-6 sm:px-8 pb-8">
+                <MultiplexAd slot="article_multiplex_v" className="w-full overflow-hidden" />
+              </div>
             </div>
 
             {/* Related Articles */}
@@ -2601,10 +2620,20 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
               {trending && trending.length > 0 && (
                 <TrendingArticlesSidebar trending={trending} tenantSlug={tenantSlug} />
               )}
-              
-              {/* Sidebar Ad */}
+
+              {/* Square Ad (300×250) — between trending & bottom sidebar ads */}
               <div className="rounded-2xl overflow-hidden shadow-sm">
-                <AdBanner variant="tall" />
+                <AdSlot slot="article_square" settings={settings ?? undefined} />
+              </div>
+              
+              {/* Sidebar Ad — Top (300×250) */}
+              <div className="rounded-2xl overflow-hidden shadow-sm">
+                <AdSlot slot="article_sidebar_top" settings={settings ?? undefined} />
+              </div>
+
+              {/* Sidebar Ad — Bottom (300×600 Half Page) */}
+              <div className="rounded-2xl overflow-hidden shadow-sm">
+                <AdSlot slot="article_sidebar_bottom" settings={settings ?? undefined} />
               </div>
             </div>
           </aside>
@@ -2618,6 +2647,14 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
         visible={true}
       />
       
+      {/* Mobile Sticky Bottom Ad — 320×50 / 320×100, visible only on mobile (<lg) */}
+      {/* Sits just above MobileBottomNav so it doesn't overlap nav */}
+      <div className="lg:hidden fixed bottom-16 left-0 right-0 z-40 flex justify-center pointer-events-none">
+        <div className="pointer-events-auto max-w-full overflow-hidden shadow-xl rounded-t-lg">
+          <AdSlot slot="article_horizontal" settings={settings ?? undefined} className="w-full overflow-hidden" />
+        </div>
+      </div>
+
       {/* Scroll to Top Button */}
       <ScrollToTopButton />
       

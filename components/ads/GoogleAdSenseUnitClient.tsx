@@ -92,7 +92,7 @@ export function GoogleAdSenseUnitClient({
           insRef.current = el as HTMLModElement | null
         }}
         className={(className || 'adsbygoogle').trim()}
-        style={{ display: 'block', ...(style || {}) }}
+        style={{ display: 'block', overflow: 'hidden', maxWidth: '100%', ...(style || {}) }}
         data-ad-client={client}
         {...(slot ? { 'data-ad-slot': slot } : {})}
         data-ad-format={format}

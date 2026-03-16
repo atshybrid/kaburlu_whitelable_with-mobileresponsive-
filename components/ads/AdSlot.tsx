@@ -105,9 +105,9 @@ export function AdSlot({
           </div>
         ) : null}
 
-        <a href={clickUrl} target="_blank" rel="noreferrer" className="block overflow-hidden">
+        <a href={clickUrl} target="_blank" rel="noreferrer" className="block overflow-hidden max-w-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={imageUrl} alt={alt} className="h-full w-full object-cover" />
+          <img src={imageUrl} alt={alt} className="h-auto w-full object-cover max-w-full" />
         </a>
       </div>
     )
@@ -129,7 +129,7 @@ export function AdSlot({
     }
 
     return (
-      <div className={effectiveClassName} style={style} aria-label={label}>
+      <div className={`overflow-hidden w-full ${effectiveClassName || ''}`.trim()} style={style} aria-label={label}>
         {ads.debug ? (
           <div className="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">
             {slot} • GOOGLE{layout ? ` [${layout}]` : ''}
