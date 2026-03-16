@@ -1290,8 +1290,8 @@ export async function ThemeHome({
             return (
               <div key={block.id} className="flex flex-col flex-1">
                 <section className="rounded-xl bg-white p-4">
-                  {/* maxHeight 260px prevents Google responsive ad from rendering 300×600 tall ad */}
-                  <div className="mb-3 overflow-hidden rounded-lg" style={{ maxHeight: '260px' }}>
+                  {/* Fixed 250px height clips Google iframe — maxHeight alone doesn't clip iframes */}
+                  <div className="mb-3 overflow-hidden rounded-lg" style={{ height: '250px', maxHeight: '250px', overflow: 'hidden' }}>
                     <AdBanner variant="square" />
                   </div>
                   <h3 className="mb-3 text-sm font-bold uppercase tracking-wide flex items-center gap-2">
@@ -1565,11 +1565,11 @@ export async function ThemeHome({
   return (
     <div className="theme-style1">
       <Navbar tenantSlug={tenantSlugForLinks} title={siteName} logoUrl={logoUrl} />
-      {/* Top Leaderboard Banner — best CTR placement, sits right below navbar */}
-      {/* Desktop: 728×90 Leaderboard | Mobile: 320×100 Large Banner */}
-      <div className="bg-white border-b border-zinc-100">
-        <div className="mx-auto max-w-7xl px-3 sm:px-4 py-2 flex justify-center">
-          <AdSlot slot="home_top_banner" settings={settings ?? undefined} className="w-full overflow-hidden" />
+      {/* Top Leaderboard Banner — capped at 90px so Google cannot expand to 250px Billboard */}
+      {/* Desktop: 728×90 | Mobile: 320×50/100 */}
+      <div className="bg-white border-b border-zinc-100 overflow-hidden" style={{ maxHeight: '110px' }}>
+        <div className="mx-auto max-w-7xl px-3 sm:px-4 py-1 flex justify-center overflow-hidden" style={{ maxHeight: '108px' }}>
+          <AdSlot slot="home_top_banner" settings={settings ?? undefined} className="w-full overflow-hidden" style={{ maxHeight: '96px', display: 'block' }} />
         </div>
       </div>
       {rendered}
