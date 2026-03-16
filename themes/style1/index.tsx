@@ -1291,20 +1291,16 @@ export async function ThemeHome({
           }
           
           if (colKey === 'col-4') {
-            // Column 4: Top Articles with label + 4 articles
+            // Column 4: Top Articles — clean, no ad squished inside the content column
             return (
               <div key={block.id} className="flex flex-col flex-1">
-                <section className="rounded-xl bg-white p-4">
-                  {/* Fixed 250px height clips Google iframe — maxHeight alone doesn't clip iframes */}
-                  <div className="mb-3 overflow-hidden rounded-lg" style={{ height: '250px', maxHeight: '250px', overflow: 'hidden' }}>
-                    <AdBanner variant="square" />
-                  </div>
+                <section className="rounded-xl bg-white p-4 h-full">
                   <h3 className="mb-3 text-sm font-bold uppercase tracking-wide flex items-center gap-2">
                     <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
                     Top Articles
                   </h3>
                   <div className="grid grid-cols-1 gap-3">
-                    {col4Articles.slice(0, 4).map((a) => (
+                    {col4Articles.slice(0, 6).map((a) => (
                       <ListRow key={a.id} tenantSlug={tenantSlugForLinks} a={a} />
                     ))}
                   </div>
@@ -1446,25 +1442,23 @@ export async function ThemeHome({
       case 'heroSection':
       case 'mainGrid4':
         if (!showHero) return null
-        // Hero + 1 Ad (only if hero shown) + 4-column category section + 1 Ad (only if categories shown)
+        // Hero section (4-col grid) → visual separator → 4-col categories + right rail → multiplex
         return { 
           placement: 'main', 
           node: (
             <Fragment key={section.id}>
               {renderMainGrid(section)}
-              {/* Multiplex after hero section (homepage high-intent placement) */}
-              {showHero && (
-                takeHomeMultiplex(
-                  <div className="my-6">
-                    <MultiplexAd slot="home_multiplex" minHeight={adPolicy.home.multiplexMinHeight} />
-                  </div>
-                )
-              )}
               {showCategories ? (
                 <>
+                  {/* Visual section separator — clean break between hero and categories */}
+                  <div className="my-5 flex items-center gap-3">
+                    <div className="flex-1 h-px bg-zinc-200" />
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400 px-2">వార్తలు</span>
+                    <div className="flex-1 h-px bg-zinc-200" />
+                  </div>
                   {/* Category Section + Right Sidebar Vertical Ads */}
-                  <div className="mt-4 flex flex-col lg:flex-row gap-4 lg:gap-6">
-                    {/* Category columns */}
+                  <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+                    {/* Category columns (4-col grid) */}
                     <div className="flex-1 min-w-0">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
                         {configuredCategoryColumns.length > 0 ? (
@@ -1474,29 +1468,39 @@ export async function ThemeHome({
                         )}
                       </div>
                     </div>
-                    {/* Right sidebar: Vertical display ads (hidden on mobile) */}
-                    <aside className="hidden lg:block w-[300px] shrink-0">
-                      <div className="sticky top-24 space-y-4">
-                        {adPolicy.home.rightRailMax >= 1 && adPolicy.home.showRightRail1 ? (
-                          <AdSlot slot="home_right_1" settings={settings ?? undefined} />
-                        ) : null}
-                        {adPolicy.home.rightRailMax >= 1 && !adPolicy.home.showRightRail1 && adPolicy.home.showRightRail2 ? (
-                          <AdSlot slot="home_right_2" settings={settings ?? undefined} />
-                        ) : null}
-                        {adPolicy.home.rightRailMax >= 2 && adPolicy.home.showRightRail2 ? (
-                          <AdSlot slot="home_right_2" settings={settings ?? undefined} />
-                        ) : null}
-                      </div>
-                    </aside>
+                    {/* Right sidebar: 300×250 (highest CPM) on top, 300×600 below — hidden on mobile */}
+                    {adPolicy.home.rightRailMax >= 1 && (
+                      <aside className="hidden lg:block w-[300px] shrink-0">
+                        <div className="sticky top-20 space-y-4">
+                          {/* 300×250 rectangle — best CPM position */}
+                          {adPolicy.home.showRightRail2 ? (
+                            <AdSlot slot="home_right_2" settings={settings ?? undefined} />
+                          ) : adPolicy.home.showRightRail1 ? (
+                            <AdSlot slot="home_right_1" settings={settings ?? undefined} />
+                          ) : null}
+                          {/* 300×600 half-page — below the rectangle */}
+                          {adPolicy.home.rightRailMax >= 2 && adPolicy.home.showRightRail1 && adPolicy.home.showRightRail2 ? (
+                            <AdSlot slot="home_right_1" settings={settings ?? undefined} />
+                          ) : null}
+                        </div>
+                      </aside>
+                    )}
                   </div>
-                  {/* Multiplex Ad after Category Section */}
+                  {/* Multiplex Ad — after all content sections for natural reading flow */}
                   {takeHomeMultiplex(
                     <div className="my-6">
                       <MultiplexAd slot="home_multiplex" minHeight={adPolicy.home.multiplexMinHeight} />
                     </div>
                   )}
                 </>
-              ) : null}
+              ) : (
+                /* No categories: show multiplex right after hero */
+                takeHomeMultiplex(
+                  <div className="my-6">
+                    <MultiplexAd slot="home_multiplex" minHeight={adPolicy.home.multiplexMinHeight} />
+                  </div>
+                )
+              )}
             </Fragment>
           )
         }
@@ -1576,22 +1580,26 @@ export async function ThemeHome({
   return (
     <div className="theme-style1">
       <Navbar tenantSlug={tenantSlugForLinks} title={siteName} logoUrl={logoUrl} />
-      {/* Top Leaderboard Banner — capped at 90px so Google cannot expand to 250px Billboard */}
-      {/* Desktop: 728×90 | Mobile: 320×50/100 */}
+      {/* Top Leaderboard Banner — 728×90 desktop / 320×50 mobile */}
       {adPolicy.home.showTopBanner ? (
-        <div className="bg-white border-b border-zinc-100 overflow-hidden" style={{ maxHeight: '110px' }}>
-          <div className="mx-auto max-w-7xl px-3 sm:px-4 py-1 flex justify-center overflow-hidden" style={{ maxHeight: '108px' }}>
-            <AdSlot slot="home_top_banner" settings={settings ?? undefined} className="w-full overflow-hidden" style={{ maxHeight: '96px', display: 'block' }} />
+        <div className="bg-white border-b border-zinc-100 overflow-hidden">
+          <div className="mx-auto max-w-7xl px-3 sm:px-4 overflow-hidden">
+            <p className="text-center text-[9px] font-medium text-zinc-400 uppercase tracking-[0.18em] pt-1 pb-0">Advertisement</p>
+            <div className="flex justify-center overflow-hidden pb-1" style={{ maxHeight: '100px' }}>
+              <AdSlot slot="home_top_banner" settings={settings ?? undefined} className="w-full overflow-hidden" style={{ maxHeight: '96px', display: 'block' }} />
+            </div>
           </div>
         </div>
       ) : null}
       {rendered}
-      {/* Bottom Leaderboard Banner — high-viewability placement before footer */}
-      {/* Desktop: 728×90 | Mobile: 320×100 */}
+      {/* Bottom Leaderboard Banner — 728×90 desktop / 320×100 mobile */}
       {adPolicy.home.showBottomBanner ? (
         <div className="bg-white border-t border-zinc-100 mt-4">
-          <div className="mx-auto max-w-7xl px-3 sm:px-4 py-3 flex justify-center">
-            <AdSlot slot="home_bottom_banner" settings={settings ?? undefined} className="w-full overflow-hidden" />
+          <div className="mx-auto max-w-7xl px-3 sm:px-4 overflow-hidden">
+            <p className="text-center text-[9px] font-medium text-zinc-400 uppercase tracking-[0.18em] pt-1.5 pb-0">Advertisement</p>
+            <div className="flex justify-center overflow-hidden pb-2">
+              <AdSlot slot="home_bottom_banner" settings={settings ?? undefined} className="w-full overflow-hidden" style={{ maxHeight: '110px', display: 'block' }} />
+            </div>
           </div>
         </div>
       ) : null}
