@@ -374,13 +374,17 @@ function HorizontalAd({ className, label = 'Horizontal Ad', slot = 'home_mid' }:
 // Multiplex ad (autorelaxed) — shows grid/list of sponsored articles.
 // Best placement: article end (before related), homepage between sections.
 // Mobile: renders as a 2-column card grid; desktop: wider grid.
-async function MultiplexAd({ slot = 'article_multiplex_h', className }: { slot?: 'article_multiplex_h' | 'article_multiplex_v' | 'home_multiplex'; className?: string }) {
+// NOTE: minHeight is passed as inline style — AdSlot strips Tailwind min-h-* classes
+// when NEXT_PUBLIC_ADS_SHOW_HOUSE_FALLBACK is not set, collapsing the container to 0px
+// and preventing Google autorelaxed from rendering. Inline styles are never stripped.
+async function MultiplexAd({ slot = 'article_multiplex_h', className, minHeight = 280 }: { slot?: 'article_multiplex_h' | 'article_multiplex_v' | 'home_multiplex'; className?: string; minHeight?: number }) {
   const settings = await getEffectiveSettings()
   return (
     <AdSlot
       slot={slot}
       settings={settings ?? undefined}
       className={className}
+      style={{ minHeight: `${minHeight}px`, display: 'block' }}
     />
   )
 }
@@ -1450,7 +1454,7 @@ export async function ThemeHome({
               {showHero && (
                 takeHomeAd(
                   <div className="my-6">
-                    <MultiplexAd slot="home_multiplex" className="min-h-[160px] sm:min-h-[200px]" />
+                    <MultiplexAd slot="home_multiplex" minHeight={280} />
                   </div>
                 )
               )}
@@ -1481,7 +1485,7 @@ export async function ThemeHome({
                   {/* Multiplex Ad after Category Section */}
                   {takeHomeAd(
                     <div className="my-6">
-                      <MultiplexAd slot="home_multiplex" className="min-h-[160px] sm:min-h-[200px]" />
+                      <MultiplexAd slot="home_multiplex" minHeight={280} />
                     </div>
                   )}
                 </>
@@ -1512,7 +1516,7 @@ export async function ThemeHome({
               {renderBlock(b)}
               {takeHomeAd(
                 <div className="my-6">
-                  <MultiplexAd slot="home_multiplex" className="min-h-[160px] sm:min-h-[200px]" />
+                  <MultiplexAd slot="home_multiplex" minHeight={280} />
                 </div>
               )}
             </Fragment>
