@@ -31,6 +31,11 @@ export function GoogleAdSenseUnitClient({
   const [noFill, setNoFill] = useState(false)
   const insRef = useRef<HTMLElement | null>(null)
 
+  // Multiplex (autorelaxed) ads don't use the height-based timeout no-fill heuristic —
+  // Google takes longer to build the sponsored content grid and the <ins> starts at 0px.
+  // Only rely on Google's explicit data-ad-status="unfilled" signal for autorelaxed.
+  const isAutorelaxed = format === 'autorelaxed'
+
   useEffect(() => {
     setNoFill(false)
     let timer: ReturnType<typeof setTimeout> | null = null
@@ -49,7 +54,16 @@ export function GoogleAdSenseUnitClient({
         observer.observe(insRef.current, { attributes: true, attributeFilter: ['data-ad-status'] })
       }
 
-      // Google may silently return no-fill; hide blank box and show fallback.
+      // For autorelaxed (multiplex) ads: skip the height-based timeout heuristic entirely.
+      // Google builds a sponsored content grid asynchronously and the <ins> can stay at
+      // 0px for several seconds before content appears — triggering a false no-fill.
+      // We rely solely on Google's explicit data-ad-status signal above.
+      if (isAutorelaxed) {
+        // Return cleanup without setting a timer — observer handles unfilled signal.
+        return () => { if (observer) observer.disconnect() }
+      }
+
+      // For display/banner ads: hide blank box after 12s if Google hasn't filled it.
       // 12s timeout: AdSense script loads "afterInteractive" (~2-3s) + ad fill time (~1-2s).
       // Never hide if Google has already reported the slot as filled.
       timer = setTimeout(() => {
@@ -75,7 +89,7 @@ export function GoogleAdSenseUnitClient({
       if (timer) clearTimeout(timer)
       if (observer) observer.disconnect()
     }
-  }, [client, slot, format, layout, responsive])
+  }, [client, slot, format, layout, responsive, isAutorelaxed])
 
   if (noFill) {
     return <>{fallback ?? null}</>
