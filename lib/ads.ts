@@ -450,7 +450,21 @@ export function getAdsSettings(settings?: EffectiveSettings): AdsSettings {
     }
   }
 
-  const mergedSlots = useFrontendOwned ? defaultSlots : { ...defaultSlots, ...remoteSlots }
+  // Deep-merge per slot so that default `layout` (e.g. 'in-article' for fluid ads) is
+  // preserved when backend overrides the slot but doesn't send a layout field.
+  const mergedSlots = useFrontendOwned ? defaultSlots : (() => {
+    const result: Partial<Record<AdSlotKey, SlotAdConfig>> = {}
+    const allKeys = new Set([...Object.keys(defaultSlots), ...Object.keys(remoteSlots)]) as Set<AdSlotKey>
+    for (const key of allKeys) {
+      const def = defaultSlots[key]
+      const rem = remoteSlots[key]
+      if (!rem) { result[key] = def; continue }
+      if (!def) { result[key] = rem; continue }
+      // Merge google sub-config: remote values win, but default layout is kept if remote omits it
+      result[key] = { ...def, ...rem, google: { ...def.google, ...rem.google } }
+    }
+    return result
+  })()
 
   return {
     enabled,
