@@ -308,13 +308,23 @@ function normalizeSlotConfig(input: unknown, fallbackClient?: string): SlotAdCon
     return undefined
   }
 
+  // Normalize AdSense UI type names → valid data-ad-format values
+  const rawFormat = typeof simple.format === 'string' ? simple.format.trim() : 'auto'
+  const normalizedFormat = (() => {
+    const f = rawFormat.toLowerCase()
+    if (f === 'multiplex') return 'autorelaxed'       // AdSense UI shows 'Multiplex' — correct value is 'autorelaxed'
+    if (f === 'in-article') return 'fluid'            // AdSense UI shows 'In-article' — correct value is 'fluid'
+    if (f === 'in-feed') return 'fluid'               // AdSense UI shows 'In-feed'
+    return rawFormat
+  })()
+
   return {
     enabled: typeof simple.enabled === 'boolean' ? simple.enabled : true,
     provider: 'google',
     google: {
       client: fallbackClient,
       slot: slotId,
-      format: typeof simple.format === 'string' ? simple.format : 'auto',
+      format: normalizedFormat,
       responsive: true,
     },
   }

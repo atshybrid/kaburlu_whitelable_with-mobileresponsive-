@@ -97,7 +97,7 @@ export function GoogleAdSenseUnitClient({
         {...(slot ? { 'data-ad-slot': slot } : {})}
         data-ad-format={format}
         {...(layout ? { 'data-ad-layout': layout } : {})}
-        {...(format !== 'autorelaxed' ? { 'data-full-width-responsive': responsive ? 'true' : 'false' } : {})}
+        {...(format !== 'autorelaxed' && format !== 'fluid' ? { 'data-full-width-responsive': responsive ? 'true' : 'false' } : {})}
       />
     </>
   )
