@@ -1416,12 +1416,14 @@ export async function ThemeHome({
 
   // Pending ads array for deferred rendering
   const pendingAds: ReactNode[] = []
-  const HOME_AD_CAP = Number(process.env.NEXT_PUBLIC_HOME_AD_CAP || '4')
-  let homeAdCount = 0
+  // Multiplex performs best as a single, high-intent placement on homepage.
+  // Repeating the same slot several times can reduce fill consistency and RPM.
+  const HOME_MULTIPLEX_CAP = Number(process.env.NEXT_PUBLIC_HOME_MULTIPLEX_CAP || process.env.NEXT_PUBLIC_HOME_AD_CAP || '1')
+  let homeMultiplexCount = 0
 
-  function takeHomeAd(node: ReactNode): ReactNode | null {
-    if (homeAdCount >= HOME_AD_CAP) return null
-    homeAdCount += 1
+  function takeHomeMultiplex(node: ReactNode): ReactNode | null {
+    if (homeMultiplexCount >= HOME_MULTIPLEX_CAP) return null
+    homeMultiplexCount += 1
     return node
   }
 
@@ -1452,7 +1454,7 @@ export async function ThemeHome({
               {renderMainGrid(section)}
               {/* Multiplex after hero section (homepage high-intent placement) */}
               {showHero && (
-                takeHomeAd(
+                takeHomeMultiplex(
                   <div className="my-6">
                     <MultiplexAd slot="home_multiplex" minHeight={280} />
                   </div>
@@ -1483,7 +1485,7 @@ export async function ThemeHome({
                     </aside>
                   </div>
                   {/* Multiplex Ad after Category Section */}
-                  {takeHomeAd(
+                  {takeHomeMultiplex(
                     <div className="my-6">
                       <MultiplexAd slot="home_multiplex" minHeight={280} />
                     </div>
@@ -1514,7 +1516,7 @@ export async function ThemeHome({
           node: (
             <Fragment key={section.id}>
               {renderBlock(b)}
-              {takeHomeAd(
+              {takeHomeMultiplex(
                 <div className="my-6">
                   <MultiplexAd slot="home_multiplex" minHeight={280} />
                 </div>
