@@ -2729,9 +2729,8 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
 }
 
 function getAdEveryN() {
-  const raw = Number(process.env.NEXT_PUBLIC_ARTICLE_AD_EVERY_N_PARAGRAPHS || '6')
-  if (Number.isFinite(raw) && raw >= 1) return Math.max(3, Math.floor(raw))
-  return 4
+  // Config-policy fallback default when explicit per-render policy is not provided.
+  return 6
 }
 
 function HorizontalInlineAd() {

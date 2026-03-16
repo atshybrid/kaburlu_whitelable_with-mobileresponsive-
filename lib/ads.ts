@@ -348,7 +348,11 @@ function normalizeRemoteAds(rawAds?: AdsSettings): AdsSettings | undefined {
 
     const mappedKeys = BACKEND_SLOT_ALIASES[rawKey] || (isAdSlotKey(rawKey) ? [rawKey] : [])
     for (const key of mappedKeys) {
-      normalizedSlots[key] = config
+      // Preserve native in-article layout for inline fluid units coming from simplified backend keys.
+      const normalizedConfig = key === 'article_inline' && config.google?.format === 'fluid' && !config.google?.layout
+        ? { ...config, google: { ...config.google, layout: 'in-article' } }
+        : config
+      normalizedSlots[key] = normalizedConfig
     }
   }
 
@@ -411,76 +415,20 @@ function pickAdsFromSettings(settings?: EffectiveSettings): AdsSettings | undefi
 export function getAdsSettings(settings?: EffectiveSettings): AdsSettings {
   const fromRemote = pickAdsFromSettings(settings) || {}
 
-  const enabledEnv = process.env.NEXT_PUBLIC_ADS_ENABLED
-  const debugEnv = process.env.NEXT_PUBLIC_ADS_DEBUG
-  const frontendOwnedEnv = process.env.NEXT_PUBLIC_ADS_FRONTEND_OWNED
-  const frontendOwned = frontendOwnedEnv ? (frontendOwnedEnv === '1' || frontendOwnedEnv === 'true') : true
-
-  // Auto-switch to backend-driven slots when config API provides tenant slot mappings.
+  // Config API is the single source of truth for ad enablement and slot mappings.
   const remoteSlots = fromRemote.slots || {}
   const hasRemoteSlots = Object.keys(remoteSlots).length > 0
-  const preferRemote = hasRemoteSlots
-  const useFrontendOwned = frontendOwned && !preferRemote
-
-  const enabledFromEnv = enabledEnv === '1' || enabledEnv === 'true'
-  const enabled = useFrontendOwned
-    ? (enabledEnv ? enabledFromEnv : true)
-    : (typeof fromRemote.enabled === 'boolean' ? fromRemote.enabled : enabledFromEnv)
-
-  const debugFromEnv = debugEnv === '1' || debugEnv === 'true'
-  const debug = useFrontendOwned
-    ? (debugEnv ? debugFromEnv : !!fromRemote.debug)
-    : (typeof fromRemote.debug === 'boolean' ? fromRemote.debug : debugFromEnv)
-
-  const clientFromEnv = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
-  const client = clientFromEnv || fromRemote.googleAdsense?.client
-
-  // Optional dedicated Multiplex unit ID (from AdSense "Multiplex ad unit")
-  // When set, multiplex slots use format="autorelaxed" for better fill quality.
-  const multiplexSlotFromEnv = process.env.NEXT_PUBLIC_ADSENSE_MULTIPLEX_SLOT?.trim()
-
-  // Build default slot configs from frontend defaults.
-  // In frontend-owned mode, these are authoritative and do not depend on backend slot flow.
-  const defaultSlots: Partial<Record<AdSlotKey, SlotAdConfig>> = {}
-  if (client) {
-    for (const [key, def] of Object.entries(DEFAULT_ADSENSE_SLOTS)) {
-      const isMultiplexKey =
-        key === 'article_multiplex_h' ||
-        key === 'article_multiplex_v' ||
-        key === 'home_multiplex'
-
-      const resolvedGoogle = isMultiplexKey && multiplexSlotFromEnv
-        ? { client, slot: multiplexSlotFromEnv, format: 'autorelaxed', responsive: true }
-        : { client, slot: def.slot, format: def.format, layout: def.layout, responsive: true }
-
-      defaultSlots[key as AdSlotKey] = {
-        provider: 'google',
-        google: resolvedGoogle,
-      }
-    }
-  }
-
-  // Deep-merge per slot so that default `layout` (e.g. 'in-article' for fluid ads) is
-  // preserved when backend overrides the slot but doesn't send a layout field.
-  const mergedSlots = useFrontendOwned ? defaultSlots : (() => {
-    const result: Partial<Record<AdSlotKey, SlotAdConfig>> = {}
-    const allKeys = new Set([...Object.keys(defaultSlots), ...Object.keys(remoteSlots)]) as Set<AdSlotKey>
-    for (const key of allKeys) {
-      const def = defaultSlots[key]
-      const rem = remoteSlots[key]
-      if (!rem) { result[key] = def; continue }
-      if (!def) { result[key] = rem; continue }
-      // Merge google sub-config: remote values win, but default layout is kept if remote omits it
-      result[key] = { ...def, ...rem, google: { ...def.google, ...rem.google } }
-    }
-    return result
-  })()
+  const client = fromRemote.googleAdsense?.client
+  const enabled = typeof fromRemote.enabled === 'boolean'
+    ? fromRemote.enabled
+    : Boolean(hasRemoteSlots || client)
+  const debug = Boolean(fromRemote.debug)
 
   return {
     enabled,
     debug,
     googleAdsense: { client },
-    slots: mergedSlots,
+    slots: remoteSlots,
   }
 }
 
@@ -534,7 +482,7 @@ export type AdsPlacementPolicy = {
   }
 }
 
-function readBoundedNumber(raw: string | undefined, fallback: number, min: number, max: number): number {
+function readBoundedNumber(raw: number | undefined, fallback: number, min: number, max: number): number {
   const value = Number(raw)
   if (!Number.isFinite(value)) return fallback
   return Math.min(max, Math.max(min, Math.floor(value)))
@@ -587,15 +535,13 @@ export function getAdsPlacementPolicy(settings?: EffectiveSettings): AdsPlacemen
     ? (articleInventory >= 4 ? 2 : 1)
     : (has('article_sidebar_top') || has('article_sidebar_bottom') ? 1 : 0)
 
-  const homeMultiplexMax = has('home_multiplex')
-    ? readBoundedNumber(process.env.NEXT_PUBLIC_HOME_MULTIPLEX_CAP || process.env.NEXT_PUBLIC_HOME_AD_CAP, 1, 0, 2)
-    : 0
+  const homeMultiplexMax = has('home_multiplex') ? 1 : 0
 
   const articleInlineMax = has('article_inline')
-    ? readBoundedNumber(process.env.NEXT_PUBLIC_ARTICLE_INLINE_MAX, defaultArticleInlineMax, 1, 4)
+    ? readBoundedNumber(defaultArticleInlineMax, defaultArticleInlineMax, 1, 4)
     : 0
 
-  const articleSidebarMax = readBoundedNumber(process.env.NEXT_PUBLIC_ARTICLE_SIDEBAR_MAX, defaultArticleSidebarMax, 0, 2)
+  const articleSidebarMax = readBoundedNumber(defaultArticleSidebarMax, defaultArticleSidebarMax, 0, 2)
 
   return {
     home: {
@@ -603,14 +549,14 @@ export function getAdsPlacementPolicy(settings?: EffectiveSettings): AdsPlacemen
       showBottomBanner: has('home_bottom_banner') && homeInventory >= 2,
       showRightRail1: has('home_right_1'),
       showRightRail2: has('home_right_2'),
-      rightRailMax: readBoundedNumber(process.env.NEXT_PUBLIC_HOME_RIGHT_RAIL_MAX, defaultHomeRightRailMax, 0, 2),
+      rightRailMax: readBoundedNumber(defaultHomeRightRailMax, defaultHomeRightRailMax, 0, 2),
       multiplexMax: homeMultiplexMax,
-      multiplexMinHeight: readBoundedNumber(process.env.NEXT_PUBLIC_HOME_MULTIPLEX_MIN_HEIGHT, 280, 180, 420),
+      multiplexMinHeight: 280,
     },
     article: {
-      inlineEveryN: readBoundedNumber(process.env.NEXT_PUBLIC_ARTICLE_AD_EVERY_N_PARAGRAPHS, defaultArticleInlineEvery, 3, 10),
+      inlineEveryN: readBoundedNumber(defaultArticleInlineEvery, defaultArticleInlineEvery, 3, 10),
       inlineMax: articleInlineMax,
-      forceEarlyInline: process.env.NEXT_PUBLIC_ARTICLE_FORCE_EARLY_INLINE !== 'false',
+      forceEarlyInline: true,
       showTopHorizontal: has('article_horizontal'),
       showBottomInline: has('article_inline') && (articleInlineMax <= 1 || !has('article_multiplex_h')),
       showBottomHorizontalMobile: has('article_horizontal'),
