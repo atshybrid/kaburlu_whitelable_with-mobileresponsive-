@@ -286,11 +286,7 @@ async function AdBanner({
 
 async function MultiplexAd({ slot = 'article_multiplex_h', className }: { slot?: 'article_multiplex_h' | 'home_multiplex'; className?: string }) {
   const settings = await getEffectiveSettings().catch(() => undefined)
-  const hasDedicatedMultiplex = Boolean(process.env.NEXT_PUBLIC_ADSENSE_MULTIPLEX_SLOT)
-  const resolvedSlot = hasDedicatedMultiplex
-    ? slot
-    : (slot === 'home_multiplex' ? 'home_horizontal_2' : 'article_horizontal')
-  return <AdSlot slot={resolvedSlot} settings={settings ?? undefined} className={className} />
+  return <AdSlot slot={slot} settings={settings ?? undefined} className={className} />
 }
 
 /* ==================== SECTION COMPONENTS ==================== */

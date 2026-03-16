@@ -238,6 +238,7 @@ export type SlotAdConfig = {
 export type AdsSettings = {
   enabled?: boolean
   debug?: boolean
+  houseFallback?: boolean
   googleAdsense?: { client?: string }
   slots?: Partial<Record<AdSlotKey, SlotAdConfig>>
 }
@@ -333,7 +334,7 @@ function normalizeSlotConfig(input: unknown, fallbackClient?: string): SlotAdCon
 function normalizeRemoteAds(rawAds?: AdsSettings): AdsSettings | undefined {
   if (!rawAds || typeof rawAds !== 'object') return undefined
 
-  const src = rawAds as AdsSettings & { adsenseClientId?: string; slots?: Record<string, unknown> }
+  const src = rawAds as AdsSettings & { adsenseClientId?: string; slots?: Record<string, unknown>; houseFallback?: boolean }
   const client =
     (typeof src.googleAdsense?.client === 'string' && src.googleAdsense.client.trim())
       ? src.googleAdsense.client.trim()
@@ -359,6 +360,7 @@ function normalizeRemoteAds(rawAds?: AdsSettings): AdsSettings | undefined {
   return {
     enabled: src.enabled,
     debug: src.debug,
+    houseFallback: typeof src.houseFallback === 'boolean' ? src.houseFallback : undefined,
     googleAdsense: { client },
     slots: normalizedSlots,
   }
@@ -427,6 +429,7 @@ export function getAdsSettings(settings?: EffectiveSettings): AdsSettings {
   return {
     enabled,
     debug,
+    houseFallback: typeof fromRemote.houseFallback === 'boolean' ? fromRemote.houseFallback : true,
     googleAdsense: { client },
     slots: remoteSlots,
   }

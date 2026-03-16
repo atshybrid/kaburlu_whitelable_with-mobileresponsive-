@@ -74,7 +74,7 @@ export function AdSlot({
   const def = AD_SLOTS[slot]
   const cfg = getSlotConfig(ads, slot)
   const provider = resolveProvider(ads, slot)
-  const showHouseFallback = process.env.NEXT_PUBLIC_ADS_SHOW_HOUSE_FALLBACK === 'true'
+  const showHouseFallback = ads.houseFallback !== false
   // Multiplex (autorelaxed) ads need a minimum height to render regardless of fallback setting.
   const isMultiplex = slot === 'home_multiplex' || slot === 'article_multiplex_h' || slot === 'article_multiplex_v'
   // When house-fallback is disabled, strip min-h Tailwind classes to avoid blank space on no-fill.
