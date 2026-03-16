@@ -334,20 +334,25 @@ function extractCategoryName(val: unknown): string {
 }
 
 // ── Real ad banner using AdSlot (maps variant → slot key + settings) ─────────
-async function AdBanner({ variant = 'default', className }: { variant?: 'default' | 'tall' | 'square' | 'horizontal' | 'home_top' | 'home_mid'; className?: string }) {
+async function AdBanner({ variant = 'default', className }: { variant?: 'default' | 'tall' | 'square' | 'horizontal' | 'home_top' | 'home_mid' | 'home_right_1' | 'home_right_2'; className?: string }) {
   const settings = await getEffectiveSettings()
 
   // variant → AdSlotKey mapping
-  // square  = 300×250 display  → article_square
-  // horizontal = 728×90 display → article_horizontal  
-  // tall/default = 300×600/300×250 vertical → article_vertical / article_sidebar_top
+  // square      = 300×250 display   → article_square
+  // horizontal  = 728×90 display    → article_horizontal
+  // tall        = 300×600 vertical  → article_vertical
+  // default     = 300×250 sidebar   → article_sidebar_top
+  // home_right_1 = 300×600 right rail → home_right_1
+  // home_right_2 = 300×250 right rail → home_right_2
   const slotMap = {
-    square:     'article_square',
-    horizontal: 'article_horizontal',
-    tall:       'article_vertical',
-    default:    'article_sidebar_top',
-    home_top:   'home_horizontal_1',
-    home_mid:   'home_horizontal_2',
+    square:       'article_square',
+    horizontal:   'article_horizontal',
+    tall:         'article_vertical',
+    default:      'article_sidebar_top',
+    home_top:     'home_horizontal_1',
+    home_mid:     'home_horizontal_2',
+    home_right_1: 'home_right_1',
+    home_right_2: 'home_right_2',
   } as const
 
   const slot = slotMap[variant]
@@ -1451,17 +1456,29 @@ export async function ThemeHome({
               )}
               {showCategories ? (
                 <>
-                  {/* 4-Column Category Section */}
-                  <div className="mt-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-                      {configuredCategoryColumns.length > 0 ? (
-                        <SmartCategoryColumns tenantSlug={tenantSlugForLinks} columns={configuredCategoryColumns} />
-                      ) : (
-                        <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} usedCategorySlugs={usedCategorySlugs} />
-                      )}
+                  {/* Category Section + Right Sidebar Vertical Ads */}
+                  <div className="mt-4 flex flex-col lg:flex-row gap-4 lg:gap-6">
+                    {/* Category columns */}
+                    <div className="flex-1 min-w-0">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+                        {configuredCategoryColumns.length > 0 ? (
+                          <SmartCategoryColumns tenantSlug={tenantSlugForLinks} columns={configuredCategoryColumns} />
+                        ) : (
+                          <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} usedCategorySlugs={usedCategorySlugs} />
+                        )}
+                      </div>
                     </div>
+                    {/* Right sidebar: Vertical display ads (hidden on mobile) */}
+                    <aside className="hidden lg:block w-[300px] shrink-0">
+                      <div className="sticky top-24 space-y-4">
+                        {/* Vertical 300×600 */}
+                        <AdSlot slot="home_right_1" settings={settings ?? undefined} />
+                        {/* Square 300×250 */}
+                        <AdSlot slot="home_right_2" settings={settings ?? undefined} />
+                      </div>
+                    </aside>
                   </div>
-                  {/* 1 Horizontal Ad after Category Section - only show if categories visible */}
+                  {/* Multiplex Ad after Category Section */}
                   {takeHomeAd(
                     <div className="my-6">
                       <MultiplexAd slot="home_multiplex" className="min-h-[160px] sm:min-h-[200px]" />
@@ -3562,15 +3579,15 @@ async function WebStoriesArea({ tenantSlug, showHgBlock = true }: { tenantSlug: 
         {showHgBlockSection ? <HGBlock tenantSlug={tenantSlug} /> : null}
       </div>
 
-      {/* Right: Sticky square ads — two 300×250 units, no tall/vertical to avoid blank space */}
+      {/* Right: Sticky vertical + square ads (300×600 + 300×250) */}
       {hasCategoryData ? (
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-4">
+            {/* Vertical 300×600 */}
+            <AdBanner variant="home_right_1" />
+            {/* Square 300×250 */}
             <div className="overflow-hidden rounded-xl" style={{ maxHeight: '260px' }}>
-              <AdBanner variant="square" />
-            </div>
-            <div className="overflow-hidden rounded-xl" style={{ maxHeight: '260px' }}>
-              <AdBanner variant="square" />
+              <AdBanner variant="home_right_2" />
             </div>
           </div>
         </aside>
