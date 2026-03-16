@@ -1285,8 +1285,9 @@ export async function ThemeHome({
             return (
               <div key={block.id} className="flex flex-col flex-1">
                 <section className="rounded-xl bg-white p-4">
-                  <div className="mb-3 overflow-hidden rounded-lg">
-                    <AdBanner variant="square" className="min-h-[250px]" />
+                  {/* maxHeight 260px prevents Google responsive ad from rendering 300×600 tall ad */}
+                  <div className="mb-3 overflow-hidden rounded-lg" style={{ maxHeight: '260px' }}>
+                    <AdBanner variant="square" />
                   </div>
                   <h3 className="mb-3 text-sm font-bold uppercase tracking-wide flex items-center gap-2">
                     <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
@@ -3561,12 +3562,16 @@ async function WebStoriesArea({ tenantSlug, showHgBlock = true }: { tenantSlug: 
         {showHgBlockSection ? <HGBlock tenantSlug={tenantSlug} /> : null}
       </div>
 
-      {/* Right: Sticky vertical ads shared for both blocks */}
+      {/* Right: Sticky square ads — two 300×250 units, no tall/vertical to avoid blank space */}
       {hasCategoryData ? (
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-4">
-            <AdBanner variant="tall" className="min-h-[300px]" />
-            <AdBanner variant="square" className="min-h-[250px]" />
+            <div className="overflow-hidden rounded-xl" style={{ maxHeight: '260px' }}>
+              <AdBanner variant="square" />
+            </div>
+            <div className="overflow-hidden rounded-xl" style={{ maxHeight: '260px' }}>
+              <AdBanner variant="square" />
+            </div>
           </div>
         </aside>
       ) : null}
