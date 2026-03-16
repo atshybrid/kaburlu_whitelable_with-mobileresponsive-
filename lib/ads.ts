@@ -507,3 +507,119 @@ export function resolveProvider(settings: AdsSettings, slot: AdSlotKey): AdProvi
   }
   return 'none'
 }
+
+export type AdsPlacementPolicy = {
+  home: {
+    showTopBanner: boolean
+    showBottomBanner: boolean
+    showRightRail1: boolean
+    showRightRail2: boolean
+    rightRailMax: number
+    multiplexMax: number
+    multiplexMinHeight: number
+  }
+  article: {
+    inlineEveryN: number
+    inlineMax: number
+    forceEarlyInline: boolean
+    showTopHorizontal: boolean
+    showBottomInline: boolean
+    showBottomHorizontalMobile: boolean
+    showSquare: boolean
+    showSidebarTop: boolean
+    showSidebarBottom: boolean
+    sidebarMax: number
+    showMultiplexHorizontal: boolean
+    showMultiplexVerticalMobile: boolean
+  }
+}
+
+function readBoundedNumber(raw: string | undefined, fallback: number, min: number, max: number): number {
+  const value = Number(raw)
+  if (!Number.isFinite(value)) return fallback
+  return Math.min(max, Math.max(min, Math.floor(value)))
+}
+
+function hasRenderableSlot(settings: AdsSettings, slot: AdSlotKey): boolean {
+  return resolveProvider(settings, slot) !== 'none'
+}
+
+function countRenderableSlots(settings: AdsSettings, slots: AdSlotKey[]): number {
+  let count = 0
+  for (const slot of slots) {
+    if (hasRenderableSlot(settings, slot)) count += 1
+  }
+  return count
+}
+
+export function getAdsPlacementPolicy(settings?: EffectiveSettings): AdsPlacementPolicy {
+  const ads = getAdsSettings(settings)
+  const has = (slot: AdSlotKey) => hasRenderableSlot(ads, slot)
+
+  const homeInventory = countRenderableSlots(ads, [
+    'home_top_banner',
+    'home_bottom_banner',
+    'home_right_1',
+    'home_right_2',
+    'home_multiplex',
+    'home_horizontal_1',
+    'home_horizontal_2',
+    'home_horizontal_3',
+  ])
+
+  const articleInventory = countRenderableSlots(ads, [
+    'article_horizontal',
+    'article_inline',
+    'article_square',
+    'article_sidebar_top',
+    'article_sidebar_bottom',
+    'article_multiplex_h',
+    'article_multiplex_v',
+  ])
+
+  const defaultHomeRightRailMax = has('home_right_1') && has('home_right_2')
+    ? (homeInventory >= 3 ? 2 : 1)
+    : (has('home_right_1') || has('home_right_2') ? 1 : 0)
+
+  const defaultArticleInlineEvery = articleInventory >= 5 ? 5 : 6
+  const defaultArticleInlineMax = articleInventory >= 5 ? 3 : 2
+  const defaultArticleSidebarMax = has('article_sidebar_top') && has('article_sidebar_bottom')
+    ? (articleInventory >= 4 ? 2 : 1)
+    : (has('article_sidebar_top') || has('article_sidebar_bottom') ? 1 : 0)
+
+  const homeMultiplexMax = has('home_multiplex')
+    ? readBoundedNumber(process.env.NEXT_PUBLIC_HOME_MULTIPLEX_CAP || process.env.NEXT_PUBLIC_HOME_AD_CAP, 1, 0, 2)
+    : 0
+
+  const articleInlineMax = has('article_inline')
+    ? readBoundedNumber(process.env.NEXT_PUBLIC_ARTICLE_INLINE_MAX, defaultArticleInlineMax, 1, 4)
+    : 0
+
+  const articleSidebarMax = readBoundedNumber(process.env.NEXT_PUBLIC_ARTICLE_SIDEBAR_MAX, defaultArticleSidebarMax, 0, 2)
+
+  return {
+    home: {
+      showTopBanner: has('home_top_banner'),
+      showBottomBanner: has('home_bottom_banner') && homeInventory >= 2,
+      showRightRail1: has('home_right_1'),
+      showRightRail2: has('home_right_2'),
+      rightRailMax: readBoundedNumber(process.env.NEXT_PUBLIC_HOME_RIGHT_RAIL_MAX, defaultHomeRightRailMax, 0, 2),
+      multiplexMax: homeMultiplexMax,
+      multiplexMinHeight: readBoundedNumber(process.env.NEXT_PUBLIC_HOME_MULTIPLEX_MIN_HEIGHT, 280, 180, 420),
+    },
+    article: {
+      inlineEveryN: readBoundedNumber(process.env.NEXT_PUBLIC_ARTICLE_AD_EVERY_N_PARAGRAPHS, defaultArticleInlineEvery, 3, 10),
+      inlineMax: articleInlineMax,
+      forceEarlyInline: process.env.NEXT_PUBLIC_ARTICLE_FORCE_EARLY_INLINE !== 'false',
+      showTopHorizontal: has('article_horizontal'),
+      showBottomInline: has('article_inline') && (articleInlineMax <= 1 || !has('article_multiplex_h')),
+      showBottomHorizontalMobile: has('article_horizontal'),
+      showSquare: has('article_square'),
+      showSidebarTop: has('article_sidebar_top'),
+      showSidebarBottom: has('article_sidebar_bottom'),
+      sidebarMax: articleSidebarMax,
+      showMultiplexHorizontal: has('article_multiplex_h'),
+      showMultiplexVerticalMobile: has('article_multiplex_v'),
+    },
+  }
+}

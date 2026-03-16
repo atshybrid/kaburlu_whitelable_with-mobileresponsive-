@@ -14,7 +14,7 @@ import { articleHref, categoryHref, basePathForTenant, getCategorySlugFromArticl
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
 import { getEffectiveSettings } from '@/lib/settings'
-import { getAdsSettings } from '@/lib/ads'
+import { getAdsPlacementPolicy } from '@/lib/ads'
 import { getConfig } from '@/lib/config'
 import { WebStoriesPlayer } from '@/components/shared/WebStoriesPlayer'
 import { WebStoriesGrid } from '@/components/shared/WebStoriesGrid'
@@ -950,6 +950,7 @@ export async function ThemeHome({
   tenantDomain?: string
 }) {
   const baseArticles: Article[] = Array.isArray(articles) ? articles : []
+  const adPolicy = getAdsPlacementPolicy(settings)
 
   // Extract domain from settings for API calls
   const canonicalBaseUrl = settings?.seo?.canonicalBaseUrl || settings?.settings?.seo?.canonicalBaseUrl
@@ -1416,9 +1417,8 @@ export async function ThemeHome({
 
   // Pending ads array for deferred rendering
   const pendingAds: ReactNode[] = []
-  // Multiplex performs best as a single, high-intent placement on homepage.
-  // Repeating the same slot several times can reduce fill consistency and RPM.
-  const HOME_MULTIPLEX_CAP = Number(process.env.NEXT_PUBLIC_HOME_MULTIPLEX_CAP || process.env.NEXT_PUBLIC_HOME_AD_CAP || '1')
+  // Multiplex performs best as a focused, high-intent placement on homepage.
+  const HOME_MULTIPLEX_CAP = adPolicy.home.multiplexMax
   let homeMultiplexCount = 0
 
   function takeHomeMultiplex(node: ReactNode): ReactNode | null {
@@ -1456,7 +1456,7 @@ export async function ThemeHome({
               {showHero && (
                 takeHomeMultiplex(
                   <div className="my-6">
-                    <MultiplexAd slot="home_multiplex" minHeight={280} />
+                    <MultiplexAd slot="home_multiplex" minHeight={adPolicy.home.multiplexMinHeight} />
                   </div>
                 )
               )}
@@ -1477,17 +1477,22 @@ export async function ThemeHome({
                     {/* Right sidebar: Vertical display ads (hidden on mobile) */}
                     <aside className="hidden lg:block w-[300px] shrink-0">
                       <div className="sticky top-24 space-y-4">
-                        {/* Vertical 300×600 */}
-                        <AdSlot slot="home_right_1" settings={settings ?? undefined} />
-                        {/* Square 300×250 */}
-                        <AdSlot slot="home_right_2" settings={settings ?? undefined} />
+                        {adPolicy.home.rightRailMax >= 1 && adPolicy.home.showRightRail1 ? (
+                          <AdSlot slot="home_right_1" settings={settings ?? undefined} />
+                        ) : null}
+                        {adPolicy.home.rightRailMax >= 1 && !adPolicy.home.showRightRail1 && adPolicy.home.showRightRail2 ? (
+                          <AdSlot slot="home_right_2" settings={settings ?? undefined} />
+                        ) : null}
+                        {adPolicy.home.rightRailMax >= 2 && adPolicy.home.showRightRail2 ? (
+                          <AdSlot slot="home_right_2" settings={settings ?? undefined} />
+                        ) : null}
                       </div>
                     </aside>
                   </div>
                   {/* Multiplex Ad after Category Section */}
                   {takeHomeMultiplex(
                     <div className="my-6">
-                      <MultiplexAd slot="home_multiplex" minHeight={280} />
+                      <MultiplexAd slot="home_multiplex" minHeight={adPolicy.home.multiplexMinHeight} />
                     </div>
                   )}
                 </>
@@ -1518,7 +1523,7 @@ export async function ThemeHome({
               {renderBlock(b)}
               {takeHomeMultiplex(
                 <div className="my-6">
-                  <MultiplexAd slot="home_multiplex" minHeight={280} />
+                  <MultiplexAd slot="home_multiplex" minHeight={adPolicy.home.multiplexMinHeight} />
                 </div>
               )}
             </Fragment>
@@ -1573,19 +1578,23 @@ export async function ThemeHome({
       <Navbar tenantSlug={tenantSlugForLinks} title={siteName} logoUrl={logoUrl} />
       {/* Top Leaderboard Banner — capped at 90px so Google cannot expand to 250px Billboard */}
       {/* Desktop: 728×90 | Mobile: 320×50/100 */}
-      <div className="bg-white border-b border-zinc-100 overflow-hidden" style={{ maxHeight: '110px' }}>
-        <div className="mx-auto max-w-7xl px-3 sm:px-4 py-1 flex justify-center overflow-hidden" style={{ maxHeight: '108px' }}>
-          <AdSlot slot="home_top_banner" settings={settings ?? undefined} className="w-full overflow-hidden" style={{ maxHeight: '96px', display: 'block' }} />
+      {adPolicy.home.showTopBanner ? (
+        <div className="bg-white border-b border-zinc-100 overflow-hidden" style={{ maxHeight: '110px' }}>
+          <div className="mx-auto max-w-7xl px-3 sm:px-4 py-1 flex justify-center overflow-hidden" style={{ maxHeight: '108px' }}>
+            <AdSlot slot="home_top_banner" settings={settings ?? undefined} className="w-full overflow-hidden" style={{ maxHeight: '96px', display: 'block' }} />
+          </div>
         </div>
-      </div>
+      ) : null}
       {rendered}
       {/* Bottom Leaderboard Banner — high-viewability placement before footer */}
       {/* Desktop: 728×90 | Mobile: 320×100 */}
-      <div className="bg-white border-t border-zinc-100 mt-4">
-        <div className="mx-auto max-w-7xl px-3 sm:px-4 py-3 flex justify-center">
-          <AdSlot slot="home_bottom_banner" settings={settings ?? undefined} className="w-full overflow-hidden" />
+      {adPolicy.home.showBottomBanner ? (
+        <div className="bg-white border-t border-zinc-100 mt-4">
+          <div className="mx-auto max-w-7xl px-3 sm:px-4 py-3 flex justify-center">
+            <AdSlot slot="home_bottom_banner" settings={settings ?? undefined} className="w-full overflow-hidden" />
+          </div>
         </div>
-      </div>
+      ) : null}
       <MobileBottomNav tenantSlug={tenantSlugForLinks} />
       <Footer settings={settings} tenantSlug={tenantSlugForLinks} />
       {domainStats?.topArticles && domainStats.topArticles.length > 0 && (
@@ -1863,14 +1872,18 @@ function ArticleContentWithMustRead({
   tenantSlug: _tenantSlug,
   secondImage,
   settings,
+  adEveryN,
+  inlineMax,
+  forceEarlyInline,
 }: { 
   html: string; 
   tenantSlug: string;
   secondImage?: { url?: string; alt?: string; caption?: string } | null;
   settings?: EffectiveSettings | null;
+  adEveryN?: number;
+  inlineMax?: number;
+  forceEarlyInline?: boolean;
 }) {
-  // Pre-compute ads settings once so the loop can use AdSlot directly (sync)
-  const _adsSettings = getAdsSettings(settings ?? undefined)
   if (!html) {
     return (
       <div className="px-6 sm:px-8 lg:px-10 py-8">
@@ -1899,7 +1912,9 @@ function ArticleContentWithMustRead({
   
   const parts = html.split(/<\/p>/i)
   const nodes: ReactNode[] = []
-  const every = getAdEveryN()
+  const every = Number.isFinite(adEveryN) && (adEveryN || 0) >= 1 ? Math.max(3, Math.floor(adEveryN || 0)) : getAdEveryN()
+  const maxInline = Number.isFinite(inlineMax) && (inlineMax || 0) >= 0 ? Math.max(0, Math.floor(inlineMax || 0)) : 2
+  const shouldForceEarlyInline = forceEarlyInline !== false
   let paraIndex = 0
   let actualParagraphCount = 0
   let secondImageInserted = false
@@ -1955,7 +1970,7 @@ function ArticleContentWithMustRead({
     
     // Insert in-article ad (or fallback house-ad) after every N paragraphs
     // AdSlot handles both: real Google ad when enabled, fallback banner when not
-    if (paraIndex % every === 0 && i < parts.length - 2 && paraIndex > 2) {
+    if (inlineAdsInserted < maxInline && paraIndex % every === 0 && i < parts.length - 2 && paraIndex > 2) {
       nodes.push(
         <AdSlot
           key={`ad-${i}`}
@@ -1968,7 +1983,7 @@ function ArticleContentWithMustRead({
     }
 
     // Short articles were missing ads often; force one early inline slot after 2nd paragraph.
-    if (inlineAdsInserted === 0 && actualParagraphCount === 2 && i < parts.length - 1) {
+    if (shouldForceEarlyInline && inlineAdsInserted < maxInline && inlineAdsInserted === 0 && actualParagraphCount === 2 && i < parts.length - 1) {
       nodes.push(
         <AdSlot
           key={`ad-early-${i}`}
@@ -1990,6 +2005,7 @@ function ArticleContentWithMustRead({
 
 export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }: { tenantSlug: string; title: string; article: Article; tenantDomain?: string }) {
   const settings = await getEffectiveSettings()
+  const adPolicy = getAdsPlacementPolicy(settings)
 
   if (process.env.NODE_ENV !== 'production') {
     const body = (article as unknown as { contentHtml?: unknown; content?: unknown })
@@ -2351,10 +2367,12 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
               )}
 
               {/* Top Ad - Above Content */}
-              <div className="px-6 sm:px-8 lg:px-10 pt-8">
-                {/* No border wrapper — AdSlot returns null when disabled, border would create blank box */}
-                <AdBanner variant="horizontal" />
-              </div>
+              {adPolicy.article.showTopHorizontal ? (
+                <div className="hidden lg:block px-6 sm:px-8 lg:px-10 pt-8">
+                  {/* Desktop-only top horizontal; mobile uses sticky bottom horizontal */}
+                  <AdBanner variant="horizontal" />
+                </div>
+              ) : null}
 
               {/* Article Content with Must-Read Card and In-Article Images */}
               <ArticleContentWithMustRead 
@@ -2362,6 +2380,9 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 tenantSlug={tenantSlug}
                 secondImage={article.media?.images && article.media.images.length > 0 ? article.media.images[0] : null}
                 settings={settings}
+                adEveryN={adPolicy.article.inlineEveryN}
+                inlineMax={adPolicy.article.inlineMax}
+                forceEarlyInline={adPolicy.article.forceEarlyInline}
               />
 
               {/* Additional Images Gallery */}
@@ -2396,10 +2417,11 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
               )}
 
               {/* Bottom Ad */}
-              <div className="px-6 sm:px-8 lg:px-10 pb-8">
-                {/* No border wrapper — AdSlot returns null when disabled, border would create blank box */}
-                <AdSlot slot="article_inline" settings={settings ?? undefined} />
-              </div>
+              {adPolicy.article.showBottomInline ? (
+                <div className="px-6 sm:px-8 lg:px-10 pb-8">
+                  <AdSlot slot="article_inline" settings={settings ?? undefined} />
+                </div>
+              ) : null}
 
               {/* Tags */}
               {article.tags && article.tags.length > 0 && (
@@ -2433,14 +2455,18 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
               ) : null}
 
               {/* Multiplex directly after reporter/publisher card for high-intent readers */}
-              <div className="px-6 sm:px-8 lg:px-10 pb-8 pt-2">
-                <MultiplexAd slot="article_multiplex_h" />
-              </div>
+              {adPolicy.article.showMultiplexHorizontal ? (
+                <div className="px-6 sm:px-8 lg:px-10 pb-8 pt-2">
+                  <MultiplexAd slot="article_multiplex_h" />
+                </div>
+              ) : null}
 
               {/* Mobile-only: Vertical multiplex after article body (sidebar is hidden on mobile) */}
-              <div className="lg:hidden px-6 sm:px-8 pb-8">
-                <MultiplexAd slot="article_multiplex_v" className="w-full overflow-hidden" />
-              </div>
+              {adPolicy.article.showMultiplexVerticalMobile ? (
+                <div className="lg:hidden px-6 sm:px-8 pb-8">
+                  <MultiplexAd slot="article_multiplex_v" className="w-full overflow-hidden" />
+                </div>
+              ) : null}
             </div>
 
             {/* Related Articles */}
@@ -2646,19 +2672,31 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
               )}
 
               {/* Square Ad (300×250) — between trending & bottom sidebar ads */}
-              <div className="rounded-2xl overflow-hidden shadow-sm">
-                <AdSlot slot="article_square" settings={settings ?? undefined} />
-              </div>
+              {adPolicy.article.showSquare ? (
+                <div className="rounded-2xl overflow-hidden shadow-sm">
+                  <AdSlot slot="article_square" settings={settings ?? undefined} />
+                </div>
+              ) : null}
               
               {/* Sidebar Ad — Top (300×250) */}
-              <div className="rounded-2xl overflow-hidden shadow-sm">
-                <AdSlot slot="article_sidebar_top" settings={settings ?? undefined} />
-              </div>
+              {adPolicy.article.sidebarMax >= 1 && adPolicy.article.showSidebarTop ? (
+                <div className="rounded-2xl overflow-hidden shadow-sm">
+                  <AdSlot slot="article_sidebar_top" settings={settings ?? undefined} />
+                </div>
+              ) : null}
+
+              {adPolicy.article.sidebarMax >= 1 && !adPolicy.article.showSidebarTop && adPolicy.article.showSidebarBottom ? (
+                <div className="rounded-2xl overflow-hidden shadow-sm">
+                  <AdSlot slot="article_sidebar_bottom" settings={settings ?? undefined} />
+                </div>
+              ) : null}
 
               {/* Sidebar Ad — Bottom (300×600 Half Page) */}
-              <div className="rounded-2xl overflow-hidden shadow-sm">
-                <AdSlot slot="article_sidebar_bottom" settings={settings ?? undefined} />
-              </div>
+              {adPolicy.article.sidebarMax >= 2 && adPolicy.article.showSidebarBottom ? (
+                <div className="rounded-2xl overflow-hidden shadow-sm">
+                  <AdSlot slot="article_sidebar_bottom" settings={settings ?? undefined} />
+                </div>
+              ) : null}
             </div>
           </aside>
         </div>
@@ -2673,11 +2711,13 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
       
       {/* Mobile Sticky Bottom Ad — 320×50 / 320×100, visible only on mobile (<lg) */}
       {/* Sits just above MobileBottomNav so it doesn't overlap nav */}
-      <div className="lg:hidden fixed bottom-16 left-0 right-0 z-40 flex justify-center pointer-events-none">
-        <div className="pointer-events-auto max-w-full overflow-hidden shadow-xl rounded-t-lg">
-          <AdSlot slot="article_horizontal" settings={settings ?? undefined} className="w-full overflow-hidden" />
+      {adPolicy.article.showBottomHorizontalMobile ? (
+        <div className="lg:hidden fixed bottom-16 left-0 right-0 z-40 flex justify-center pointer-events-none">
+          <div className="pointer-events-auto max-w-full overflow-hidden shadow-xl rounded-t-lg">
+            <AdSlot slot="article_horizontal" settings={settings ?? undefined} className="w-full overflow-hidden" />
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Scroll to Top Button */}
       <ScrollToTopButton />
