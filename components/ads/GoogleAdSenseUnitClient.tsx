@@ -50,10 +50,13 @@ export function GoogleAdSenseUnitClient({
       }
 
       // Google may silently return no-fill; hide blank box and show fallback.
+      // 12s timeout: AdSense script loads "afterInteractive" (~2-3s) + ad fill time (~1-2s).
+      // Never hide if Google has already reported the slot as filled.
       timer = setTimeout(() => {
         const el = insRef.current
         if (!el) return
         const status = el.getAttribute('data-ad-status')
+        if (status === 'filled') return         // already filled — never hide
         if (status === 'unfilled') {
           setNoFill(true)
           return
@@ -63,7 +66,7 @@ export function GoogleAdSenseUnitClient({
         if (h < 40 && !hasInner) {
           setNoFill(true)
         }
-      }, 4500)
+      }, 12000)
     } catch {
       setNoFill(true)
     }
@@ -86,6 +89,13 @@ export function GoogleAdSenseUnitClient({
         strategy="afterInteractive"
         src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(client)}`}
         crossOrigin="anonymous"
+        onLoad={() => {
+          // Re-push after script loads to ensure the queued <ins> tags are processed
+          try {
+            window.adsbygoogle = window.adsbygoogle || []
+            window.adsbygoogle.push({})
+          } catch { /* ignore duplicate push */ }
+        }}
       />
       <ins
         ref={(el) => {
