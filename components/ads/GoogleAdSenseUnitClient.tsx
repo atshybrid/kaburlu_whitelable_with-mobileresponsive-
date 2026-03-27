@@ -103,13 +103,6 @@ export function GoogleAdSenseUnitClient({
         strategy="afterInteractive"
         src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(client)}`}
         crossOrigin="anonymous"
-        onLoad={() => {
-          // Re-push after script loads to ensure the queued <ins> tags are processed
-          try {
-            window.adsbygoogle = window.adsbygoogle || []
-            window.adsbygoogle.push({})
-          } catch { /* ignore duplicate push */ }
-        }}
       />
       <ins
         ref={(el) => {
