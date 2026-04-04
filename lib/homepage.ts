@@ -948,6 +948,7 @@ function isValidArticleData(article: Article | null | undefined): article is Art
 
 export function feedItemToArticle(item: HomepageFeedItem): Article {
   const coverUrl = item.image || item.coverImageUrl || item.coverImage || undefined
+  const cat = item.category as { id?: string; slug?: string; name?: string } | undefined
   return {
     id: item.id,
     slug: item.slug || item.id,
@@ -956,6 +957,9 @@ export function feedItemToArticle(item: HomepageFeedItem): Article {
     content: item.content || null,
     coverImage: coverUrl ? { url: coverUrl } : undefined,
     publishedAt: item.publishedAt || item.createdAt || undefined,
+    category: cat && typeof cat === 'object' && cat.slug
+      ? { slug: String(cat.slug), name: String(cat.name || cat.slug) }
+      : undefined,
   } as Article
 }
 

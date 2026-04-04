@@ -25,6 +25,7 @@ import { getDomainStats } from '@/lib/domain-stats'
 function style2ItemToArticle(item: Style2HomepageItem): Article {
   // Check all possible image fields: image, coverImageUrl, coverImage
   const coverUrl = item.image || item.coverImageUrl || item.coverImage || undefined
+  const cat = item.category as { id?: string; slug?: string; name?: string } | undefined
   return {
     id: item.id,
     slug: item.slug || item.id,
@@ -32,6 +33,9 @@ function style2ItemToArticle(item: Style2HomepageItem): Article {
     excerpt: item.excerpt || undefined,
     publishedAt: item.publishedAt || undefined,
     coverImage: coverUrl ? { url: coverUrl } : undefined,
+    category: cat && typeof cat === 'object' && cat.slug
+      ? { slug: String(cat.slug), name: String(cat.name || cat.slug) }
+      : undefined,
   } as Article
 }
 
@@ -1010,7 +1014,7 @@ export async function ThemeHome({
   
   const byCategorySlug = buildStyle2CategoryMap(style2Home)
   const style2Feed = buildStyle2HomeFeed(style2Home)
-  const style2Hero = Array.isArray(style2Home?.hero) ? style2Home!.hero!.map(style2ItemToArticle) : []
+  // style2Hero priority removed - heroLeftData[0] is always used (fresh data first)
 
   // ✅ Smart data selection: Only use mock if NO real data from API
   const hasRealData = latestItems.length > 0 || style2Feed.length > 0
@@ -1128,7 +1132,7 @@ export async function ThemeHome({
   
   console.log(`📊 [EXTRA CATEGORIES] ${extraCategoryData.length} extra categories with data out of ${topNavCats.slice(6, 12).length}, usedSlugs:`, Array.from(usedCategorySlugs))
 
-  const heroArticle = style2Hero.length ? style2Hero[0] : heroLeftData[0]
+  const heroArticle = heroLeftData[0]  // always use freshest available article
   const secondaryArticles = heroLeftData.slice(1, 9) // 8 articles: 2 cols × 4 rows
   // ✅ Use different data for right sidebar latest - don't slice beyond available data
   const latestArticles = homeFeed.length > 10 ? homeFeed.slice(10, 20) : (homeFeed.length > 6 ? homeFeed.slice(6) : homeFeed.slice(0, 6))

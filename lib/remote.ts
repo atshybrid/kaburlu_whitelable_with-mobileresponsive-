@@ -76,6 +76,13 @@ export async function fetchJSON<T>(path: string, init?: FetchJSONInit) {
 
   console.log(`🌐 [API Call] ${method} ${url} | X-Tenant-Domain: ${tenantDomain}`)
   
+  // Apply a per-request timeout to prevent server renders from hanging indefinitely
+  // when the backend is slow or unresponsive (causes infinite loading on mobile).
+  // Caller-provided signal takes precedence.
+  const timeoutMs = Number(process.env.REMOTE_FETCH_TIMEOUT_MS || '8000')
+  const callerSignal = (rest as { signal?: AbortSignal | null }).signal
+  const timeoutSignal = callerSignal ?? AbortSignal.timeout(timeoutMs)
+
   const res = await fetch(url, {
     ...rest,
     headers: {
@@ -86,6 +93,7 @@ export async function fetchJSON<T>(path: string, init?: FetchJSONInit) {
     // Best-practice: cache GETs with revalidation to reduce TTFB and avoid repeated backend calls.
     cache: cacheFromInit ?? (isCacheable ? 'force-cache' : 'no-store'),
     next,
+    signal: timeoutSignal,
   })
   if (!res.ok) {
     const text = await res.text().catch(() => '')
