@@ -116,73 +116,99 @@ function getArticleImageUrl(articleLike: Partial<Article> | Record<string, unkno
   return undefined
 }
 
-/* ==================== TOI-STYLE HERO FEATURE ==================== */
+/* ==================== HERO FEATURE — full-bleed image with overlay text ==================== */
 
 function HeroFeature({ tenantSlug, article }: { tenantSlug: string; article: Article }) {
   const categorySlug = getCategorySlugFromArticle(article)
+  const catName = article.category?.name || ''
   return (
-    <article className="group bg-white overflow-hidden">
+    <article className="group relative overflow-hidden bg-zinc-900 shadow-lg">
       <Link href={toHref(articleHref(tenantSlug, article.slug || article.id, categorySlug))} className="block">
-        <div className="relative aspect-[16/9] w-full overflow-hidden bg-zinc-100">
+        <div className="relative aspect-[16/9] w-full overflow-hidden">
           {article.coverImage?.url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img 
-              src={article.coverImage.url} 
-              alt={article.title} 
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+            <img
+              src={article.coverImage.url}
+              alt={article.title}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-85 group-hover:opacity-100"
             />
           ) : (
-            <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
+            <PlaceholderImg className="absolute inset-0 h-full w-full object-cover opacity-50" />
           )}
-          {/* Breaking badge */}
-          <span className="absolute top-3 left-3 px-2 py-1 text-xs font-semibold uppercase tracking-wider bg-[hsl(var(--primary))] text-white">
-            బ్రేకింగ్
-          </span>
-        </div>
-        
-        {/* Text below image - BLACK text */}
-        <div className="p-4">
-          <h1 className="text-xl sm:text-2xl font-bold text-black leading-tight line-clamp-3 group-hover:text-[hsl(var(--primary))] transition-colors">
-            {article.title}
-          </h1>
-          {article.excerpt ? (
-            <p className="mt-2 text-sm text-zinc-600 line-clamp-2">{article.excerpt}</p>
-          ) : null}
-          {article.publishedAt ? (
-            <time className="mt-2 block text-xs text-zinc-500">
-              {new Date(String(article.publishedAt)).toLocaleDateString('te-IN', { month: 'long', day: 'numeric', year: 'numeric' })}
-            </time>
-          ) : null}
+          {/* Deep gradient — strong at bottom */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent" />
+          {/* Top-left badges */}
+          <div className="absolute top-3 left-3 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold uppercase tracking-wider bg-[hsl(var(--primary))] text-white shadow-md">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              తాజా
+            </span>
+            {catName ? (
+              <span className="px-2.5 py-1 text-xs font-semibold text-white/90 bg-black/55 backdrop-blur-sm">
+                {catName}
+              </span>
+            ) : null}
+          </div>
+          {/* Bottom text overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white leading-snug line-clamp-3 drop-shadow-lg group-hover:text-[hsl(var(--primary))] transition-colors duration-200">
+              {article.title}
+            </h1>
+            {article.excerpt ? (
+              <p className="mt-2 text-sm text-white/70 line-clamp-2 hidden sm:block">{article.excerpt}</p>
+            ) : null}
+            <div className="mt-3 flex items-center gap-3">
+              {article.publishedAt ? (
+                <time className="flex items-center gap-1.5 text-xs text-white/55">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {new Date(String(article.publishedAt)).toLocaleDateString('te-IN', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </time>
+              ) : null}
+              <span className="ml-auto flex items-center gap-1.5 text-xs font-semibold text-white bg-white/15 px-3 py-1 rounded-full backdrop-blur-sm group-hover:bg-[hsl(var(--primary))]/80 transition-colors">
+                చదవండి
+                <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </span>
+            </div>
+          </div>
         </div>
       </Link>
     </article>
   )
 }
 
-/* ==================== TOI-STYLE SECONDARY CARDS ==================== */
+/* ==================== SECONDARY CARD — image overlay tile ==================== */
 
 function SecondaryCard({ tenantSlug, article }: { tenantSlug: string; article: Article }) {
   const categorySlug = getCategorySlugFromArticle(article)
   return (
-    <article className="group bg-white border-b border-zinc-100 pb-3 last:border-b-0">
-      <Link href={toHref(articleHref(tenantSlug, article.slug || article.id, categorySlug))} className="flex gap-3">
-        <div className="h-16 w-24 shrink-0 overflow-hidden bg-zinc-100">
+    <article className="group relative overflow-hidden bg-zinc-900">
+      <Link href={toHref(articleHref(tenantSlug, article.slug || article.id, categorySlug))} className="block">
+        <div className="relative aspect-[4/3] w-full overflow-hidden">
           {article.coverImage?.url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={article.coverImage.url} alt={article.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+            <img
+              src={article.coverImage.url}
+              alt={article.title}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-80 group-hover:opacity-100"
+            />
           ) : (
-            <PlaceholderImg className="h-full w-full object-cover" />
+            <PlaceholderImg className="absolute inset-0 h-full w-full object-cover opacity-50" />
           )}
-        </div>
-        <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <h3 className="text-sm font-semibold text-black line-clamp-2 group-hover:text-[hsl(var(--primary))] transition-colors">
-            {article.title}
-          </h3>
-          {article.publishedAt ? (
-            <time className="mt-1 text-xs text-zinc-500">
-              {new Date(String(article.publishedAt)).toLocaleDateString('te-IN', { month: 'short', day: 'numeric' })}
-            </time>
-          ) : null}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-3">
+            <h3 className="text-xs sm:text-sm font-bold text-white line-clamp-2 leading-snug drop-shadow group-hover:text-[hsl(var(--primary))] transition-colors">
+              {article.title}
+            </h3>
+            {article.publishedAt ? (
+              <time className="mt-0.5 block text-[10px] text-white/50">
+                {new Date(String(article.publishedAt)).toLocaleDateString('te-IN', { month: 'short', day: 'numeric' })}
+              </time>
+            ) : null}
+          </div>
         </div>
       </Link>
     </article>
@@ -193,14 +219,13 @@ function SecondaryCard({ tenantSlug, article }: { tenantSlug: string; article: A
 
 function TrendingWidget({ tenantSlug, items }: { tenantSlug: string; items: Article[] }) {
   if (!items.length) return null
-  
   return (
     <div className="bg-white border border-zinc-200 overflow-hidden">
-      <div className="bg-gradient-to-r from-red-600 to-orange-500 px-4 py-2.5">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <span>🔥</span>
-          ట్రెండింగ్ వార్తలు
-        </h3>
+      <div className="bg-[hsl(var(--primary))] px-4 py-3 flex items-center gap-2">
+        <svg className="w-4 h-4 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+        <h3 className="text-sm font-bold text-white uppercase tracking-wider">ట్రెండింగ్</h3>
       </div>
       <div className="divide-y divide-zinc-100">
         {items.slice(0, 5).map((a, idx) => (
@@ -209,12 +234,27 @@ function TrendingWidget({ tenantSlug, items }: { tenantSlug: string; items: Arti
             href={toHref(articleHref(tenantSlug, a.slug || a.id))}
             className="group flex items-start gap-3 p-3 hover:bg-zinc-50 transition-colors"
           >
-            <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-red-500 text-xs font-bold text-white rounded">
-              {idx + 1}
-            </span>
-            <span className="text-sm font-medium text-black line-clamp-2 group-hover:text-[hsl(var(--primary))] transition-colors">
-              {a.title}
-            </span>
+            <span className={`flex-shrink-0 w-7 h-7 flex items-center justify-center text-sm font-black rounded-sm ${
+              idx === 0 ? 'bg-[hsl(var(--primary))] text-white' :
+              idx === 1 ? 'bg-zinc-700 text-white' :
+              'bg-zinc-100 text-zinc-500'
+            }`}>{idx + 1}</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-semibold text-zinc-900 line-clamp-2 group-hover:text-[hsl(var(--primary))] transition-colors leading-snug">
+                {a.title}
+              </span>
+              {a.publishedAt ? (
+                <time className="mt-0.5 block text-xs text-zinc-400">
+                  {new Date(String(a.publishedAt)).toLocaleDateString('te-IN', { month: 'short', day: 'numeric' })}
+                </time>
+              ) : null}
+            </div>
+            {a.coverImage?.url ? (
+              <div className="flex-shrink-0 w-14 h-10 overflow-hidden bg-zinc-100 rounded-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={a.coverImage.url} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
+              </div>
+            ) : null}
           </Link>
         ))}
       </div>
@@ -224,30 +264,35 @@ function TrendingWidget({ tenantSlug, items }: { tenantSlug: string; items: Arti
 
 function LatestNewsWidget({ tenantSlug, items }: { tenantSlug: string; items: Article[] }) {
   if (!items.length) return null
-  
   return (
     <div className="bg-white border border-zinc-200 overflow-hidden">
-      <div className="bg-gradient-to-r from-blue-600 to-cyan-500 px-4 py-2.5">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <span>📰</span>
-          తాజా వార్తలు
-        </h3>
+      <div className="bg-blue-600 px-4 py-3 flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-white animate-pulse flex-shrink-0" />
+        <h3 className="text-sm font-bold text-white uppercase tracking-wider">తాజా వార్తలు</h3>
       </div>
       <div className="divide-y divide-zinc-100">
         {items.slice(0, 6).map((a) => (
           <Link
             key={a.id}
             href={toHref(articleHref(tenantSlug, a.slug || a.id))}
-            className="group block p-3 hover:bg-zinc-50 transition-colors"
+            className="group flex items-center gap-3 p-3 hover:bg-zinc-50 transition-colors"
           >
-            <span className="text-sm font-medium text-black line-clamp-2 group-hover:text-[hsl(var(--primary))] transition-colors">
-              {a.title}
-            </span>
-            {a.publishedAt ? (
-              <time className="mt-1 block text-xs text-zinc-500">
-                {new Date(String(a.publishedAt)).toLocaleDateString('te-IN', { hour: '2-digit', minute: '2-digit' })}
-              </time>
+            {a.coverImage?.url ? (
+              <div className="flex-shrink-0 w-12 h-9 overflow-hidden bg-zinc-100 rounded-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={a.coverImage.url} alt={a.title} className="w-full h-full object-cover" loading="lazy" />
+              </div>
             ) : null}
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-medium text-zinc-900 line-clamp-2 group-hover:text-blue-600 transition-colors leading-snug">
+                {a.title}
+              </span>
+              {a.publishedAt ? (
+                <time className="mt-0.5 block text-xs text-zinc-400">
+                  {new Date(String(a.publishedAt)).toLocaleDateString('te-IN', { hour: '2-digit', minute: '2-digit' })}
+                </time>
+              ) : null}
+            </div>
           </Link>
         ))}
       </div>
@@ -1201,10 +1246,10 @@ export async function ThemeHome({
             {/* Hero Feature with Overlay */}
             {heroArticle ? <HeroFeature tenantSlug={tenantSlug} article={heroArticle} /> : null}
             
-            {/* Secondary Stories Grid */}
+            {/* Secondary Stories — 2-col mobile / 4-col desktop */}
             {secondaryArticles.length > 0 ? (
-              <div className="grid grid-cols-2 gap-4">
-                {secondaryArticles.map((a) => (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2">
+                {secondaryArticles.slice(0, 8).map((a) => (
                   <SecondaryCard key={a.id} tenantSlug={tenantSlug} article={a} />
                 ))}
               </div>
