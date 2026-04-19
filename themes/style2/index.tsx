@@ -1144,13 +1144,20 @@ export async function ThemeHome({
   
   console.log(`📊 [EXTRA CATEGORIES] ${extraCategoryData.length} extra categories with data out of ${topNavCats.slice(6, 12).length}, usedSlugs:`, Array.from(usedCategorySlugs))
 
-  // Sort by publishedAt descending so the newest article is always the hero
+  // Sort by publishedAt descending (full ISO timestamp) so newest is first
   const sortedHeroData = [...heroLeftData].sort((a, b) => {
     const ta = a.publishedAt ? new Date(String(a.publishedAt)).getTime() : 0
     const tb = b.publishedAt ? new Date(String(b.publishedAt)).getTime() : 0
     return tb - ta
   })
-  const heroArticle = sortedHeroData[0]  // newest article is always hero
+
+  // 🎯 Hero MUST be different from the trending/most-read articles shown in the right sidebar
+  // This prevents the #1 most-read article from occupying both hero AND trending position 1.
+  const mostReadIdSet = new Set(heroRightMostRead.map(a => a.id).filter(Boolean))
+  // Prefer an article that is NOT already in the most-read list
+  const heroPool = sortedHeroData.filter(a => !mostReadIdSet.has(a.id))
+  // Fallback to full sorted list if every article is also most-read (very small sites)
+  const heroArticle = heroPool.length > 0 ? heroPool[0] : sortedHeroData[1] ?? sortedHeroData[0]
   const heroArticleId = heroArticle?.id
   // Secondary articles: exclude the hero article to prevent duplication
   const secondaryArticles = sortedHeroData.filter(a => a.id !== heroArticleId).slice(0, 8)
