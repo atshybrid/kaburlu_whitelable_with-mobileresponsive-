@@ -1733,7 +1733,7 @@ export async function ThemeHome({
     <div className="theme-style1" style={cssVars}>
       <Navbar tenantSlug={tenantSlugForLinks} title={siteName} logoUrl={logoUrl} />
       {/* Top Leaderboard Banner — 728×90 desktop / 320×50 mobile */}
-      {adPolicy.home.showTopBanner ? (
+      {adPolicy.home.showTopBanner && resolveProvider(getAdsSettings(settings ?? undefined), 'home_top_banner') !== 'none' ? (
         <div className="bg-white border-b border-zinc-100 overflow-hidden">
           <div className="mx-auto max-w-7xl px-3 sm:px-4 overflow-hidden">
             <p className="text-center text-[9px] font-medium text-zinc-400 uppercase tracking-[0.18em] pt-1 pb-0">Advertisement</p>
@@ -1745,7 +1745,7 @@ export async function ThemeHome({
       ) : null}
       {rendered}
       {/* Bottom Leaderboard Banner — 728×90 desktop / 320×100 mobile */}
-      {adPolicy.home.showBottomBanner ? (
+      {adPolicy.home.showBottomBanner && resolveProvider(getAdsSettings(settings ?? undefined), 'home_bottom_banner') !== 'none' ? (
         <div className="bg-white border-t border-zinc-100 mt-4">
           <div className="mx-auto max-w-7xl px-3 sm:px-4 overflow-hidden">
             <p className="text-center text-[9px] font-medium text-zinc-400 uppercase tracking-[0.18em] pt-1.5 pb-0">Advertisement</p>
@@ -2900,26 +2900,8 @@ function getAdEveryN() {
 }
 
 function HorizontalInlineAd() {
-  return (
-    <div className="my-8 not-prose">
-      <div className="relative group">
-        {/* Ad Label */}
-        <div className="absolute -top-3 left-4 z-10">
-          <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600 shadow-sm">
-            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Advertisement
-          </span>
-        </div>
-        
-        {/* Ad Container */}
-        <div className="overflow-hidden rounded-2xl shadow-md bg-linear-to-br from-zinc-50 to-white border border-zinc-200">
-          <ConditionalAdBanner variant="horizontal" />
-        </div>
-      </div>
-    </div>
-  )
+  // ConditionalAdBanner handles its own wrapper + null-return when no provider
+  return <ConditionalAdBanner variant="horizontal" />
 }
 
 // Enhanced Article Content with Drop Caps and Better Typography for Telugu
@@ -2977,14 +2959,21 @@ function EnhancedArticleContent({ html }: { html: string }) {
   return <>{nodes}</>
 }
 
-// Conditional Ad Banner — used only for tall (sidebar) variant now.
-// Horizontal in-article ads are handled directly via AdSlot in ArticleContentWithMustRead.
+// Conditional Ad Banner — renders only when a provider is configured for the slot.
 async function ConditionalAdBanner({ variant }: { variant: 'horizontal' | 'tall' }) {
   const settings = await getEffectiveSettings()
+  const ads = getAdsSettings(settings ?? undefined)
   if (variant === 'tall') {
+    if (resolveProvider(ads, 'article_vertical') === 'none') return null
     return <AdSlot slot="article_vertical" settings={settings ?? undefined} />
   }
-  return <AdSlot slot="article_inline" settings={settings ?? undefined} className="overflow-hidden" />
+  // Horizontal inline — only render when Google/local provider is configured
+  if (resolveProvider(ads, 'article_inline') === 'none') return null
+  return (
+    <div className="my-8 not-prose">
+      <AdSlot slot="article_inline" settings={settings ?? undefined} className="overflow-hidden" />
+    </div>
+  )
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

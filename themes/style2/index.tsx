@@ -7,6 +7,7 @@ import MobileBottomNav from '@/components/shared/MobileBottomNav'
 import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapper'
 import ArticleEngagementClient from '@/components/shared/ArticleEngagementClient'
 import { AdSlot } from '@/components/ads/AdSlot'
+import { getAdsSettings, resolveProvider } from '@/lib/ads'
 import type { Article } from '@/lib/data-sources'
 import { getLatestArticles, getMustReadArticles, getRelatedArticles, getTrendingArticles } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
@@ -259,17 +260,25 @@ function LatestNewsWidget({ tenantSlug, items }: { tenantSlug: string; items: Ar
 async function AdBanner({
   variant = 'horizontal',
   size = 'medium',
+  wrapperClass,
 }: {
   variant?: 'horizontal' | 'sidebar' | 'leaderboard'
   size?: 'small' | 'medium' | 'large'
+  wrapperClass?: string
 }) {
   const settings = await getEffectiveSettings().catch(() => undefined)
+  const ads = getAdsSettings(settings ?? undefined)
 
   const slotMap = {
     horizontal: 'article_horizontal',
     leaderboard: 'home_horizontal_1',
     sidebar: 'style2_article_sidebar',
   } as const
+
+  const slot = slotMap[variant]
+
+  // Don't render anything (not even a wrapper div) if no ad provider is configured
+  if (resolveProvider(ads, slot) === 'none') return null
 
   const sizeClass =
     size === 'large' ? 'min-h-[280px]' :
@@ -279,13 +288,16 @@ async function AdBanner({
   // Keep mobile experience clean: hide heavy sidebars on small screens.
   const responsiveClass = variant === 'sidebar' ? 'hidden lg:block' : ''
 
-  return (
+  const adSlot = (
     <AdSlot
-      slot={slotMap[variant]}
+      slot={slot}
       settings={settings ?? undefined}
       className={`${sizeClass} ${responsiveClass}`.trim()}
     />
   )
+
+  if (wrapperClass) return <div className={wrapperClass}>{adSlot}</div>
+  return adSlot
 }
 
 async function MultiplexAd({ slot = 'article_multiplex_h', className }: { slot?: 'article_multiplex_h' | 'home_multiplex'; className?: string }) {
@@ -1132,8 +1144,16 @@ export async function ThemeHome({
   
   console.log(`📊 [EXTRA CATEGORIES] ${extraCategoryData.length} extra categories with data out of ${topNavCats.slice(6, 12).length}, usedSlugs:`, Array.from(usedCategorySlugs))
 
-  const heroArticle = heroLeftData[0]  // always use freshest available article
-  const secondaryArticles = heroLeftData.slice(1, 9) // 8 articles: 2 cols × 4 rows
+  // Sort by publishedAt descending so the newest article is always the hero
+  const sortedHeroData = [...heroLeftData].sort((a, b) => {
+    const ta = a.publishedAt ? new Date(String(a.publishedAt)).getTime() : 0
+    const tb = b.publishedAt ? new Date(String(b.publishedAt)).getTime() : 0
+    return tb - ta
+  })
+  const heroArticle = sortedHeroData[0]  // newest article is always hero
+  const heroArticleId = heroArticle?.id
+  // Secondary articles: exclude the hero article to prevent duplication
+  const secondaryArticles = sortedHeroData.filter(a => a.id !== heroArticleId).slice(0, 8)
   // ✅ Use different data for right sidebar latest - don't slice beyond available data
   const latestArticles = homeFeed.length > 10 ? homeFeed.slice(10, 20) : (homeFeed.length > 6 ? homeFeed.slice(6) : homeFeed.slice(0, 6))
   console.log('🎯 [HERO WIDGETS] latestArticles for sidebar:', latestArticles.length)
@@ -1265,11 +1285,9 @@ export async function ThemeHome({
           />
         ) : null}
 
-        {/* Mid-sections monetization: single bridge ad for the top content cluster */}
+        {/* Mid-sections monetization */}
         {(categoryData[0]?.items?.length > 0 || categoryData[1]?.items?.length > 0 || categoryData[2]?.items?.length > 0) ? (
-          <div className="my-6">
-            <AdBanner variant="horizontal" size="medium" />
-          </div>
+          <AdBanner variant="horizontal" size="medium" wrapperClass="my-6" />
         ) : null}
 
         {/* Style 5: Newspaper Columns (Blue theme) */}
@@ -1362,11 +1380,9 @@ export async function ThemeHome({
           </div>
         ) : null}
 
-        {/* Lower-page monetization: one ad before final placements */}
+        {/* Lower-page monetization */}
         {(categoryData[4]?.items?.length > 0 || categoryData[5]?.items?.length > 0 || extraCategoryData[2]?.items?.length > 0 || extraCategoryData[3]?.items?.length > 0 || extraCategoryData[4]?.items?.length > 0) ? (
-          <div className="my-6">
-            <AdBanner variant="leaderboard" size="small" />
-          </div>
+          <AdBanner variant="leaderboard" size="small" wrapperClass="my-6" />
         ) : null}
 
         {/* Mobile: keep one low-friction multiplex block */}
