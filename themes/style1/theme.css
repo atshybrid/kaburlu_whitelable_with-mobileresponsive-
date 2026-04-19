@@ -45,8 +45,6 @@
 .theme-style1 .group-hover\:text-red-600 { color: hsl(var(--primary, 0 72% 51%)) !important; }
 .theme-style1 .group:hover .group-hover\:text-red-600 { color: hsl(var(--primary, 0 72% 51%)) !important; }
 
-/* Typography */
-.theme-style1 {
 /* ── Navbar / Footer background from backend config ─────────────────────────
    ThemeColorVars (layout.tsx) sets --header-bg and --footer-bg on :root.
    These rules apply those backend-configured colors to the sticky nav and footer.
