@@ -429,7 +429,11 @@ export function getAdsSettings(settings?: EffectiveSettings): AdsSettings {
   return {
     enabled,
     debug,
-    houseFallback: typeof fromRemote.houseFallback === 'boolean' ? fromRemote.houseFallback : true,
+    // Default false when AdSense is configured — show nothing on no-fill rather than Telugu placeholder cards.
+    // Default true only when no real ad provider is configured (dev/local mode).
+    houseFallback: typeof fromRemote.houseFallback === 'boolean'
+      ? fromRemote.houseFallback
+      : !(hasRemoteSlots || client),
     googleAdsense: { client },
     slots: remoteSlots,
   }
