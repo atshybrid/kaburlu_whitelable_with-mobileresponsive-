@@ -482,29 +482,14 @@ export function defaultHomeLayout(tenantSlug: string, themeKey: HomeLayoutThemeK
           },
 
           // ─────────────────────────────────────────────────────────
-          // Col-4: Top Viewed (4 articles, with label) + Ads
+          // Col-4: Top Viewed (4 articles, with label)
           // ─────────────────────────────────────────────────────────
-          { 
-            id: 'b-ad-728x90-top', 
-            key: 'adTopBanner', 
-            name: 'Ad Banner Top', 
-            type: 'ad', 
-            position: 1, 
-            isActive: true, 
-            columnKey: 'col-4', 
-            config: { 
-              size: '300x250',
-              type: 'none', // 'google' | 'local' | 'none'
-              // google: { adClient: 'ca-pub-xxx', adSlot: '123456' },
-              // local: { imageUrl: '/ads/banner.jpg', targetUrl: 'https://example.com' },
-            } 
-          },
           {
             id: 'b-top-viewed',
             key: 'topViewed',
             name: 'Top Viewed Articles',
             type: 'smallList',
-            position: 2,
+            position: 1,
             isActive: true,
             columnKey: 'col-4',
             config: { 
@@ -514,19 +499,6 @@ export function defaultHomeLayout(tenantSlug: string, themeKey: HomeLayoutThemeK
               showCategoryLabel: false,
               source: 'topViewed',
             },
-          },
-          { 
-            id: 'b-ad-728x90-bottom', 
-            key: 'adBottomBanner', 
-            name: 'Ad Banner Bottom', 
-            type: 'ad', 
-            position: 3, 
-            isActive: true, 
-            columnKey: 'col-4', 
-            config: { 
-              size: '300x250',
-              type: 'none', // 'google' | 'local' | 'none'
-            } 
           },
         ],
       },
