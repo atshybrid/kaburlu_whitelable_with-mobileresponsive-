@@ -14,7 +14,7 @@ import { articleHref, categoryHref, basePathForTenant, getCategorySlugFromArticl
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
 import { getEffectiveSettings } from '@/lib/settings'
-import { getAdsPlacementPolicy } from '@/lib/ads'
+import { getAdsPlacementPolicy, getAdsSettings, resolveProvider } from '@/lib/ads'
 import { getConfig } from '@/lib/config'
 import { WebStoriesPlayer } from '@/components/shared/WebStoriesPlayer'
 import { WebStoriesGrid } from '@/components/shared/WebStoriesGrid'
@@ -1570,42 +1570,19 @@ export async function ThemeHome({
                     <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400 px-2">{i18n.sectionNews}</span>
                     <div className="flex-1 h-px bg-zinc-200" />
                   </div>
-                  {/* Category Section + Right Sidebar Vertical Ads */}
-                  <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-                    {/* Category columns (4-col grid) */}
-                    <div className="flex-1 min-w-0">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-                        {configuredCategoryColumns.length > 0 ? (
-                          <SmartCategoryColumns tenantSlug={tenantSlugForLinks} columns={configuredCategoryColumns} viewMoreLabel={i18n.viewMore} lang={String(lang)} />
-                        ) : (
-                          <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} usedCategorySlugs={usedCategorySlugs} viewMoreLabel={i18n.viewMore} lang={String(lang)} />
-                        )}
-                      </div>
-                      {/* Mobile-only banner ad — desktop sees right rail instead */}
-                      <div className="lg:hidden mt-4">
-                        <p className="text-center text-[9px] font-medium text-zinc-400 uppercase tracking-[0.18em] mb-1">Advertisement</p>
-                        <div className="flex justify-center overflow-hidden">
-                          <AdSlot slot="home_horizontal_1" settings={settings ?? undefined} className="w-full overflow-hidden" style={{ maxHeight: '100px', display: 'block' }} />
-                        </div>
-                      </div>
+                  {/* Category columns — full width, no fixed right rail (avoids blank space on low-fill) */}
+                  <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+                      {configuredCategoryColumns.length > 0 ? (
+                        <SmartCategoryColumns tenantSlug={tenantSlugForLinks} columns={configuredCategoryColumns} viewMoreLabel={i18n.viewMore} lang={String(lang)} />
+                      ) : (
+                        <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} usedCategorySlugs={usedCategorySlugs} viewMoreLabel={i18n.viewMore} lang={String(lang)} />
+                      )}
                     </div>
-                    {/* Right sidebar: 300×250 on top (best CPM), 300×600 below — hidden on mobile */}
-                    {adPolicy.home.rightRailMax >= 1 && (
-                      <aside className="hidden lg:block w-[300px] shrink-0">
-                        <div className="sticky top-20 space-y-4">
-                          {/* home_right_1 = 300×250 rectangle — best CPM position (TOP) */}
-                          {adPolicy.home.showRightRail1 ? (
-                            <AdSlot slot="home_right_1" settings={settings ?? undefined} />
-                          ) : adPolicy.home.showRightRail2 ? (
-                            <AdSlot slot="home_right_2" settings={settings ?? undefined} />
-                          ) : null}
-                          {/* home_right_2 = 300×600 half-page — below the rectangle */}
-                          {adPolicy.home.rightRailMax >= 2 && adPolicy.home.showRightRail1 && adPolicy.home.showRightRail2 ? (
-                            <AdSlot slot="home_right_2" settings={settings ?? undefined} />
-                          ) : null}
-                        </div>
-                      </aside>
-                    )}
+                    {/* Horizontal ad below categories — auto-collapses when Google does not fill */}
+                    <div className="mt-4 overflow-hidden">
+                      <AdSlot slot="home_horizontal_1" settings={settings ?? undefined} className="w-full overflow-hidden" style={{ display: 'block' }} />
+                    </div>
                   </div>
                   {/* Multiplex Ad — after all content sections for natural reading flow */}
                   {takeHomeMultiplex(
@@ -1633,14 +1610,14 @@ export async function ThemeHome({
           : section.key === 'horizontalAd2'
             ? 'home_horizontal_2'
             : 'home_horizontal_3'
+        // Only render when Google fills — no label wrapper that shows even on no-fill
+        const slotProvider = resolveProvider(getAdsSettings(settings ?? undefined), slotKey as import('@/lib/ads').AdSlotKey)
+        if (slotProvider === 'none') return null
         return {
           placement: 'main',
           node: (
-            <div key={section.id} className="my-4">
-              <p className="text-center text-[9px] font-medium text-zinc-400 uppercase tracking-[0.18em] mb-1">Advertisement</p>
-              <div className="flex justify-center overflow-hidden">
-                <AdSlot slot={slotKey as import('@/lib/ads').AdSlotKey} settings={settings ?? undefined} className="w-full overflow-hidden" style={{ display: 'block' }} />
-              </div>
+            <div key={section.id} className="my-4 overflow-hidden">
+              <AdSlot slot={slotKey as import('@/lib/ads').AdSlotKey} settings={settings ?? undefined} className="w-full overflow-hidden" style={{ display: 'block' }} />
             </div>
           ),
         }
