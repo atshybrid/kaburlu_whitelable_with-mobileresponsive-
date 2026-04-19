@@ -73,7 +73,7 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
   const siteTitle = settings?.branding?.siteName || tenant.name || process.env.SITE_NAME || 'Kaburlu News'
 
   const themeKey = pickThemeKey(settings)
-  const cssVars = themeKey === 'style2' ? themeCssVarsFromSettings(settings) : undefined
+  const cssVars = (themeKey === 'style1' || themeKey === 'style2') ? themeCssVarsFromSettings(settings) : undefined
 
   return (
     <div className={`theme-${themeKey}`} style={cssVars}>

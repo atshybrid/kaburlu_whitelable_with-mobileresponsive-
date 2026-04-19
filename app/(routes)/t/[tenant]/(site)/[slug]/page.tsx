@@ -35,10 +35,10 @@ export default async function TenantLegalSlugPage({ params }: { params: Promise<
   const settings = tenant.domain ? await getEffectiveSettingsForDomain(tenant.domain) : undefined
   const siteTitle = settings?.branding?.siteName || tenant.name || process.env.SITE_NAME || 'Kaburlu News'
 
-  const cssVars = tenant.themeKey === 'style2' ? themeCssVarsFromSettings(settings) : undefined
+  const cssVars = (tenant.themeKey === 'style1' || tenant.themeKey === 'style2') ? themeCssVarsFromSettings(settings) : undefined
 
   return (
-    <div style={cssVars}>
+    <div className={`theme-${tenant.themeKey}`} style={cssVars}>
       <LegalPage pageKey={pageKey} tenantSlug={tenant.slug} siteTitle={siteTitle} settings={settings} themeKey={tenant.themeKey} />
     </div>
   )

@@ -9,7 +9,7 @@
 # Production uses direct domain detection, not path or subdomain mode
 # MULTITENANT_MODE="path"
 
-# Data source and remote API
+# ── Data source ───────────────────────────────────────────────────────────────
 DATA_SOURCE="remote" # remote | local
 API_BASE_URL="https://api.kaburlumedia.com/api/v1"
 
@@ -21,7 +21,75 @@ API_BASE_URL="https://api.kaburlumedia.com/api/v1"
 # For localhost testing only, override these in .env.local:
 # HOST="kaburlutoday.com"
 # NEXT_PUBLIC_HOST="kaburlutoday.com"
+# NEXT_PUBLIC_DEV_DOMAIN="kaburlutoday.com"
 
-# Site metadata defaults
+# ── Site metadata defaults ────────────────────────────────────────────────────
 SITE_NAME="Kaburlu News"
 SITE_DESCRIPTION="Multi-tenant news platform with multiple themes."
+
+# ── Ads ───────────────────────────────────────────────────────────────────────
+# Show house fallback ads when no AdSense slot is configured (dev/testing).
+# Set to "true" in .env.local to see placeholder banners locally.
+# NEXT_PUBLIC_ADS_SHOW_HOUSE_FALLBACK="true"
+
+# AdSense publisher ID override — use for quick testing without backend config.
+# In production, each tenant's AdSense client ID comes from the backend settings.
+# NEXT_PUBLIC_ADSENSE_CLIENT="ca-pub-XXXXXXXXXXXXXXXX"
+
+# ── Homepage sections ─────────────────────────────────────────────────────────
+# Number of articles shown in the "last news" (col-4) column on the homepage.
+NEXT_PUBLIC_LAST_NEWS_COUNT="8"
+
+# Category slug for the "last news" column — per-tenant override via backend preferred.
+# NEXT_PUBLIC_LAST_NEWS_CATEGORY="national"
+
+# Category slug for the WebStories widget — per-tenant override via backend preferred.
+# NEXT_PUBLIC_WEBSTORIES_CATEGORY="entertainment"
+
+# ── Performance / ISR ─────────────────────────────────────────────────────────
+# ISR revalidation interval in seconds. 0 = SSR (no caching).
+# NEXT_PUBLIC_REVALIDATE_SECONDS="60"
+
+# ── AI Agent ──────────────────────────────────────────────────────────────────
+# Master switch. Keys are configured in the DUAL PROVIDER section below.
+AI_AGENT_ENABLED="true"
+
+# Protect POST /api/agent endpoint. Leave empty for open access (dev only).
+# AGENT_SECRET="your-random-secret-here"
+
+# ── PWA Push Notifications ────────────────────────────────────────────────────
+# VAPID public key for web push. Generate with: npx web-push generate-vapid-keys
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=""
+
+
+# AI - DUAL PROVIDER (OpenAI + Gemini)
+# ===============================================
+# Using both OpenAI and Gemini for redundancy
+# Strategy: Try Gemini first (free/fast), fallback to OpenAI, or race both for fastest response
+AI_PROVIDER=gemini
+AI_USE_GEMINI=true
+AI_USE_OPENAI=true
+AI_PARALLEL_RACE=true
+AI_ENABLE_SEO=true
+AI_ENABLE_MODERATION=true
+AI_ENABLE_TRANSLATION=true
+AI_TIMEOUT_MS=120000
+AI_CHECK_KEYS_ON_STARTUP=false
+
+# Gemini 2.5 Flash-Lite (Unlimited quota - Fast & Free!)
+GEMINI_API_KEY=your-gemini-api-key-here
+GEMINI_MODEL=gemini-2.5-flash-lite
+GEMINI_MODEL_SEO=gemini-2.5-flash-lite
+GEMINI_MODEL_REWRITE=gemini-2.5-flash-lite
+GEMINI_MODEL_MODERATION=gemini-2.5-flash-lite
+GEMINI_MODEL_TRANSLATION=gemini-2.5-flash-lite
+
+OPENAI_API_KEY=your-openai-api-key-here
+
+# OpenAI Secondary/Fallback API Key (optional)
+# If primary key fails due to quota/rate limits, system will automatically use this
+OPENAI_API_KEY_FALLBACK=
+
+OPENAI_MODEL_SEO=gpt-4o-mini
+OPENAI_MODEL_NEWSPAPER=gpt-4o-mini
+OPENAI_MODEL_REWRITE=gpt-4o-mini

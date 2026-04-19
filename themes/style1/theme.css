@@ -7,6 +7,11 @@
 /* Theme Variables */
 .theme-style1 { 
   --accent: 220 70% 55%;
+  /* Per-tenant primary color — overridden at runtime via inline style from themeCssVarsFromSettings() */
+  /* Default matches Tailwind red-600 (#dc2626) so fallback looks identical to before */
+  --primary: 0 72% 51%;
+  --primary-light: 0 84% 60%;
+  --secondary: 240 5% 26%;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   --font-serif: 'Merriweather', Georgia, 'Times New Roman', Times, serif;
   --font-display: 'Playfair Display', Georgia, serif;
@@ -14,11 +19,50 @@
   --font-telugu-sans: 'Noto Sans Telugu', sans-serif;
 }
 
+/* ── Per-tenant color overrides ──────────────────────────────────────────────
+   These override Tailwind's compiled red-600 classes with the CSS custom
+   property --primary, allowing each tenant to have a unique brand color.
+   The !important is required to beat Tailwind's specificity.
+   Fallback value (0 72% 51%) = #dc2626 (Tailwind red-600) keeps default look.
+   ─────────────────────────────────────────────────────────────────────────── */
+.theme-style1 .bg-red-600 { background-color: hsl(var(--primary, 0 72% 51%)) !important; }
+.theme-style1 .text-red-600 { color: hsl(var(--primary, 0 72% 51%)) !important; }
+.theme-style1 .border-red-600 { border-color: hsl(var(--primary, 0 72% 51%)) !important; }
+.theme-style1 .from-red-600 { --tw-gradient-from: hsl(var(--primary, 0 72% 51%)) !important; }
+.theme-style1 .to-red-600 { --tw-gradient-to: hsl(var(--primary, 0 72% 51%)) !important; }
+.theme-style1 .from-red-500 { --tw-gradient-from: hsl(var(--primary-light, 0 84% 60%)) !important; }
+.theme-style1 .to-red-500 { --tw-gradient-to: hsl(var(--primary-light, 0 84% 60%)) !important; }
+.theme-style1 .bg-red-50 { background-color: hsl(var(--primary, 0 72% 51%) / 0.08) !important; }
+.theme-style1 .border-red-200 { border-color: hsl(var(--primary, 0 72% 51%) / 0.3) !important; }
+.theme-style1 .ring-red-100 { --tw-ring-color: hsl(var(--primary, 0 72% 51%) / 0.1) !important; }
+.theme-style1 .text-red-700 { color: hsl(var(--primary, 0 72% 51%) / 0.85) !important; }
+.theme-style1 .text-red-800 { color: hsl(var(--primary, 0 72% 51%) / 0.8) !important; }
+/* Hover variants */
+.theme-style1 .hover\:bg-red-600:hover { background-color: hsl(var(--primary, 0 72% 51%)) !important; }
+.theme-style1 .hover\:text-red-600:hover { color: hsl(var(--primary, 0 72% 51%)) !important; }
+.theme-style1 .hover\:border-red-600:hover { border-color: hsl(var(--primary, 0 72% 51%)) !important; }
+.theme-style1 .active\:bg-red-700:active { background-color: hsl(var(--primary, 0 72% 51%) / 0.9) !important; }
+.theme-style1 .group-hover\:text-red-600 { color: hsl(var(--primary, 0 72% 51%)) !important; }
+.theme-style1 .group:hover .group-hover\:text-red-600 { color: hsl(var(--primary, 0 72% 51%)) !important; }
+
 /* Typography */
 .theme-style1 {
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ── Navbar / Footer background from backend config ─────────────────────────
+   ThemeColorVars (layout.tsx) sets --header-bg and --footer-bg on :root.
+   These rules apply those backend-configured colors to the sticky nav and footer.
+   Fallback = white/zinc-50 so the default look is unchanged.
+   ─────────────────────────────────────────────────────────────────────────── */
+.theme-style1 nav[class*="sticky"],
+.theme-style1 header {
+  background-color: var(--header-bg, white) !important;
+}
+.theme-style1 footer {
+  background-color: var(--footer-bg, #f9fafb) !important;
+}
+
+/* ── Body / article font from backend config ─────────────────────────────── */
+.theme-style1 {
+  font-family: var(--font-body, var(--font-sans));
 }
 
 .theme-style1 h1,

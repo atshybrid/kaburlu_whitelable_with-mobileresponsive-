@@ -20,6 +20,7 @@ import type { ReactElement } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { categoryHref } from '@/lib/url'
+import { themeCssVarsFromSettings } from '@/lib/theme-vars'
 
 // Force dynamic rendering for domain-based multitenancy
 export const dynamic = 'force-dynamic'
@@ -166,6 +167,10 @@ export default async function CategoryPage({
   const articles = paged.articles
   const categoryName = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
+  // Get settings for CSS vars (per-tenant brand colors)
+  const settings = tenant.domain ? await getEffectiveSettingsForDomain(tenant.domain) : undefined
+  const cssVars = themeCssVarsFromSettings(settings)
+
   // Use theme-specific category page if available
   type CategoryComp = (p: {
     tenantSlug: string
@@ -200,7 +205,7 @@ export default async function CategoryPage({
 
   // Default fallback category page (works for style1)
   return (
-    <div className="theme-style1 min-h-screen bg-zinc-50">
+    <div className={`theme-${tenant.themeKey} min-h-screen bg-zinc-50`} style={cssVars}>
       <Navbar tenantSlug={tenant.slug} title={tenant.name} />
       <main className="mx-auto max-w-7xl px-4 py-6">
         <div className="mb-6">

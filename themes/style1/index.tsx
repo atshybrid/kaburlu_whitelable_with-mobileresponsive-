@@ -36,6 +36,119 @@ import {
 import { FontSizeControl, CopyLinkButton, ScrollToTopButton, StickyShareBar, ViewCounter } from '@/components/shared/ArticleEnhancements'
 import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapper'
 import { getDomainStats } from '@/lib/domain-stats'
+import { themeCssVarsFromSettings } from '@/lib/theme-vars'
+import { agentEnhanceArticle } from '@/lib/ai-agent'
+
+// ── I18n: per-language UI strings ────────────────────────────────────────────
+type I18nStrings = {
+  viewMore: string
+  sectionNews: string
+  mustRead: string
+  topArticles: string
+  trending: string
+  readTime: (n: number) => string
+  home: string
+  author: string
+  readingMinutes: string
+  highlights: string
+  summary: string
+  aboutAuthor: string
+  articles: string
+  views: string
+  recentArticles: string
+}
+
+const UI_STRINGS: Record<string, I18nStrings> = {
+  te: {
+    viewMore: 'అన్నీ →',
+    sectionNews: 'వార్తలు',
+    mustRead: 'తప్పక చదవండి',
+    topArticles: 'టాప్ ఆర్టికల్స్',
+    trending: '🔥 ట్రెండింగ్',
+    readTime: (n) => `📖 ${n} నిమిషాలు`,
+    home: 'హోమ్',
+    author: 'రచయిత',
+    readingMinutes: 'నిమిషాల పఠనం',
+    highlights: 'ముఖ్య విషయాలు',
+    summary: 'సారాంశం',
+    aboutAuthor: 'రచయిత గురించి',
+    articles: 'ఆర్టికల్స్',
+    views: 'వ్యూస్',
+    recentArticles: 'ఇటీవలి ఆర్టికల్స్',
+  },
+  en: {
+    viewMore: 'More →',
+    sectionNews: 'News',
+    mustRead: 'Must Read',
+    topArticles: 'Top Articles',
+    trending: '🔥 Trending',
+    readTime: (n) => `📖 ${n} min read`,
+    home: 'Home',
+    author: 'Author',
+    readingMinutes: 'min read',
+    highlights: 'Key Points',
+    summary: 'Summary',
+    aboutAuthor: 'About the Author',
+    articles: 'Articles',
+    views: 'Views',
+    recentArticles: 'Recent Articles',
+  },
+  hi: {
+    viewMore: 'और देखें →',
+    sectionNews: 'समाचार',
+    mustRead: 'ज़रूर पढ़ें',
+    topArticles: 'शीर्ष लेख',
+    trending: '🔥 ट्रेंडिंग',
+    readTime: (n) => `📖 ${n} मिनट`,
+    home: 'होम',
+    author: 'लेखक',
+    readingMinutes: 'मिनट पढ़ें',
+    highlights: 'मुख्य बिंदु',
+    summary: 'सारांश',
+    aboutAuthor: 'लेखक के बारे में',
+    articles: 'लेख',
+    views: 'व्यूज़',
+    recentArticles: 'हाल के लेख',
+  },
+  kn: {
+    viewMore: 'ಎಲ್ಲಾ →',
+    sectionNews: 'ಸುದ್ದಿ',
+    mustRead: 'ಓದಲೇಬೇಕು',
+    topArticles: 'ಟಾಪ್ ಲೇಖನಗಳು',
+    trending: '🔥 ಟ್ರೆಂಡಿಂಗ್',
+    readTime: (n) => `📖 ${n} ನಿಮಿಷ`,
+    home: 'ಮನೆ',
+    author: 'ಲೇಖಕ',
+    readingMinutes: 'ನಿಮಿಷ ಓದು',
+    highlights: 'ಮುಖ್ಯ ಅಂಶಗಳು',
+    summary: 'ಸಾರಾಂಶ',
+    aboutAuthor: 'ಲೇಖಕರ ಬಗ್ಗೆ',
+    articles: 'ಲೇಖನಗಳು',
+    views: 'ವ್ಯೂಸ್',
+    recentArticles: 'ಇತ್ತೀಚಿನ ಲೇಖನಗಳು',
+  },
+  ta: {
+    viewMore: 'மேலும் →',
+    sectionNews: 'செய்திகள்',
+    mustRead: 'கட்டாயம் படிக்க',
+    topArticles: 'சிறந்த கட்டுரைகள்',
+    trending: '🔥 டிரெண்டிங்',
+    readTime: (n) => `📖 ${n} நிமிடம்`,
+    home: 'முகப்பு',
+    author: 'ஆசிரியர்',
+    readingMinutes: 'நிமிட வாசிப்பு',
+    highlights: 'முக்கிய புள்ளிகள்',
+    summary: 'சுருக்கம்',
+    aboutAuthor: 'ஆசிரியரைப் பற்றி',
+    articles: 'கட்டுரைகள்',
+    views: 'காட்சிகள்',
+    recentArticles: 'சமீபத்திய கட்டுரைகள்',
+  },
+}
+
+function getI18n(lang: string): I18nStrings {
+  return UI_STRINGS[lang] ?? UI_STRINGS.te
+}
 
 function toHref(pathname: string): UrlObject {
   return { pathname }
@@ -472,7 +585,7 @@ function CardMedium({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
   )
 }
 
-function Section({ title, children, noShadow, flushBody, viewMoreHref, bodyClassName }: { title: string; children: React.ReactNode; noShadow?: boolean; flushBody?: boolean; viewMoreHref?: string; bodyClassName?: string }) {
+function Section({ title, children, noShadow, flushBody, viewMoreHref, bodyClassName, viewMoreLabel }: { title: string; children: React.ReactNode; noShadow?: boolean; flushBody?: boolean; viewMoreHref?: string; bodyClassName?: string; viewMoreLabel?: string }) {
   const hasTitle = (title ?? '').trim().length > 0
   const bodyClasses = bodyClassName ?? (flushBody ? '' : 'p-3 sm:p-4 space-y-3 sm:space-y-4')
   return (
@@ -488,7 +601,7 @@ function Section({ title, children, noShadow, flushBody, viewMoreHref, bodyClass
               href={viewMoreHref}
               className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold hover:bg-red-600 hover:text-white hover:border-red-600 active:bg-red-700 transition-all"
             >
-              అన్నీ →
+              {viewMoreLabel ?? 'అన్నీ →'}
             </a>
           ) : null}
         </div>
@@ -724,7 +837,7 @@ function ListRow({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
 // ============================================
 
 // Style 1: Horizontal Card - Image left, text right (compact)
-function MobileHorizontalCard({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
+function MobileHorizontalCard({ tenantSlug, a, readLabel = '📖 2 నిమిషాలు' }: { tenantSlug: string; a: Article; readLabel?: string }) {
   const categoryName = a.categories?.[0]?.name || ''
   const categorySlug = getCategorySlugFromArticle(a)
   return (
@@ -750,7 +863,7 @@ function MobileHorizontalCard({ tenantSlug, a }: { tenantSlug: string; a: Articl
           <h4 className="text-[15px] font-bold text-zinc-900 group-hover:text-red-600 line-clamp-3 leading-snug">
             {a.title}
           </h4>
-          <span className="mt-1 text-[11px] text-zinc-500">📖 2 నిమిషాలు</span>
+          <span className="mt-1 text-[11px] text-zinc-500">{readLabel}</span>
         </div>
       </Link>
     </article>
@@ -786,7 +899,7 @@ function MobileTextCard({ tenantSlug, a, accentColor = 'red' }: { tenantSlug: st
 }
 
 // Style 3: Numbered Trending Card
-function MobileNumberedCard({ tenantSlug, a, number }: { tenantSlug: string; a: Article; number: number }) {
+function MobileNumberedCard({ tenantSlug, a, number, trendingLabel = '🔥 ట్రెండింగ్' }: { tenantSlug: string; a: Article; number: number; trendingLabel?: string }) {
   const categorySlug = getCategorySlugFromArticle(a)
   return (
     <article className="group">
@@ -801,7 +914,7 @@ function MobileNumberedCard({ tenantSlug, a, number }: { tenantSlug: string; a: 
           <h4 className="text-[15px] font-bold text-zinc-900 group-hover:text-red-600 line-clamp-2 leading-snug">
             {a.title}
           </h4>
-          <span className="text-[11px] text-zinc-400">🔥 ట్రెండింగ్</span>
+          <span className="text-[11px] text-zinc-400">{trendingLabel}</span>
         </div>
         <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
           {a.coverImage?.url ? (
@@ -960,6 +1073,7 @@ export async function ThemeHome({
   // Determine the API version based on theme setting from config
   const themeKey = settings?.theme?.theme || settings?.theme?.key || (settings?.theme?.layout as Record<string, unknown>)?.style || (settings?.settings?.theme?.layout as Record<string, unknown>)?.style || 'style1'
   const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'te'
+  const i18n = getI18n(String(lang))
 
   const smartArticleToArticle = (a: HomepageSmartV2Article): Article => {
     const imageUrl = a.coverImageUrl || null
@@ -991,7 +1105,7 @@ export async function ThemeHome({
       categories: item.category
         ? [{ slug: item.category.slug || '', name: extractCategoryName(item.category) }]
         : undefined,
-      author: { name: 'కబుర్లు డెస్క్' },
+      author: { name: settings?.branding?.siteName ? `${settings.branding.siteName} Desk` : 'News Desk' },
       content: '',
     }
   }
@@ -1246,8 +1360,8 @@ export async function ThemeHome({
           // Col 1: articles 4,5,6 (indices 3,4,5) - hero is 1, medium is 2,3
           // Col 2: articles 7-14 (indices 6-13) - continues from col 1
           const col2Articles = allLatest.slice(6, 14) // Articles 7-14
-          const col3Articles = sectionDataMap['mustRead'] || sectionDataMap['must-read'] || sectionDataMap['col-3'] || small
-          const col4Articles = mostReadData.length > 0 ? mostReadData : (sectionDataMap['topViewed'] || sectionDataMap['top-viewed'] || sectionDataMap['col-4'] || small)
+          const col3Articles = sectionDataMap['mustRead'] || sectionDataMap['must-read'] || sectionDataMap['col-3'] || allLatest.slice(14, 22)
+          const col4Articles = mostReadData.length > 0 ? mostReadData : (sectionDataMap['topViewed'] || sectionDataMap['top-viewed'] || sectionDataMap['col-4'] || allLatest.slice(22, 28))
           
           if (colKey === 'col-1') {
             // Column 1: articles 4,5,6 (heroLead=1, medium=2,3, small=4,5,6) = 6 total
@@ -1278,7 +1392,7 @@ export async function ThemeHome({
                 <section className="rounded-xl bg-white p-4">
                   <h3 className="mb-3 text-sm font-bold uppercase tracking-wide flex items-center gap-2">
                     <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-orange-500 to-orange-400" />
-                    Must Read
+                    {i18n.mustRead}
                   </h3>
                   <div className="grid grid-cols-1 gap-3">
                     {col3Articles.slice(0, 8).map((a) => (
@@ -1297,7 +1411,7 @@ export async function ThemeHome({
                 <section className="rounded-xl bg-white p-4 h-full">
                   <h3 className="mb-3 text-sm font-bold uppercase tracking-wide flex items-center gap-2">
                     <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
-                    Top Articles
+                    {i18n.topArticles}
                   </h3>
                   <div className="grid grid-cols-1 gap-3">
                     {col4Articles.slice(0, 6).map((a) => (
@@ -1353,7 +1467,7 @@ export async function ThemeHome({
         return (
           <div key={block.id} className="mt-8">
             <Section title="" noShadow bodyClassName="grid grid-cols-1 gap-6 lg:grid-cols-4">
-              <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} usedCategorySlugs={usedCategorySlugs} />
+              <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} usedCategorySlugs={usedCategorySlugs} viewMoreLabel={i18n.viewMore} lang={String(lang)} />
             </Section>
           </div>
         )
@@ -1453,7 +1567,7 @@ export async function ThemeHome({
                   {/* Visual section separator — clean break between hero and categories */}
                   <div className="my-5 flex items-center gap-3">
                     <div className="flex-1 h-px bg-zinc-200" />
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400 px-2">వార్తలు</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400 px-2">{i18n.sectionNews}</span>
                     <div className="flex-1 h-px bg-zinc-200" />
                   </div>
                   {/* Category Section + Right Sidebar Vertical Ads */}
@@ -1462,25 +1576,32 @@ export async function ThemeHome({
                     <div className="flex-1 min-w-0">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
                         {configuredCategoryColumns.length > 0 ? (
-                          <SmartCategoryColumns tenantSlug={tenantSlugForLinks} columns={configuredCategoryColumns} />
+                          <SmartCategoryColumns tenantSlug={tenantSlugForLinks} columns={configuredCategoryColumns} viewMoreLabel={i18n.viewMore} lang={String(lang)} />
                         ) : (
-                          <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} usedCategorySlugs={usedCategorySlugs} />
+                          <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} usedCategorySlugs={usedCategorySlugs} viewMoreLabel={i18n.viewMore} lang={String(lang)} />
                         )}
                       </div>
+                      {/* Mobile-only banner ad — desktop sees right rail instead */}
+                      <div className="lg:hidden mt-4">
+                        <p className="text-center text-[9px] font-medium text-zinc-400 uppercase tracking-[0.18em] mb-1">Advertisement</p>
+                        <div className="flex justify-center overflow-hidden">
+                          <AdSlot slot="home_horizontal_1" settings={settings ?? undefined} className="w-full overflow-hidden" style={{ maxHeight: '100px', display: 'block' }} />
+                        </div>
+                      </div>
                     </div>
-                    {/* Right sidebar: 300×250 (highest CPM) on top, 300×600 below — hidden on mobile */}
+                    {/* Right sidebar: 300×250 on top (best CPM), 300×600 below — hidden on mobile */}
                     {adPolicy.home.rightRailMax >= 1 && (
                       <aside className="hidden lg:block w-[300px] shrink-0">
                         <div className="sticky top-20 space-y-4">
-                          {/* 300×250 rectangle — best CPM position */}
-                          {adPolicy.home.showRightRail2 ? (
+                          {/* home_right_1 = 300×250 rectangle — best CPM position (TOP) */}
+                          {adPolicy.home.showRightRail1 ? (
+                            <AdSlot slot="home_right_1" settings={settings ?? undefined} />
+                          ) : adPolicy.home.showRightRail2 ? (
                             <AdSlot slot="home_right_2" settings={settings ?? undefined} />
-                          ) : adPolicy.home.showRightRail1 ? (
-                            <AdSlot slot="home_right_1" settings={settings ?? undefined} />
                           ) : null}
-                          {/* 300×600 half-page — below the rectangle */}
+                          {/* home_right_2 = 300×600 half-page — below the rectangle */}
                           {adPolicy.home.rightRailMax >= 2 && adPolicy.home.showRightRail1 && adPolicy.home.showRightRail2 ? (
-                            <AdSlot slot="home_right_1" settings={settings ?? undefined} />
+                            <AdSlot slot="home_right_2" settings={settings ?? undefined} />
                           ) : null}
                         </div>
                       </aside>
@@ -1507,14 +1628,44 @@ export async function ThemeHome({
       case 'horizontalAd1':
       case 'horizontalAd2':
       case 'horizontalAd3': {
-        const b = activeBlocksForSection(section).find((x) => x.type === 'horizontalAd')
-        if (!b) return null
-        // Skip these - we already show 1 ad after hero
-        return null
+        const slotKey = section.key === 'horizontalAd1'
+          ? 'home_horizontal_1'
+          : section.key === 'horizontalAd2'
+            ? 'home_horizontal_2'
+            : 'home_horizontal_3'
+        return {
+          placement: 'main',
+          node: (
+            <div key={section.id} className="my-4">
+              <p className="text-center text-[9px] font-medium text-zinc-400 uppercase tracking-[0.18em] mb-1">Advertisement</p>
+              <div className="flex justify-center overflow-hidden">
+                <AdSlot slot={slotKey as import('@/lib/ads').AdSlotKey} settings={settings ?? undefined} className="w-full overflow-hidden" style={{ display: 'block' }} />
+              </div>
+            </div>
+          ),
+        }
       }
       case 'categoryHub': {
-        // Already rendered after hero, skip here
-        return null
+        if (!showCategories) return null
+        return {
+          placement: 'main',
+          node: (
+            <div key={section.id} className="my-4">
+              <div className="my-5 flex items-center gap-3">
+                <div className="flex-1 h-px bg-zinc-200" />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400 px-2">{i18n.sectionNews}</span>
+                <div className="flex-1 h-px bg-zinc-200" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+                {configuredCategoryColumns.length > 0 ? (
+                  <SmartCategoryColumns tenantSlug={tenantSlugForLinks} columns={configuredCategoryColumns} viewMoreLabel={i18n.viewMore} lang={String(lang)} />
+                ) : (
+                  <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} usedCategorySlugs={usedCategorySlugs} viewMoreLabel={i18n.viewMore} lang={String(lang)} />
+                )}
+              </div>
+            </div>
+          ),
+        }
       }
       case 'webStories': {
         if (!showWebStories) return null
@@ -1548,7 +1699,7 @@ export async function ThemeHome({
   function flushMain() {
     if (mainChunk.length === 0) return
     rendered.push(
-      <main id="main-content" key={`main-${mainKey++}`} className="mx-auto max-w-7xl px-3 sm:px-4 py-2 sm:py-3\">
+      <main id="main-content" key={`main-${mainKey++}`} className="mx-auto max-w-7xl px-3 sm:px-4 py-2 sm:py-3">
         {mainChunk}
       </main>,
     )
@@ -1565,20 +1716,44 @@ export async function ThemeHome({
   }
   
   // Add pending ads at the end (after all main content)
-  if (pendingAds.length > 0) {
-    for (const ad of pendingAds) {
-      mainChunk.push(ad)
-    }
+  for (const ad of pendingAds) {
+    mainChunk.push(ad)
   }
   flushMain()
 
+  // Graceful fallback: if no layout sections rendered, synthesise a default view
+  if (rendered.length === 0 && (lead || fallbackFeed.length > 0)) {
+    rendered.push(
+      <main id="main-content" key="main-fallback" className="mx-auto max-w-7xl px-3 sm:px-4 py-4">
+        {lead && (
+          <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 mb-6">
+            <HeroLead tenantSlug={tenantSlugForLinks} a={lead} />
+            <div className="space-y-3">
+              {allLatest.slice(1, 5).map((a) => <ListRow key={a.id} tenantSlug={tenantSlugForLinks} a={a} />)}
+            </div>
+          </div>
+        )}
+        {showCategories && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+            {configuredCategoryColumns.length > 0 ? (
+              <SmartCategoryColumns tenantSlug={tenantSlugForLinks} columns={configuredCategoryColumns} viewMoreLabel={i18n.viewMore} lang={String(lang)} />
+            ) : (
+              <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} usedCategorySlugs={usedCategorySlugs} viewMoreLabel={i18n.viewMore} lang={String(lang)} />
+            )}
+          </div>
+        )}
+      </main>
+    )
+  }
+
   const logoUrl = config?.branding.logoUrl || config?.branding.logo || settings?.branding?.logoUrl
   const siteName = config?.branding.siteName || title
+  const cssVars = themeCssVarsFromSettings(settings)
 
   // ⚡ domainStats already fetched in parallel at the top - no extra call needed!
 
   return (
-    <div className="theme-style1">
+    <div className="theme-style1" style={cssVars}>
       <Navbar tenantSlug={tenantSlugForLinks} title={siteName} logoUrl={logoUrl} />
       {/* Top Leaderboard Banner — 728×90 desktop / 320×50 mobile */}
       {adPolicy.home.showTopBanner ? (
@@ -1616,7 +1791,8 @@ export async function ThemeHome({
 }
 
 // Reporter Card Component - Enhanced with Recent Articles
-function ReporterCard({ reporter, tenantSlug }: { reporter: NonNullable<Article['reporter']>; tenantSlug: string }) {
+function ReporterCard({ reporter, tenantSlug, lang = 'te' }: { reporter: NonNullable<Article['reporter']>; tenantSlug: string; lang?: string }) {
+  const i18n = getI18n(lang)
   const locationParts = [
     reporter.location?.mandal,
     reporter.location?.district,
@@ -1625,10 +1801,10 @@ function ReporterCard({ reporter, tenantSlug }: { reporter: NonNullable<Article[
 
   const statsChips: Array<{ label: string; value: string }> = []
   if (typeof reporter.totalArticles === 'number' && reporter.totalArticles > 0) {
-    statsChips.push({ label: 'ఆర్టికల్స్', value: String(reporter.totalArticles) })
+    statsChips.push({ label: i18n.articles, value: String(reporter.totalArticles) })
   }
   if (typeof reporter.totalViews === 'number' && reporter.totalViews > 0) {
-    statsChips.push({ label: 'వ్యూస్', value: reporter.totalViews.toLocaleString('en-IN') })
+    statsChips.push({ label: i18n.views, value: reporter.totalViews.toLocaleString('en-IN') })
   }
 
   return (
@@ -1638,7 +1814,7 @@ function ReporterCard({ reporter, tenantSlug }: { reporter: NonNullable<Article[
           <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
-          రచయిత గురించి
+          {i18n.aboutAuthor}
         </h3>
       </div>
 
@@ -1700,7 +1876,7 @@ function ReporterCard({ reporter, tenantSlug }: { reporter: NonNullable<Article[
           {/* Recent Articles by Reporter */}
           {reporter.recentArticles && reporter.recentArticles.length > 0 && (
             <div className="mt-6 pt-6 border-t border-zinc-200">
-              <h5 className="text-lg font-bold text-zinc-900 mb-4">ఇటీవలి ఆర్టికల్స్</h5>
+              <h5 className="text-lg font-bold text-zinc-900 mb-4">{i18n.recentArticles}</h5>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {reporter.recentArticles.slice(0, 3).map((recentArticle) => (
                   <a 
@@ -2011,8 +2187,12 @@ function ArticleContentWithMustRead({
   )
 }
 
-export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }: { tenantSlug: string; title: string; article: Article; tenantDomain?: string }) {
+export async function ThemeArticle({ tenantSlug, title, article: rawArticle, tenantDomain }: { tenantSlug: string; title: string; article: Article; tenantDomain?: string }) {
   const settings = await getEffectiveSettings()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const agentLang = (settings as any)?.locale || (settings as any)?.content?.defaultLanguage || 'te'
+  // 🤖 AI Agent: auto-fill missing excerpt, highlights, SEO meta, reading time
+  const article = await agentEnhanceArticle(rawArticle, { lang: agentLang })
   const adPolicy = getAdsPlacementPolicy(settings)
 
   if (process.env.NODE_ENV !== 'production') {
@@ -2122,9 +2302,11 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
   // Get locale from settings (extracted from domain or default to Telugu)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const locale = (settings as any)?.locale || (settings as any)?.language?.code || 'te'
+  const i18n = getI18n(locale)
+  const cssVars = themeCssVarsFromSettings(settings)
 
   return (
-    <div className="theme-style1 bg-zinc-50">
+    <div className="theme-style1 bg-zinc-50" style={cssVars}>
       {/* Congratulations Overlay for View Milestones */}
       {article.viewCount && article.viewCount > 0 && (
         <CongratulationsWrapper 
@@ -2147,7 +2329,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                 </svg>
-                హోమ్
+                {i18n.home}
               </a>
             </li>
             {categorySlug && (
@@ -2248,7 +2430,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                       </div>
                     )}
                     <div>
-                      <div className="text-xs text-zinc-500">రచయిత</div>
+                      <div className="text-xs text-zinc-500">{i18n.author}</div>
                       <div className="font-semibold text-zinc-900">{reporter?.name || primaryAuthor.name || 'Staff Reporter'}</div>
                     </div>
                   </div>
@@ -2283,7 +2465,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                     <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span>{readingTime} నిమిషాల పఠనం</span>
+                    <span>{readingTime} {i18n.readingMinutes}</span>
                   </div>
                   
                   {/* View Count with Animation */}
@@ -2318,7 +2500,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                       </svg>
                       <div className="flex-1">
-                        <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wide mb-3">ముఖ్య విషయాలు</h3>
+                        <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wide mb-3">{i18n.highlights}</h3>
                         <ul className="space-y-2">
                           {article.highlights.map((highlight, idx) => (
                             <li key={idx} className="flex items-start gap-2">
@@ -2344,7 +2526,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                       <div>
-                        <h3 className="text-sm font-bold text-red-700 uppercase tracking-wide mb-2">సారాంశం</h3>
+                        <h3 className="text-sm font-bold text-red-700 uppercase tracking-wide mb-2">{i18n.summary}</h3>
                         <p className="text-base sm:text-lg text-zinc-800 leading-relaxed font-medium" style={{ lineHeight: '1.8' }}>
                           {article.excerpt}
                         </p>
@@ -2457,7 +2639,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
 
               {/* Reporter Card - Enhanced with Recent Articles */}
               {reporter ? (
-                <ReporterCard reporter={reporter} tenantSlug={tenantSlug} />
+                <ReporterCard reporter={reporter} tenantSlug={tenantSlug} lang={locale} />
               ) : publisher ? (
                 <PublisherCard publisher={publisher} />
               ) : null}
@@ -2686,7 +2868,6 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 </div>
               ) : null}
               
-              {/* Sidebar Ad — Top (300×250) */}
               {adPolicy.article.sidebarMax >= 1 && adPolicy.article.showSidebarTop ? (
                 <div className="rounded-2xl overflow-hidden shadow-sm">
                   <AdSlot slot="article_sidebar_top" settings={settings ?? undefined} />
@@ -2699,8 +2880,8 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 </div>
               ) : null}
 
-              {/* Sidebar Ad — Bottom (300×600 Half Page) */}
-              {adPolicy.article.sidebarMax >= 2 && adPolicy.article.showSidebarBottom ? (
+              {/* Sidebar Ad — Bottom (300×600 Half Page) — only when BOTH top+bottom slots enabled */}
+              {adPolicy.article.sidebarMax >= 2 && adPolicy.article.showSidebarTop && adPolicy.article.showSidebarBottom ? (
                 <div className="rounded-2xl overflow-hidden shadow-sm">
                   <AdSlot slot="article_sidebar_bottom" settings={settings ?? undefined} />
                 </div>
@@ -3195,11 +3376,16 @@ async function MostReadSidebar({ tenantSlug, currentArticleId }: { tenantSlug: s
 function SmartCategoryColumns({
   tenantSlug,
   columns,
+  viewMoreLabel = 'అన్నీ →',
+  lang = 'te',
 }: {
   tenantSlug: string
   columns: Array<{ slug: string; name: string; items: Article[] }>
+  viewMoreLabel?: string
+  lang?: string
 }) {
   if (!columns.length) return null
+  const i18n = getI18n(lang)
 
   return (
     <>
@@ -3214,7 +3400,7 @@ function SmartCategoryColumns({
               href={toHref(categoryHref(tenantSlug, slug))}
               className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-[11px] font-semibold hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors"
             >
-              అన్నీ →
+              {viewMoreLabel}
             </Link>
           </div>
 
@@ -3223,7 +3409,7 @@ function SmartCategoryColumns({
               <>
                 {items[0] && <MobileFeaturedCard tenantSlug={tenantSlug} a={items[0]} />}
                 {items.slice(1).map((a) => (
-                  <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} />
+                  <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} readLabel={i18n.readTime(2)} />
                 ))}
               </>
             )}
@@ -3248,7 +3434,7 @@ function SmartCategoryColumns({
             {categoryIndex % 4 === 2 && (
               <>
                 {items.map((a, i) => (
-                  <MobileNumberedCard key={a.id} tenantSlug={tenantSlug} a={a} number={i + 1} />
+                  <MobileNumberedCard key={a.id} tenantSlug={tenantSlug} a={a} number={i + 1} trendingLabel={i18n.trending} />
                 ))}
               </>
             )}
@@ -3262,7 +3448,7 @@ function SmartCategoryColumns({
                   </div>
                 )}
                 {items.slice(3).map((a) => (
-                  <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} />
+                  <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} readLabel={i18n.readTime(2)} />
                 ))}
               </>
             )}
@@ -3325,12 +3511,17 @@ function SmartCategoryColumns({
 async function CategoryColumns({ 
   tenantSlug, 
   sectionDataMap = {},
-  usedCategorySlugs = []
+  usedCategorySlugs = [],
+  viewMoreLabel = 'అన్నీ →',
+  lang = 'te',
 }: { 
   tenantSlug: string
   sectionDataMap?: Record<string, Article[]>
   usedCategorySlugs?: string[]
+  viewMoreLabel?: string
+  lang?: string
 }) {
+  const i18n = getI18n(lang)
   const allCats: Category[] = await getCategoriesForNav()
   
   // 🎯 IMPORTANT: Filter out 'latest' and 'breaking' - these are feed types, NOT real categories
@@ -3425,7 +3616,7 @@ async function CategoryColumns({
               href={toHref(categoryHref(tenantSlug, c.slug))}
               className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-[11px] font-semibold hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors"
             >
-              అన్నీ →
+              {viewMoreLabel}
             </Link>
           </div>
           
@@ -3436,7 +3627,7 @@ async function CategoryColumns({
                 {/* Style A: Featured + Horizontal cards */}
                 {items[0] && <MobileFeaturedCard tenantSlug={tenantSlug} a={items[0]} />}
                 {items.slice(1).map((a) => (
-                  <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} />
+                  <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} readLabel={i18n.readTime(2)} />
                 ))}
               </>
             )}
@@ -3458,7 +3649,7 @@ async function CategoryColumns({
               <>
                 {/* Style C: Numbered trending list */}
                 {items.map((a, i) => (
-                  <MobileNumberedCard key={a.id} tenantSlug={tenantSlug} a={a} number={i + 1} />
+                  <MobileNumberedCard key={a.id} tenantSlug={tenantSlug} a={a} number={i + 1} trendingLabel={i18n.trending} />
                 ))}
               </>
             )}
@@ -3473,7 +3664,7 @@ async function CategoryColumns({
                   </div>
                 )}
                 {items.slice(3).map((a) => (
-                  <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} />
+                  <MobileHorizontalCard key={a.id} tenantSlug={tenantSlug} a={a} readLabel={i18n.readTime(2)} />
                 ))}
               </>
             )}
