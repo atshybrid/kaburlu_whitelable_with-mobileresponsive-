@@ -395,18 +395,18 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
               
               {/* Stats */}
               <div className="grid grid-cols-3 gap-2 pt-2">
-                <div className="text-center p-2 rounded-lg bg-zinc-100 border border-zinc-200">
-                  <div className="text-lg font-bold text-[hsl(var(--primary))]">
+                <div className="text-center p-2 rounded-lg bg-zinc-100 border border-zinc-200 min-w-0 overflow-hidden">
+                  <div className="text-xs font-bold text-[hsl(var(--primary))] truncate leading-tight">
                     {displayViewCount > 0 ? displayViewCount.toLocaleString('en-IN') : '10L+'}
                   </div>
                   <div className="text-[10px] text-zinc-600">పాఠకులు</div>
                 </div>
-                <div className="text-center p-2 rounded-lg bg-zinc-100 border border-zinc-200">
-                  <div className="text-lg font-bold text-[hsl(var(--primary))]">24/7</div>
+                <div className="text-center p-2 rounded-lg bg-zinc-100 border border-zinc-200 min-w-0 overflow-hidden">
+                  <div className="text-xs font-bold text-[hsl(var(--primary))] truncate leading-tight">24/7</div>
                   <div className="text-[10px] text-zinc-600">వార్తలు</div>
                 </div>
-                <div className="text-center p-2 rounded-lg bg-zinc-100 border border-zinc-200">
-                  <div className="text-lg font-bold text-[hsl(var(--primary))]">
+                <div className="text-center p-2 rounded-lg bg-zinc-100 border border-zinc-200 min-w-0 overflow-hidden">
+                  <div className="text-xs font-bold text-[hsl(var(--primary))] truncate leading-tight">
                     {reporterCount > 0 ? `${reporterCount}+` : '100+'}
                   </div>
                   <div className="text-[10px] text-zinc-600">రిపోర్టర్లు</div>
