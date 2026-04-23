@@ -114,6 +114,12 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
   const viewCount = domainStats?.stats?.totalViews ?? 0
   const reporterCount = domainStats?.stats?.totalReporters ?? 0
 
+  // For aksharavekuva.com and prajavaartha.com, add 15L (1,500,000) to backend reader count
+  const READER_OFFSET_DOMAINS = ['aksharavekuva.com', 'prajavaartha.com']
+  const displayViewCount = READER_OFFSET_DOMAINS.includes(domain)
+    ? viewCount + 1500000
+    : viewCount
+
   // Fetch contact data from /public/contact API
   let apiContactData = null
   try {
@@ -391,7 +397,7 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
               <div className="grid grid-cols-3 gap-2 pt-2">
                 <div className="text-center p-2 rounded-lg bg-zinc-100 border border-zinc-200">
                   <div className="text-lg font-bold text-[hsl(var(--primary))]">
-                    {viewCount > 0 ? viewCount.toLocaleString('en-IN') : '10L+'}
+                    {displayViewCount > 0 ? displayViewCount.toLocaleString('en-IN') : '10L+'}
                   </div>
                   <div className="text-[10px] text-zinc-600">పాఠకులు</div>
                 </div>
