@@ -15,7 +15,7 @@ import Link from 'next/link'
 import type { UrlObject } from 'url'
 import { articleHref, categoryHref, basePathForTenant, getCategorySlugFromArticle, homeHref } from '@/lib/url'
 import { getArticlesByCategory } from '@/lib/data'
-import { getPublicHomepage, getPublicHomepageStyle2ShapeForDomain, getPublicHomepageStyle2Shape, type Style2HomepageItem, type Style2HomepageResponse, feedItemsToArticles } from '@/lib/homepage'
+import { getPublicHomepage, getPublicHomepageForDomain, getPublicHomepageStyle2ShapeForDomain, getPublicHomepageStyle2Shape, type Style2HomepageItem, type Style2HomepageResponse, feedItemsToArticles } from '@/lib/homepage'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getEffectiveSettings } from '@/lib/settings'
 import { themeCssVarsFromSettings } from '@/lib/theme-vars'
@@ -1127,9 +1127,8 @@ export async function ThemeHome({
   const siteUrl = canonicalBaseUrl || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   const domain = tenantDomain || siteUrl.replace(/^https?:\/\//, '').split('/')[0]
 
-  // Determine the API version based on theme setting from config
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const themeKey = settings?.theme?.theme || settings?.theme?.key || (settings?.theme?.layout as any)?.style || (settings?.settings?.theme?.layout as any)?.style || 'style2'
+  // Style2 page should always call style2 homepage contract regardless of config drift.
+  const themeKey = 'style2'
   const lang = settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'te'
   
   // ✅ Style2 uses v=2, shape=style2, themeKey=style2 (from config)
@@ -1143,7 +1142,9 @@ export async function ThemeHome({
     domainStatsResult,
   ] = await Promise.all([
     // Main homepage data
-    getPublicHomepage({ v: apiVersion, themeKey, lang, shape: themeKey })
+    (tenantDomain
+      ? getPublicHomepageForDomain(tenantDomain, { v: apiVersion, themeKey, lang })
+      : getPublicHomepage({ v: apiVersion, themeKey, lang, shape: themeKey }))
       .then(data => ({ data, error: null }))
       .catch(error => ({ data: null, error })),
     

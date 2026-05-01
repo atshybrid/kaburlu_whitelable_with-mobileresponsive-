@@ -337,10 +337,8 @@ function normalizeStyle2HomepageResponse(u: unknown): Style2HomepageResponse {
 }
 
 function domainFromHost(host: string | null) {
-  // 🎯 SIMPLE: If HOST env is set, use it directly
-  if (process.env.HOST) {
-    return process.env.HOST.split(':')[0]
-  }
+  // Prefer request/override host for multi-tenant correctness.
+  // HOST env should not override tenant domains in production requests.
   const h = (host || 'localhost').split(':')[0]
   return h || 'localhost'
 }
@@ -792,6 +790,7 @@ const _getPublicHomepage = reactCache(async (params: {
   try {
     const response = await fetchJSON<NewHomepageResponse>(`/public/homepage?${qs.toString()}`, {
       tenantDomain: domain,
+      cache: 'no-store',
       // Cache with revalidation; avoids repeated backend hits.
       revalidateSeconds: Number(process.env.REMOTE_HOMEPAGE_REVALIDATE_SECONDS || '30'),
       tags: [`homepage:${domain}:${lang}:${themeKey}`],
@@ -829,6 +828,7 @@ const _getPublicHomepageForDomain = reactCache(async (tenantDomain: string, para
 
   return fetchJSON<NewHomepageResponse>(`/public/homepage?${qs.toString()}`, {
     tenantDomain: domainFromHost(tenantDomain),
+    cache: 'no-store',
     // Cache with revalidation; avoids repeated backend hits.
     revalidateSeconds: Number(process.env.REMOTE_HOMEPAGE_REVALIDATE_SECONDS || '30'),
     tags: [`homepage:${tenantDomain}:${lang}:${themeKey}`],
@@ -845,6 +845,7 @@ const _getPublicHomepageStyle2Shape = reactCache(async (tenantDomainOverride?: s
 
   const res = await fetchJSON<unknown>(`/public/homepage?${qs.toString()}`, {
     tenantDomain: domain,
+    cache: 'no-store',
     revalidateSeconds: Number(process.env.REMOTE_HOMEPAGE_REVALIDATE_SECONDS || '30'),
     tags: [`homepage:${domain}:shape:style2`],
   })
