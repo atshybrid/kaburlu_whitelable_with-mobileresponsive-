@@ -220,9 +220,18 @@ class RemoteDataSource implements DataSource {
           }
           return normalized
         }
-        // Fallback to direct response normalization
+        // Fallback to direct response normalization — only if response looks like an article
         console.log(`📰 [ARTICLE API FALLBACK] slug="${slug}" | keys=`, Object.keys(response).slice(0, 10))
-        return normalizeItem(res)
+        const directNormalized = normalizeItem(res)
+        // Only return if the normalized object has a real title (not default 'Untitled') and matches the slug
+        if (
+          directNormalized.title &&
+          directNormalized.title !== 'Untitled' &&
+          (directNormalized.slug === slug || directNormalized.id === slug)
+        ) {
+          return directNormalized
+        }
+        // Response doesn't look like the right article — fall through to legacy endpoints
       }
     } catch (error) {
       console.log(`⚠️ New article API failed for slug "${slug}":`, error)
@@ -240,9 +249,26 @@ class RemoteDataSource implements DataSource {
       try {
         const res = await fetchJSON<unknown>(p, { tenantDomain: domain })
         const list = normalizeList(res)
-        if (list.length) return list[0]
-        const obj = pickFirst(res, ['item', 'data', 'article']) ?? res
-        return normalizeItem(obj)
+        if (list.length) {
+          // ✅ FIX: Only return a matching article, not the first one in an unfiltered list
+          const matching = list.find(a => a.slug === slug || a.id === slug)
+          if (matching) return matching
+          // If no match but list only has 1 item (specific lookup), return it
+          if (list.length === 1) return list[0]
+          // Multiple non-matching articles means the endpoint returned wrong data — skip
+          continue
+        }
+        const obj = pickFirst(res, ['item', 'data', 'article']) ?? null
+        if (!obj) continue
+        const normalized = normalizeItem(obj)
+        // Only return if it looks like the right article
+        if (
+          normalized.title &&
+          normalized.title !== 'Untitled' &&
+          (normalized.slug === slug || normalized.id === slug)
+        ) {
+          return normalized
+        }
       } catch {
         // continue to next fallback
       }

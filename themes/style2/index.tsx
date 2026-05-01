@@ -243,7 +243,7 @@ function TrendingWidget({ tenantSlug, items }: { tenantSlug: string; items: Arti
         {items.slice(0, 5).map((a, idx) => (
           <Link
             key={a.id}
-            href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+            href={toHref(articleHref(tenantSlug, a.slug || a.id, getCategorySlugFromArticle(a)))}
             className="group flex items-start gap-3 p-3 hover:bg-zinc-50 transition-colors"
           >
             <span className={`flex-shrink-0 w-7 h-7 flex items-center justify-center text-sm font-black rounded-sm ${
@@ -286,7 +286,7 @@ function LatestNewsWidget({ tenantSlug, items }: { tenantSlug: string; items: Ar
         {items.slice(0, 6).map((a) => (
           <Link
             key={a.id}
-            href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+            href={toHref(articleHref(tenantSlug, a.slug || a.id, getCategorySlugFromArticle(a)))}
             className="group flex items-center gap-3 p-3 hover:bg-zinc-50 transition-colors"
           >
             {a.coverImage?.url ? (
@@ -400,7 +400,7 @@ function TitleList({ tenantSlug, items }: { tenantSlug: string; items: Article[]
       {items.map((a, idx) => (
         <Link
           key={a.id}
-          href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+          href={toHref(articleHref(tenantSlug, a.slug || a.id, getCategorySlugFromArticle(a)))}
           className="title-list-item group"
         >
           <span className="number">{idx + 1}</span>
@@ -431,7 +431,7 @@ function SmallCardList({ tenantSlug, items }: { tenantSlug: string; items: Artic
           </div>
           <div className="min-w-0 flex flex-col justify-center flex-1">
             <Link
-              href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+              href={toHref(articleHref(tenantSlug, a.slug || a.id, getCategorySlugFromArticle(a)))}
               className="line-clamp-2 text-sm font-medium text-black group-hover:text-[hsl(var(--primary))] transition-colors"
             >
               {a.title}
@@ -478,7 +478,7 @@ function MagazineGridSection({
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
         {/* Main large article */}
         {mainArticle ? (
-          <Link href={toHref(articleHref(tenantSlug, mainArticle.slug || mainArticle.id))} className="group relative overflow-hidden rounded-xl bg-black">
+          <Link href={toHref(articleHref(tenantSlug, mainArticle.slug || mainArticle.id, getCategorySlugFromArticle(mainArticle)))} className="group relative overflow-hidden rounded-xl bg-black">
             <div className="aspect-[16/10] w-full">
               {mainArticle.coverImage?.url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -507,7 +507,7 @@ function MagazineGridSection({
           {sideArticles.map((a) => (
             <Link 
               key={a.id}
-              href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+              href={toHref(articleHref(tenantSlug, a.slug || a.id, getCategorySlugFromArticle(a)))}
               className="group flex gap-4 p-3 rounded-lg bg-white border border-zinc-100 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-500/10 transition-all"
             >
               <div className="h-20 w-28 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
@@ -575,7 +575,7 @@ function HorizontalCardsSection({
           {items.slice(0, 6).map((a, idx) => (
             <Link 
               key={a.id}
-              href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+              href={toHref(articleHref(tenantSlug, a.slug || a.id, getCategorySlugFromArticle(a)))}
               className="group flex-shrink-0 w-72 snap-start"
             >
               <div className="relative overflow-hidden rounded-xl bg-white shadow-md hover:shadow-xl transition-shadow">
@@ -647,7 +647,7 @@ function SpotlightSection({
           {items.slice(0, 4).map((a) => (
             <Link 
               key={a.id}
-              href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+              href={toHref(articleHref(tenantSlug, a.slug || a.id, getCategorySlugFromArticle(a)))}
               className="group relative overflow-hidden rounded-xl bg-white/10 backdrop-blur border border-white/20 hover:bg-white/20 transition-all"
             >
               <div className="aspect-[4/3] overflow-hidden">
@@ -714,7 +714,7 @@ function NewspaperColumnsSection({
             {col1.map((a, idx) => (
               <Link 
                 key={a.id}
-                href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+                href={toHref(articleHref(tenantSlug, a.slug || a.id, getCategorySlugFromArticle(a)))}
                 className={`group block ${idx > 0 ? 'pt-6 border-t border-zinc-100' : ''}`}
               >
                 {idx === 0 && a.coverImage?.url ? (
@@ -743,7 +743,7 @@ function NewspaperColumnsSection({
             {col2.map((a, idx) => (
               <Link 
                 key={a.id}
-                href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+                href={toHref(articleHref(tenantSlug, a.slug || a.id, getCategorySlugFromArticle(a)))}
                 className={`group block ${idx > 0 ? 'pt-6 border-t border-zinc-100' : ''}`}
               >
                 <h3 className="font-serif font-bold text-black group-hover:text-blue-600 transition-colors">
@@ -796,7 +796,7 @@ function PhotoGallerySection({
         {items.slice(0, 6).map((a, idx) => (
           <Link 
             key={a.id}
-            href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+            href={toHref(articleHref(tenantSlug, a.slug || a.id, getCategorySlugFromArticle(a)))}
             className={`group relative overflow-hidden ${idx === 0 ? 'col-span-2 row-span-2' : ''}`}
           >
             <div className={`${idx === 0 ? 'aspect-square' : 'aspect-[4/3]'} w-full`}>
@@ -856,7 +856,7 @@ function TimelineSection({
         {items.slice(0, 5).map((a) => (
           <Link 
             key={a.id}
-            href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+            href={toHref(articleHref(tenantSlug, a.slug || a.id, getCategorySlugFromArticle(a)))}
             className="group block relative"
           >
             {/* Timeline dot */}
@@ -905,7 +905,7 @@ function FeaturedBannerSection({
   return (
     <section className="py-8 px-4 sm:px-5">
       <Link 
-        href={toHref(articleHref(tenantSlug, featured.slug || featured.id))}
+        href={toHref(articleHref(tenantSlug, featured.slug || featured.id, getCategorySlugFromArticle(featured)))}
         className="group block relative overflow-hidden rounded-2xl"
       >
         <div className="aspect-[21/9] w-full">
@@ -974,7 +974,7 @@ function CompactListSection({
         {items.slice(0, 8).map((a, idx) => (
           <Link 
             key={a.id}
-            href={toHref(articleHref(tenantSlug, a.slug || a.id))}
+            href={toHref(articleHref(tenantSlug, a.slug || a.id, getCategorySlugFromArticle(a)))}
             className="group flex items-center gap-3 px-4 py-3 hover:bg-white transition-colors"
           >
             <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded text-xs font-bold text-white ${accentColor}`}>
@@ -1073,8 +1073,9 @@ export async function ThemeHome({
   
   const topNavCats = filteredCats.filter((c) => !c.parentId)
 
-  // Fallback to old API if new one doesn't return data
-  const style2Home = (!latestItems.length && !mostReadItems.length) 
+  // Fallback to old API if new one doesn't return latest articles
+  // ✅ FIX: Only check latestItems (not mostReadItems) - homepage feed needs latestItems
+  const style2Home = !latestItems.length 
     ? await (tenantDomain
         ? getPublicHomepageStyle2ShapeForDomain(tenantDomain)
         : getPublicHomepageStyle2Shape()
@@ -1218,8 +1219,9 @@ export async function ThemeHome({
   const heroArticleId = heroArticle?.id
   // Secondary articles: exclude the hero article to prevent duplication
   const secondaryArticles = sortedHeroData.filter(a => a.id !== heroArticleId).slice(0, 8)
-  // ✅ Use different data for right sidebar latest - don't slice beyond available data
-  const latestArticles = homeFeed.length > 10 ? homeFeed.slice(10, 20) : (homeFeed.length > 6 ? homeFeed.slice(6) : homeFeed.slice(0, 6))
+  // ✅ Sidebar latest: exclude hero + secondary to prevent duplicate cards
+  const shownHeroIds = new Set([heroArticleId, ...secondaryArticles.map(a => a.id)])
+  const latestArticles = homeFeed.filter(a => !shownHeroIds.has(a.id)).slice(0, 6)
   console.log('🎯 [HERO WIDGETS] latestArticles for sidebar:', latestArticles.length)
   console.log('📰 [HERO DATA] heroArticle:', heroArticle?.title, '| secondaryArticles:', secondaryArticles.map(a => a.title.substring(0, 30)))
 
@@ -1232,8 +1234,8 @@ export async function ThemeHome({
         const matchingArticle = allArticles.find(a => a.id === topArticle.id || a.slug === topArticle.slug)
         return {
           ...topArticle,
-          image: (matchingArticle?.imageUrl as string) || topArticle.image || undefined,
-          coverImageUrl: (matchingArticle?.imageUrl as string) || topArticle.coverImageUrl || undefined,
+          image: (matchingArticle?.imageUrl as string) || (matchingArticle?.coverImage as { url?: string } | undefined)?.url || topArticle.image || undefined,
+          coverImageUrl: (matchingArticle?.imageUrl as string) || (matchingArticle?.coverImage as { url?: string } | undefined)?.url || topArticle.coverImageUrl || undefined,
         }
       })
     }
@@ -1929,7 +1931,7 @@ export async function ThemeArticle({
                     return (
                       <Link
                         key={item.id || idx}
-                        href={toHref(articleHref(tenantSlug, mrSlug))}
+                        href={toHref(articleHref(tenantSlug, mrSlug, getCategorySlugFromArticle(item)))}
                         className="group flex items-center gap-3 p-2 rounded-lg bg-white/50 hover:bg-white hover:shadow-sm transition-all"
                       >
                         {mrImgUrl ? (
@@ -1965,7 +1967,7 @@ export async function ThemeArticle({
                   {trendingArticles.slice(0, 4).map((item, idx) => (
                     <Link
                       key={item.id || idx} 
-                      href={toHref(articleHref(tenantSlug, item.slug || item.id || ''))}
+                      href={toHref(articleHref(tenantSlug, item.slug || item.id || '', getCategorySlugFromArticle(item)))}
                       className="group flex items-start gap-2 p-2 rounded-lg bg-white/50 hover:bg-white hover:shadow-sm transition-all"
                     >
                       <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-xs font-bold text-rose-600 bg-rose-100 rounded-full">
@@ -2060,7 +2062,12 @@ function Style2ArticleContent({
         (mustReadArticle.coverImage && typeof mustReadArticle.coverImage === 'object' && typeof (mustReadArticle.coverImage as Record<string, unknown>).url === 'string'
           ? String((mustReadArticle.coverImage as Record<string, unknown>).url)
           : undefined)
-      const mrHref = tenantSlug && mrSlug ? articleHref(tenantSlug, mrSlug) : (mrSlug ? `/${mrSlug}` : '#')
+      const mrCategorySlug = typeof mustReadArticle.categorySlug === 'string'
+        ? mustReadArticle.categorySlug
+        : (mustReadArticle.category && typeof mustReadArticle.category === 'object'
+            ? String((mustReadArticle.category as Record<string, unknown>).slug || '') || undefined
+            : undefined)
+      const mrHref = tenantSlug && mrSlug ? articleHref(tenantSlug, mrSlug, mrCategorySlug) : (mrSlug ? `/${mrSlug}` : '#')
       if (mrTitle && mrSlug) {
         nodes.push(
           <div key="must-read-inline" className="my-6 border-l-4 border-[hsl(var(--primary))] bg-gradient-to-r from-blue-50 to-white rounded-r-xl overflow-hidden shadow-sm">
