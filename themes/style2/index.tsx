@@ -75,6 +75,41 @@ function buildStyle2HomeFeed(home: Style2HomepageResponse | null): Article[] {
     for (const i of items) push(style2ItemToArticle(i))
   }
 
+  // ✅ Fallback: also read from feeds.latest.items (new API response shape)
+  // This handles the case where the backend returns { feeds: { latest: { items: [...] } } }
+  // instead of the legacy { hero: [...], topStories: [...], sections: [...] } shape.
+  const homeAny = home as Record<string, unknown> | null
+  const feedsObj = homeAny?.feeds
+  if (feedsObj && typeof feedsObj === 'object') {
+    const feeds = feedsObj as Record<string, unknown>
+    const latestFeed = feeds.latest
+    if (latestFeed && typeof latestFeed === 'object') {
+      const latestItems = (latestFeed as Record<string, unknown>).items
+      if (Array.isArray(latestItems)) {
+        for (const i of latestItems) push(style2ItemToArticle(i as Style2HomepageItem))
+      }
+    }
+    // Also pull mostRead articles to fill out the feed
+    const mostReadFeed = feeds.mostRead
+    if (mostReadFeed && typeof mostReadFeed === 'object') {
+      const mostReadItems = (mostReadFeed as Record<string, unknown>).items
+      if (Array.isArray(mostReadItems)) {
+        for (const i of mostReadItems) push(style2ItemToArticle(i as Style2HomepageItem))
+      }
+    }
+  }
+
+  // ✅ Also read from data sections (named sections with article arrays)
+  if (homeAny?.data && typeof homeAny.data === 'object') {
+    const dataSections = homeAny.data as Record<string, unknown>
+    for (const key of Object.keys(dataSections)) {
+      const section = dataSections[key]
+      if (Array.isArray(section)) {
+        for (const i of section) push(style2ItemToArticle(i as Style2HomepageItem))
+      }
+    }
+  }
+
   return out
 }
 

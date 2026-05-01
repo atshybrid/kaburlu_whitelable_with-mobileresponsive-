@@ -782,9 +782,9 @@ const _getPublicHomepage = reactCache(async (params: {
   const themeKey = String(params.themeKey || 'style1')
   const shape = params.shape || themeKey // Use themeKey as shape if not provided
 
-  // Backend contract: GET /public/homepage?v=1&shape=style2&themeKey=style2&lang=te
-  // Domain is inferred via X-Tenant-Domain header.
-  const qs = new URLSearchParams({ v: String(params.v ?? '1'), domain })
+  // Backend contract: GET /public/homepage?v=2&shape=style2&themeKey=style2&lang=te
+  // v=2 avoids LAYOUT_NOT_SET 400 errors on style2/toi configured domains.
+  const qs = new URLSearchParams({ v: String(params.v ?? '2'), domain })
   if (lang) qs.set('lang', lang)
   if (themeKey) qs.set('themeKey', themeKey)
   if (shape) qs.set('shape', shape)
@@ -817,12 +817,15 @@ const _getPublicHomepageForDomain = reactCache(async (tenantDomain: string, para
 }): Promise<NewHomepageResponse> => {
   const lang = String(params.lang || 'en')
   const themeKey = String(params.themeKey || 'style1')
+  // Use themeKey as shape so backends configured for style2/toi/etc don't reject with 400
+  const shape = themeKey
 
-  // Backend contract: GET /public/homepage?v=1 (optional lang/themeKey).
-  // Domain is inferred via X-Tenant-Domain header.
-  const qs = new URLSearchParams({ v: String(params.v ?? '1') })
+  // Backend contract: GET /public/homepage?v=2&shape=<themeKey>&lang=te
+  // v=2 (not v=1) avoids LAYOUT_NOT_SET errors on style2 domains.
+  const qs = new URLSearchParams({ v: String(params.v ?? '2') })
   if (lang) qs.set('lang', lang)
   if (themeKey) qs.set('themeKey', themeKey)
+  if (shape) qs.set('shape', shape)
 
   return fetchJSON<NewHomepageResponse>(`/public/homepage?${qs.toString()}`, {
     tenantDomain: domainFromHost(tenantDomain),
