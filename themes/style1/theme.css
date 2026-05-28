@@ -19,6 +19,12 @@
   --font-telugu-sans: 'Noto Sans Telugu', sans-serif;
 }
 
+/* Keep links neutral by default inside style1 (avoid browser blue/purple links). */
+.theme-style1 a,
+.theme-style1 a:visited {
+  color: inherit;
+}
+
 /* ── Per-tenant color overrides ──────────────────────────────────────────────
    These override Tailwind's compiled red-600 classes with the CSS custom
    property --primary, allowing each tenant to have a unique brand color.
@@ -70,6 +76,16 @@
   font-family: var(--font-display);
   font-weight: 500;
   letter-spacing: -0.015em;
+  color: #111111 !important;
+}
+
+/* Ensure article titles remain black (not tenant primary) */
+.theme-style1 .article-title,
+.theme-style1 .article-title a,
+.theme-style1 article h1,
+.theme-style1 article h2,
+.theme-style1 article h3 {
+  color: #111111 !important;
 }
 
 /* Telugu Typography - Enhanced for better readability */
