@@ -119,6 +119,11 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
   const displayViewCount = READER_OFFSET_DOMAINS.includes(domain)
     ? viewCount + 1500000
     : viewCount
+  const normalizedDomain = String(domain || '').trim().toLowerCase()
+  const isKaburluTodayDomain = normalizedDomain === 'kaburlutoday.com'
+  const poweredByName = isKaburluTodayDomain ? 'Amoghnyatecjsolution Pvt.Ltd' : 'Kaburlu Media'
+  const poweredByHref = isKaburluTodayDomain ? '#' : 'https://kaburlumedia.com'
+  const poweredByInitial = isKaburluTodayDomain ? 'A' : 'K'
 
   // Fetch contact data from /public/contact API
   let apiContactData = null
@@ -634,12 +639,17 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
             {/* Powered By */}
             <div className="flex items-center gap-3">
               <span className="text-xs text-zinc-500">పవర్డ్ బై</span>
-              <a href="https://kaburlumedia.com" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))]/10 border border-[hsl(var(--primary))]/30 hover:border-[hsl(var(--primary))]/50 transition-all">
+              <a
+                href={poweredByHref}
+                target={isKaburluTodayDomain ? undefined : '_blank'}
+                rel={isKaburluTodayDomain ? undefined : 'noopener noreferrer'}
+                className="group flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))]/10 border border-[hsl(var(--primary))]/30 hover:border-[hsl(var(--primary))]/50 transition-all"
+              >
                 <div className="w-6 h-6 rounded bg-[hsl(var(--primary))] flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">K</span>
+                  <span className="text-white text-xs font-bold">{poweredByInitial}</span>
                 </div>
                 <span className="text-sm font-semibold text-[hsl(var(--primary))] group-hover:opacity-80 transition-all">
-                  Kaburlu Media
+                  {poweredByName}
                 </span>
               </a>
             </div>
