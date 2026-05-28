@@ -1297,6 +1297,26 @@ export async function ThemeHome({
     allLatest = fillWithFallback(latestData, 14)
   }
 
+  // Prevent home duplicates across major columns:
+  // col-1/col-2 use allLatest(0..13), col-3/col-4 must prefer unseen ids.
+  const heroAndLatestIds = new Set(allLatest.slice(0, 14).map((a) => a.id))
+  const uniqueExcluding = (items: Article[], exclude: Set<string>, take: number): Article[] => {
+    const out: Article[] = []
+    const seen = new Set<string>()
+    for (const a of items) {
+      if (!a?.id || exclude.has(a.id) || seen.has(a.id)) continue
+      seen.add(a.id)
+      out.push(a)
+      if (out.length >= take) break
+    }
+    return out
+  }
+  const col3Base = sectionDataMap['mustRead'] || sectionDataMap['must-read'] || sectionDataMap['col-3'] || allLatest.slice(14, 28)
+  const col3ArticlesUnique = uniqueExcluding(col3Base, heroAndLatestIds, 8)
+  const col4Base = mostReadData.length > 0 ? mostReadData : (sectionDataMap['topViewed'] || sectionDataMap['top-viewed'] || sectionDataMap['col-4'] || allLatest.slice(22, 36))
+  const col4Exclude = new Set([...heroAndLatestIds, ...col3ArticlesUnique.map((a) => a.id)])
+  const col4ArticlesUnique = uniqueExcluding(col4Base, col4Exclude, 6)
+
   // Extract sections data from shaped homepage
   if (shapedHomepage?.sections) {
     shapedHomepage.sections.forEach(section => {
@@ -1360,8 +1380,8 @@ export async function ThemeHome({
           // Col 1: articles 4,5,6 (indices 3,4,5) - hero is 1, medium is 2,3
           // Col 2: articles 7-14 (indices 6-13) - continues from col 1
           const col2Articles = allLatest.slice(6, 14) // Articles 7-14
-          const col3Articles = sectionDataMap['mustRead'] || sectionDataMap['must-read'] || sectionDataMap['col-3'] || allLatest.slice(14, 22)
-          const col4Articles = mostReadData.length > 0 ? mostReadData : (sectionDataMap['topViewed'] || sectionDataMap['top-viewed'] || sectionDataMap['col-4'] || allLatest.slice(22, 28))
+          const col3Articles = col3ArticlesUnique
+          const col4Articles = col4ArticlesUnique
           
           if (colKey === 'col-1') {
             // Column 1: articles 4,5,6 (heroLead=1, medium=2,3, small=4,5,6) = 6 total
@@ -1579,9 +1599,9 @@ export async function ThemeHome({
                         <CategoryColumns tenantSlug={tenantSlugForLinks} sectionDataMap={sectionDataMap} usedCategorySlugs={usedCategorySlugs} viewMoreLabel={i18n.viewMore} lang={String(lang)} />
                       )}
                     </div>
-                    {/* Horizontal ad below categories — auto-collapses when Google does not fill */}
+                    {/* Horizontal ad below categories — use slot #2 to avoid repeat with top section ad */}
                     <div className="mt-4 overflow-hidden">
-                      <AdSlot slot="home_horizontal_1" settings={settings ?? undefined} className="w-full overflow-hidden" style={{ display: 'block' }} />
+                      <AdSlot slot="home_horizontal_2" settings={settings ?? undefined} className="w-full overflow-hidden" style={{ display: 'block' }} />
                     </div>
                   </div>
                   {/* Multiplex Ad — after all content sections for natural reading flow */}
@@ -3540,35 +3560,44 @@ async function CategoryColumns({
   const feed = await getHomeFeed('na')
   
   // Build lists: prefer sectionDataMap, fallback to category fetch
-  const lists = await Promise.all(
-    chosen.map(async (c) => {
-      // Try to get from sectionDataMap first (check both slugs for politics)
-      const slugsToCheck = c.slug === 'politics' || c.slug === 'political' 
-        ? ['political', 'politics'] 
-        : [c.slug]
-      
-      let items: Article[] = []
-      for (const slug of slugsToCheck) {
-        items = sectionDataMap[slug] || []
-        if (items.length > 0) {
-          console.log(`✅ Using pre-fetched data for ${c.name} (${slug}): ${items.length} items`)
-          break
-        }
+  const lists: Array<{ category: Category; items: Article[] }> = []
+  const globallyUsed = new Set<string>()
+  for (const c of chosen) {
+    // Try to get from sectionDataMap first (check both slugs for politics)
+    const slugsToCheck = c.slug === 'politics' || c.slug === 'political'
+      ? ['political', 'politics']
+      : [c.slug]
+
+    let items: Article[] = []
+    for (const slug of slugsToCheck) {
+      items = sectionDataMap[slug] || []
+      if (items.length > 0) {
+        console.log(`✅ Using pre-fetched data for ${c.name} (${slug}): ${items.length} items`)
+        break
       }
-      
-      // If not enough items, fetch from category API
-      if (items.length < 5) {
-        console.log(`⚠️ Fetching more for ${c.name}...`)
-        const categoryArticles = await getArticlesByCategory('na', c.slug)
-        items = fillToCount(items.length > 0 ? items : categoryArticles, feed, 5)
-      }
-      
-      return {
-        category: c,
-        items: items.slice(0, 5), // Ensure max 5 items
-      }
+    }
+
+    // If not enough items, fetch from category API
+    if (items.length < 5) {
+      console.log(`⚠️ Fetching more for ${c.name}...`)
+      const categoryArticles = await getArticlesByCategory('na', c.slug)
+      items = fillToCount(items.length > 0 ? items : categoryArticles, feed, 5)
+    }
+
+    // Enforce cross-column uniqueness to avoid duplicate article cards.
+    const uniqueItems: Article[] = []
+    for (const a of items) {
+      if (!a?.id || globallyUsed.has(a.id)) continue
+      globallyUsed.add(a.id)
+      uniqueItems.push(a)
+      if (uniqueItems.length >= 5) break
+    }
+
+    lists.push({
+      category: c,
+      items: uniqueItems,
     })
-  )
+  }
   return (
     <>
       {lists.map(({ category: c, items }, categoryIndex) => (

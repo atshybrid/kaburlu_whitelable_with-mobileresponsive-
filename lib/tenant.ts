@@ -22,6 +22,8 @@ export async function resolveTenant({ slugOverride }: { slugOverride?: string } 
 
   const host = h.get('host') || ''
   const pathname = h.get('x-pathname') || ''
+  const normalizedHost = normalizeTenantDomain(host || 'localhost')
+  const isLocalhost = normalizedHost === 'localhost' || normalizedHost === '127.0.0.1'
 
   if (mode === 'subdomain' && host && !host.startsWith('localhost')) {
     const parts = normalizeTenantDomain(host).split('.')
@@ -56,8 +58,15 @@ export async function resolveTenant({ slugOverride }: { slugOverride?: string } 
       return { id: 'na', slug, name, themeKey, domain, isDomainNotLinked: true, isApiError: true }
     }
     
-    // ✅ Use theme from backend config API
-    const themeKey = config.theme?.layout?.style || local?.themeKey || 'style1'
+    // ✅ Local testing override:
+    // On localhost, prefer local tenant theme so /t/andhra => style2, /t/telangana => style3.
+    // You can also force a specific local theme via LOCAL_THEME_KEY / NEXT_PUBLIC_LOCAL_THEME_KEY.
+    const forcedLocalTheme = (process.env.LOCAL_THEME_KEY || process.env.NEXT_PUBLIC_LOCAL_THEME_KEY || '').trim()
+    const localTheme = local?.themeKey || ''
+    const backendTheme = config.theme?.layout?.style || ''
+    const themeKey = isLocalhost
+      ? (forcedLocalTheme || localTheme || backendTheme || 'style1')
+      : (backendTheme || localTheme || 'style1')
     const name = config.tenant.displayName || config.tenant.name || local?.name || slug
     
     return { 

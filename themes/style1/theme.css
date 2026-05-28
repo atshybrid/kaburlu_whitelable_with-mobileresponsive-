@@ -199,13 +199,13 @@
 }
 
 .theme-style1 .article-content a {
-  color: #dc2626;
+  color: #111111;
   text-decoration: underline;
   font-weight: 500;
 }
 
 .theme-style1 .article-content a:hover {
-  color: #ef4444;
+  color: #111111;
 }
 
 /* Hover Effects */
@@ -312,7 +312,17 @@
   margin-right: 0.5rem;
   margin-top: 0.125rem;
   font-family: var(--font-display);
-  color: #dc2626;
+  color: #111111;
+}
+
+/* Keep style1 article body text strictly black (not tenant primary color). */
+.theme-style1 .article-content-enhanced,
+.theme-style1 .article-content-enhanced p,
+.theme-style1 .article-content-enhanced .article-paragraph,
+.theme-style1 .article-content-enhanced .article-paragraph p,
+.theme-style1 .article-content-enhanced a,
+.theme-style1 .article-content-enhanced a:hover {
+  color: #111111 !important;
 }
 
 .theme-style1 .article-content p:first-of-type {
