@@ -121,7 +121,7 @@ export async function Footer({ settings, tenantSlug }: { settings?: EffectiveSet
     : viewCount
   const normalizedDomain = String(domain || '').trim().toLowerCase()
   const isKaburluTodayDomain = normalizedDomain === 'kaburlutoday.com'
-  const poweredByName = isKaburluTodayDomain ? 'Amoghnyatecjsolution Pvt.Ltd' : 'Kaburlu Media'
+  const poweredByName = isKaburluTodayDomain ? 'AMOGHNYA TECH SOLUTIONS PRIVATE LIMITED' : 'Kaburlu Media'
   const poweredByHref = isKaburluTodayDomain ? '#' : 'https://kaburlumedia.com'
   const poweredByInitial = isKaburluTodayDomain ? 'A' : 'K'
 
