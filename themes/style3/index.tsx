@@ -273,7 +273,7 @@ export function ThemeArticle({ tenantSlug, title, article, settings }: ThemeArti
             <div className="s3-related-grid">
               {safeRelated.map((item) => (
                 <article key={String(item.id || item.slug)} className="s3-related-card">
-                  <Link href={articleHrefFromArticle(tenantSlug, { id: String(item.id || item.slug), slug: item.slug, category: item.category })}>
+                  <Link href={articleHrefFromArticle(tenantSlug, { id: String(item.id || item.slug), slug: item.slug })}>
                     <div className="s3-related-title">{item.title}</div>
                   </Link>
                 </article>
