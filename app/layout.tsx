@@ -286,7 +286,10 @@ async function RootLayoutInner({
         {/* � PWA Manifest */}
         <link rel="manifest" href="/manifest.json" />
         
-        {/* �🔍 Site Verification for Google & Bing */}
+        {/* 📰 RSS Feed — Google Publisher Center + readers */}
+        <link rel="alternate" type="application/rss+xml" title={config?.branding?.siteName ? `${config.branding.siteName} RSS` : 'RSS Feed'} href="/rss" />
+        
+        {/* 🔍 Site Verification for Google & Bing */}
         <SiteVerification />
         
         {/* 🎯 Dynamic theme colors from backend config */}

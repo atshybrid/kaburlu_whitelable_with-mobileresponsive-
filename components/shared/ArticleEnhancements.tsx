@@ -10,7 +10,7 @@ function getInitialFontSize(): 'small' | 'medium' | 'large' {
 }
 
 // Font Size Control Component
-export function FontSizeControl() {
+export function FontSizeControl({ compact = false }: { compact?: boolean }) {
   const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>(getInitialFontSize)
 
   const changeFontSize = (size: typeof fontSize) => {
@@ -27,12 +27,12 @@ export function FontSizeControl() {
   }
 
   return (
-    <div className="flex items-center gap-2 bg-white rounded-lg shadow-sm border border-zinc-200 p-2">
-      <span className="text-xs text-zinc-600 font-medium">పాఠ్య పరిమాణం:</span>
-      <div className="flex gap-1">
+    <div className={`flex items-center gap-1.5 sm:gap-2 bg-white rounded-lg shadow-sm border border-zinc-200 ${compact ? 'p-1.5' : 'p-2'}`}>
+      {!compact && <span className="text-xs text-zinc-600 font-medium hidden sm:inline">పాఠ్య పరిమాణం:</span>}
+      <div className="flex gap-0.5 sm:gap-1">
         <button
           onClick={() => changeFontSize('small')}
-          className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+          className={`${compact ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-xs'} font-medium rounded transition-colors ${
             fontSize === 'small'
               ? 'bg-red-600 text-white'
               : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
@@ -43,7 +43,7 @@ export function FontSizeControl() {
         </button>
         <button
           onClick={() => changeFontSize('medium')}
-          className={`px-3 py-1.5 text-sm font-medium rounded transition-colors ${
+          className={`${compact ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'} font-medium rounded transition-colors ${
             fontSize === 'medium'
               ? 'bg-red-600 text-white'
               : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
@@ -54,7 +54,7 @@ export function FontSizeControl() {
         </button>
         <button
           onClick={() => changeFontSize('large')}
-          className={`px-3 py-1.5 text-base font-medium rounded transition-colors ${
+          className={`${compact ? 'px-2 py-1 text-sm' : 'px-3 py-1.5 text-base'} font-medium rounded transition-colors ${
             fontSize === 'large'
               ? 'bg-red-600 text-white'
               : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
@@ -69,7 +69,7 @@ export function FontSizeControl() {
 }
 
 // Copy Link Button Component
-export function CopyLinkButton({ url, title }: { url: string; title: string }) {
+export function CopyLinkButton({ url, title, compact = false }: { url: string; title: string; compact?: boolean }) {
   const [copied, setCopied] = useState(false)
 
   const copyLink = async () => {
@@ -87,22 +87,25 @@ export function CopyLinkButton({ url, title }: { url: string; title: string }) {
   return (
     <button
       onClick={copyLink}
-      className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-zinc-200 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:border-red-300 transition-all"
+      className={`inline-flex items-center gap-2 bg-white border border-zinc-200 rounded-lg font-medium text-zinc-700 hover:bg-zinc-50 hover:border-red-300 transition-all shrink-0 ${
+        compact ? 'p-2.5' : 'px-4 py-2 text-sm border-2'
+      }`}
       title={title}
+      aria-label={compact ? 'Copy link' : title}
     >
       {copied ? (
         <>
           <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
-          <span className="text-green-600">కాపీ అయింది!</span>
+          {!compact && <span className="text-green-600">కాపీ అయింది!</span>}
         </>
       ) : (
         <>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
-          <span>లింక్ కాపీ చేయండి</span>
+          {!compact && <span>లింక్ కాపీ చేయండి</span>}
         </>
       )}
     </button>

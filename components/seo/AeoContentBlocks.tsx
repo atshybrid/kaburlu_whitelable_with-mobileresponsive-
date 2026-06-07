@@ -21,6 +21,8 @@ export interface AeoContentBlocksProps {
   variant?: 'default' | 'compact'
   /** Which blocks to render — default: all available */
   sections?: Array<'tldr' | 'facts' | 'faq'>
+  /** Collapse FAQ items into accordion (better on mobile) */
+  faqAccordion?: boolean
 }
 
 /**
@@ -32,6 +34,7 @@ export function AeoContentBlocks({
   lang = 'te',
   variant = 'default',
   sections = ['tldr', 'facts', 'faq'],
+  faqAccordion = false,
 }: AeoContentBlocksProps) {
   const l = LABELS[normalizeLang(lang)] || LABELS.te
   const faqItems = buildFaqFromArticle(article, lang)
@@ -65,16 +68,27 @@ export function AeoContentBlocks({
       )}
 
       {hasFaq && (
-        <div className={`aeo-faq ${compact ? 'aeo-faq--compact' : ''}`}>
+        <div className={`aeo-faq ${compact ? 'aeo-faq--compact' : ''} ${faqAccordion ? 'aeo-faq--accordion' : ''}`}>
           <h2 className="aeo-block-title">{l.faq}</h2>
-          <dl className="aeo-faq-list">
-            {faqItems.map((item, i) => (
-              <div key={i} className="aeo-faq-item">
-                <dt className="aeo-faq-question">{item.question}</dt>
-                <dd className="aeo-faq-answer">{item.answer}</dd>
-              </div>
-            ))}
-          </dl>
+          {faqAccordion ? (
+            <div className="aeo-faq-accordion">
+              {faqItems.map((item, i) => (
+                <details key={i} className="aeo-faq-details" open={i === 0}>
+                  <summary className="aeo-faq-question">{item.question}</summary>
+                  <p className="aeo-faq-answer">{item.answer}</p>
+                </details>
+              ))}
+            </div>
+          ) : (
+            <dl className="aeo-faq-list">
+              {faqItems.map((item, i) => (
+                <div key={i} className="aeo-faq-item">
+                  <dt className="aeo-faq-question">{item.question}</dt>
+                  <dd className="aeo-faq-answer">{item.answer}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
         </div>
       )}
     </aside>

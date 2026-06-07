@@ -72,7 +72,7 @@ export function buildFaqFromArticle(article: Article, lang = 'te'): FaqItem[] {
   const highlights = (article.highlights || []).filter(Boolean).slice(0, 4)
   highlights.forEach((h, i) => {
     items.push({
-      question: `${l.key} ${i + 1}: ${title}?`,
+      question: `${l.key} ${i + 1}`,
       answer: h.trim(),
     })
   })
@@ -272,6 +272,9 @@ export function generateLlmsTxt(opts: {
     `- [About Us](${siteUrl}/about-us)`,
     `- [AI Policy](${siteUrl}/ai-policy)`,
     `- [Sitemap](${siteUrl}/sitemap-index.xml)`,
+    `- [RSS Feed](${siteUrl}/rss)`,
+    `- [Feed XML](${siteUrl}/feed.xml)`,
+    `- [Google News Sitemap](${siteUrl}/sitemap-news.xml)`,
     `- [Full Content Index](${siteUrl}/llms-full.txt)`,
     '',
   ]

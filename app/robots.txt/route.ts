@@ -53,6 +53,10 @@ Allow: /
 # See: ${baseUrl}/llms.txt
 # Full index: ${baseUrl}/llms-full.txt
 
+# RSS Feed (Google Publisher Center)
+# Feed: ${baseUrl}/rss
+# Feed: ${baseUrl}/feed.xml
+
 # Sitemap Index (references all sitemaps)
 Sitemap: ${baseUrl}/sitemap-index.xml
 

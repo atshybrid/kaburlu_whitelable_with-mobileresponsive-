@@ -385,3 +385,406 @@
   z-index: 9999;
 }
 
+/* ── Article insights (highlights, summary, FAQ) — mobile-first ─────────── */
+
+/* Meta chips under title */
+.theme-style1 .s1-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 0.875rem;
+}
+
+.theme-style1 .s1-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #52525b;
+  white-space: nowrap;
+}
+
+.theme-style1 .s1-meta-chip--updated {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.theme-style1 .s1-author-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.875rem;
+  margin-bottom: 0.875rem;
+  border-bottom: 1px solid #e4e4e7;
+}
+
+.theme-style1 .s1-article-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 0.125rem;
+}
+
+.theme-style1 .s1-article-actions::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hero image */
+.theme-style1 .s1-article-hero {
+  margin: 0;
+  padding: 0 1rem 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .theme-style1 .s1-article-hero {
+    padding: 0 1.5rem 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .theme-style1 .s1-article-hero {
+    padding: 0 2.5rem 1.25rem;
+  }
+}
+
+.theme-style1 .s1-article-hero-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: #f4f4f5;
+}
+
+.theme-style1 .s1-article-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.theme-style1 .s1-article-hero-caption {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #71717a;
+  font-style: italic;
+}
+
+.theme-style1 .s1-article-actions .flex.flex-wrap.items-center.gap-3 > span {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .theme-style1 .s1-article-actions .flex.flex-wrap.items-center.gap-3 > span {
+    display: inline;
+  }
+}
+
+.theme-style1 .s1-article-actions .flex.flex-wrap.items-center.gap-3 {
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+}
+
+.theme-style1 .s1-article-actions .flex.gap-2 {
+  gap: 0.375rem;
+}
+
+.theme-style1 .s1-article-actions button {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+}
+
+.theme-style1 .s1-article-insights {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem 0;
+}
+
+@media (min-width: 640px) {
+  .theme-style1 .s1-article-insights {
+    gap: 1rem;
+    padding: 1rem 1.5rem 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .theme-style1 .s1-article-insights {
+    padding: 1.25rem 2.5rem 0;
+  }
+}
+
+.theme-style1 .s1-article-insights--faq {
+  padding-top: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+
+.theme-style1 .s1-insight-card {
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid #e5e7eb;
+}
+
+@media (min-width: 640px) {
+  .theme-style1 .s1-insight-card {
+    padding: 1rem 1.25rem;
+  }
+}
+
+.theme-style1 .s1-insight-card--highlights {
+  background: #f8fafc;
+  border-left: 3px solid #2563eb;
+}
+
+.theme-style1 .s1-insight-card--summary {
+  background: #fffbeb;
+  border-left: 3px solid hsl(var(--primary, 0 72% 51%));
+}
+
+.theme-style1 .s1-insight-title {
+  margin: 0 0 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #374151;
+}
+
+.theme-style1 .s1-insight-card--highlights .s1-insight-title {
+  color: #1d4ed8;
+}
+
+.theme-style1 .s1-insight-card--summary .s1-insight-title {
+  color: hsl(var(--primary, 0 72% 51%));
+}
+
+.theme-style1 .s1-highlights-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.theme-style1 .s1-highlight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.theme-style1 .s1-highlight-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.theme-style1 .s1-highlight-item:first-child {
+  padding-top: 0;
+}
+
+.theme-style1 .s1-highlight-marker {
+  flex-shrink: 0;
+  width: 1.375rem;
+  height: 1.375rem;
+  margin-top: 0.125rem;
+  border-radius: 9999px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-style1 .s1-highlight-text {
+  flex: 1;
+  min-width: 0;
+  font-family: 'Noto Sans Telugu', var(--font-serif);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: #1f2937;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 640px) {
+  .theme-style1 .s1-highlight-text {
+    font-size: 1rem;
+    line-height: 1.8;
+  }
+}
+
+.theme-style1 .s1-summary-text {
+  margin: 0;
+  font-family: 'Noto Sans Telugu', var(--font-serif);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: #1f2937;
+  font-weight: 500;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 640px) {
+  .theme-style1 .s1-summary-text {
+    font-size: 1.0625rem;
+    line-height: 1.85;
+  }
+}
+
+/* FAQ block inside style1 article */
+.theme-style1 .s1-article-insights--faq .aeo-blocks {
+  gap: 0;
+  margin-bottom: 0;
+}
+
+.theme-style1 .s1-article-insights--faq .aeo-faq {
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  background: #fafafa;
+}
+
+.theme-style1 .s1-article-insights--faq .aeo-block-title {
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+.theme-style1 .s1-article-insights--faq .aeo-faq-list {
+  gap: 0.75rem;
+}
+
+.theme-style1 .s1-article-insights--faq .aeo-faq-item {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.theme-style1 .s1-article-insights--faq .aeo-faq-item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.theme-style1 .s1-article-insights--faq .aeo-faq-question {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.5;
+  margin-bottom: 0.375rem;
+}
+
+.theme-style1 .s1-article-insights--faq .aeo-faq-answer {
+  font-family: 'Noto Sans Telugu', var(--font-serif);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: #374151;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* FAQ accordion */
+.aeo-faq--accordion .aeo-faq-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.aeo-faq-details {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.625rem;
+  background: #fff;
+  overflow: hidden;
+}
+
+.aeo-faq-details[open] {
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.aeo-faq-details .aeo-faq-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 0.875rem;
+  margin: 0;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.45;
+}
+
+.aeo-faq-details .aeo-faq-question::-webkit-details-marker {
+  display: none;
+}
+
+.aeo-faq-details .aeo-faq-question::after {
+  content: '+';
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: #f4f4f5;
+  color: #52525b;
+  font-size: 0.875rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aeo-faq-details[open] .aeo-faq-question::after {
+  content: '−';
+  background: hsl(var(--primary, 0 72% 51%) / 0.1);
+  color: hsl(var(--primary, 0 72% 51%));
+}
+
+.aeo-faq-details .aeo-faq-answer {
+  margin: 0;
+  padding: 0 0.875rem 0.75rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.theme-style1 .s1-article-insights--faq .aeo-faq-details .aeo-faq-answer {
+  padding-top: 0.625rem;
+}
+
+/* Article body mobile typography */
+@media (max-width: 639px) {
+  .theme-style1 .article-content-enhanced {
+    font-size: 1rem;
+    line-height: 1.85;
+  }
+
+  .theme-style1 .article-content-enhanced p,
+  .theme-style1 .article-paragraph p {
+    font-size: 1rem;
+    line-height: 1.85;
+    margin-bottom: 1.25rem;
+  }
+
+  .theme-style1 .drop-cap p:first-child::first-letter,
+  .theme-style1 .first-paragraph p:first-child::first-letter {
+    font-size: 3rem;
+    margin-right: 0.1em;
+  }
+}
+

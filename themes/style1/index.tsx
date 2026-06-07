@@ -33,7 +33,7 @@ import {
   type HomepageSmartV2SectionHero,
   type HomepageSmartV2SectionTicker
 } from '@/lib/homepage'
-import { FontSizeControl, CopyLinkButton, ScrollToTopButton, StickyShareBar, ViewCounter } from '@/components/shared/ArticleEnhancements'
+import { FontSizeControl, ScrollToTopButton, StickyShareBar, ViewCounter } from '@/components/shared/ArticleEnhancements'
 import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapper'
 import { getDomainStats } from '@/lib/domain-stats'
 import { themeCssVarsFromSettings } from '@/lib/theme-vars'
@@ -2067,7 +2067,7 @@ function ArticleContentWithMustRead({
 }) {
   if (!html) {
     return (
-      <div className="px-6 sm:px-8 lg:px-10 py-8">
+      <div className="px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
         <div className="text-center py-12">
           <p className="text-zinc-500 text-lg">ఆర్టికల్ కంటెంట్ లోడ్ అవుతోంది...</p>
         </div>
@@ -2081,7 +2081,7 @@ function ArticleContentWithMustRead({
   if (!hasParagraphBlocks) {
     const looksLikeHtml = /<\s*([a-z][\w:-]*)\b/i.test(html)
     return (
-      <div className="article-content-enhanced px-6 sm:px-8 lg:px-10 py-8">
+      <div className="article-content-enhanced px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
         {looksLikeHtml ? (
           <div className="article-paragraph" dangerouslySetInnerHTML={{ __html: html }} />
         ) : (
@@ -2178,7 +2178,7 @@ function ArticleContentWithMustRead({
   }
   
   return (
-    <div className="article-content-enhanced px-6 sm:px-8 lg:px-10 py-8">
+    <div className="article-content-enhanced px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
       {nodes}
     </div>
   )
@@ -2313,9 +2313,9 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
       <ReadingProgress />
       <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} />
       
-      <main className="mx-auto max-w-7xl px-4 py-4 sm:py-6">
-        {/* Enhanced Breadcrumbs */}
-        <nav className="mb-6" aria-label="Breadcrumb">
+      <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 lg:py-6">
+        {/* Enhanced Breadcrumbs — hidden on mobile for cleaner reading */}
+        <nav className="mb-3 sm:mb-6 hidden sm:block" aria-label="Breadcrumb">
           <ol className="flex items-center gap-2 text-sm">
             <li>
               <a href={`/${tenantSlug ? `t/${tenantSlug}` : ''}`} className="flex items-center gap-1 text-zinc-600 hover:text-red-600 transition-colors">
@@ -2345,9 +2345,9 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           {/* Main Article Content */}
           <article className="min-w-0">
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm overflow-hidden">
               {/* Article Header */}
-              <header className="p-6 sm:px-8 lg:px-10">
+              <header className="p-4 sm:p-6 sm:px-8 lg:px-10">
                 {/* Breaking/Live Badge */}
                 {(article.isBreaking || article.isLive) && (
                   <div className="mb-4">
@@ -2374,10 +2374,10 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 
                 {/* Category Badge */}
                 {category && (
-                  <div className="mb-4">
+                  <div className="mb-3 sm:mb-4">
                     <a 
                       href={`/${tenantSlug ? `t/${tenantSlug}/category/${categorySlug}` : `category/${categorySlug}`}`}
-                      className="inline-flex items-center gap-2 rounded-full bg-red-600 px-4 py-1.5 text-sm font-bold text-white hover:bg-red-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1 text-xs sm:text-sm font-bold text-white hover:bg-red-700 transition-colors"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -2389,8 +2389,8 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
 
                 {/* Article Title */}
                 <h1 
-                  className="mb-4 text-3xl sm:text-4xl lg:text-5xl font-black leading-[1.15] text-zinc-900"
-                  style={{ fontFamily: 'Noto Serif Telugu, serif', lineHeight: '1.4' }}
+                  className="mb-3 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-black leading-snug sm:leading-[1.15] text-zinc-900"
+                  style={{ fontFamily: 'Noto Serif Telugu, serif', lineHeight: '1.45' }}
                 >
                   {article.title}
                 </h1>
@@ -2398,16 +2398,28 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 {/* Article Subtitle */}
                 {article.subtitle && (
                   <h2 
-                    className="mb-6 text-xl sm:text-2xl font-medium text-zinc-700 leading-relaxed"
-                    style={{ fontFamily: 'Noto Sans Telugu, sans-serif', lineHeight: '1.8' }}
+                    className="mb-4 sm:mb-6 text-lg sm:text-2xl font-medium text-zinc-700 leading-relaxed"
+                    style={{ fontFamily: 'Noto Sans Telugu, sans-serif', lineHeight: '1.75' }}
                   >
                     {article.subtitle}
                   </h2>
                 )}
+
+                {/* Quick meta chips — mobile-friendly */}
+                <div className="s1-meta-chips">
+                  <time dateTime={publishDate.toISOString()} className="s1-meta-chip">{formattedDate}</time>
+                  <span className="s1-meta-chip">{readingTime} {i18n.readingMinutes}</span>
+                  {article.viewCount && article.viewCount > 0 ? (
+                    <span className="s1-meta-chip">{article.viewCount.toLocaleString('te-IN')} {i18n.views}</span>
+                  ) : null}
+                  {article.updatedAt && article.updatedAt !== article.publishedAt ? (
+                    <span className="s1-meta-chip s1-meta-chip--updated">Updated</span>
+                  ) : null}
+                </div>
                 
-                {/* Article Metadata */}
-                <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-600 pb-6 border-b border-zinc-200">
-                  <div className="flex items-center gap-2">
+                {/* Article Metadata — author */}
+                <div className="s1-author-row">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     {reporter?.photoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img 
@@ -2422,137 +2434,75 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                         </svg>
                       </div>
                     )}
-                    <div>
-                      <div className="text-xs text-zinc-500">{i18n.author}</div>
-                      <div className="font-semibold text-zinc-900">{reporter?.name || primaryAuthor.name || 'Staff Reporter'}</div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] text-zinc-500 uppercase tracking-wide">{i18n.author}</div>
+                      <div className="font-semibold text-sm sm:text-base text-zinc-900 truncate">{reporter?.name || primaryAuthor.name || 'Staff Reporter'}</div>
                     </div>
                   </div>
-                  
-                  <div className="h-8 w-px bg-zinc-300" />
-                  
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <time dateTime={publishDate.toISOString()}>{formattedDate}</time>
-                  </div>
-                  
-                  {/* Updated At - if different from published */}
-                  {article.updatedAt && article.updatedAt !== article.publishedAt && (
-                    <>
-                      <div className="h-8 w-px bg-zinc-300" />
-                      <div className="flex items-center gap-1 text-xs">
-                        <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        <span className="text-amber-600 font-medium">
-                          Updated: {new Date(article.updatedAt).toLocaleDateString('te-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                  
-                  <div className="h-8 w-px bg-zinc-300" />
-                  
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{readingTime} {i18n.readingMinutes}</span>
-                  </div>
-                  
-                  {/* View Count with Animation */}
-                  {article.viewCount && article.viewCount > 0 && (
-                    <>
-                      <div className="h-8 w-px bg-zinc-300" />
+                  {article.viewCount && article.viewCount > 0 ? (
+                    <div className="hidden sm:flex">
                       <ViewCounter viewCount={article.viewCount} />
-                    </>
-                  )}
+                    </div>
+                  ) : null}
                 </div>
 
-                {/* Enhanced Share Section */}
-                <div className="mt-6 flex flex-wrap items-center gap-3">
+                {/* Share + font controls */}
+                <div className="s1-article-actions">
                   <ShareButtons 
                     url={`https://${tenantDomain || 'kaburlutoday.com'}${articleHref(tenantSlug, article.slug || article.id)}`}
                     title={article.title}
                   />
-                  <CopyLinkButton 
-                    url={`https://${tenantDomain || 'kaburlutoday.com'}${articleHref(tenantSlug, article.slug || article.id)}`}
-                    title="Copy article link"
-                  />
-                  <FontSizeControl />
+                  <FontSizeControl compact />
                 </div>
               </header>
 
-              {/* Article Highlights - Shows before image */}
-              {article.highlights && article.highlights.length > 0 && (
-                <div className="px-6 sm:px-8 lg:px-10 pt-8">
-                  <div className="rounded-xl bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-l-4 border-blue-600 p-6 shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <svg className="h-6 w-6 text-blue-600 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                      </svg>
-                      <div className="flex-1">
-                        <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wide mb-3">{i18n.highlights}</h3>
-                        <ul className="space-y-2">
-                          {article.highlights.map((highlight, idx) => (
-                            <li key={idx} className="flex items-start gap-2">
-                              <svg className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
-                              <span className="text-base text-zinc-800 leading-relaxed" style={{ lineHeight: '1.8' }}>{highlight}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Article Summary/Excerpt - Shows after highlights */}
-              {article.excerpt && (
-                <div className="px-6 sm:px-8 lg:px-10 pt-8">
-                  <div className="rounded-xl bg-gradient-to-r from-red-50 via-orange-50 to-amber-50 border-l-4 border-red-600 p-6 shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <svg className="h-6 w-6 text-red-600 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      <div>
-                        <h3 className="text-sm font-bold text-red-700 uppercase tracking-wide mb-2">{i18n.summary}</h3>
-                        <p className="text-base sm:text-lg text-zinc-800 leading-relaxed font-medium" style={{ lineHeight: '1.8' }}>
-                          {article.excerpt}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* AEO FAQ block — complements highlights/summary above */}
-              <div className="px-6 sm:px-8 lg:px-10 pt-8">
-                <AeoContentBlocks article={article} lang={locale} sections={['faq']} />
-              </div>
-
-              {/* Featured Image - Shows after highlights and excerpt */}
+              {/* Featured Image — before insights for better mobile reading flow */}
               {article.coverImage?.url && (
-                <figure className="mt-8">
-                  <div className="relative aspect-video w-full">
+                <figure className="s1-article-hero">
+                  <div className="s1-article-hero-frame">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src={article.coverImage.url} 
                       alt={article.coverImage.alt || article.title} 
-                      className="w-full h-full object-cover" 
+                      className="s1-article-hero-img" 
                       loading="eager"
                     />
                   </div>
                   {article.coverImage.caption && (
-                    <figcaption className="px-6 sm:px-8 lg:px-10 py-3 text-sm text-zinc-600 italic bg-zinc-50">
-                      {article.coverImage.caption}
-                    </figcaption>
+                    <figcaption className="s1-article-hero-caption">{article.coverImage.caption}</figcaption>
                   )}
                 </figure>
               )}
+
+              {/* Article insights — highlights, summary, FAQ (mobile-first) */}
+              {(article.highlights?.length || article.excerpt) && (
+                <div className="s1-article-insights">
+                  {article.excerpt && (
+                    <section className="s1-insight-card s1-insight-card--summary" aria-labelledby="s1-summary-title">
+                      <h3 id="s1-summary-title" className="s1-insight-title">{i18n.summary}</h3>
+                      <p className="s1-summary-text">{article.excerpt}</p>
+                    </section>
+                  )}
+
+                  {article.highlights && article.highlights.length > 0 && (
+                    <section className="s1-insight-card s1-insight-card--highlights" aria-labelledby="s1-highlights-title">
+                      <h3 id="s1-highlights-title" className="s1-insight-title">{i18n.highlights}</h3>
+                      <ul className="s1-highlights-list">
+                        {article.highlights.map((highlight, idx) => (
+                          <li key={idx} className="s1-highlight-item">
+                            <span className="s1-highlight-marker" aria-hidden="true">{idx + 1}</span>
+                            <span className="s1-highlight-text">{highlight}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                </div>
+              )}
+
+              <div className="s1-article-insights s1-article-insights--faq">
+                <AeoContentBlocks article={article} lang={locale} sections={['faq']} faqAccordion />
+              </div>
 
               {/* Top Ad - Above Content */}
               {adPolicy.article.showTopHorizontal ? (
@@ -2575,7 +2525,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
 
               {/* Additional Images Gallery */}
               {article.media?.images && article.media.images.length > 0 && (
-                <div className="px-6 sm:px-8 lg:px-10 pb-8">
+                <div className="px-4 sm:px-6 lg:px-10 pb-6 sm:pb-8">
                   <h3 className="text-xl font-bold text-zinc-900 mb-4 flex items-center gap-2">
                     <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -2606,14 +2556,14 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
 
               {/* Bottom Ad */}
               {adPolicy.article.showBottomInline ? (
-                <div className="px-6 sm:px-8 lg:px-10 pb-8">
+                <div className="px-4 sm:px-6 lg:px-10 pb-6 sm:pb-8">
                   <AdSlot slot="article_inline" settings={settings ?? undefined} />
                 </div>
               ) : null}
 
               {/* Tags */}
               {article.tags && article.tags.length > 0 && (
-                <div className="px-6 sm:px-8 lg:px-10 pb-8 border-b border-zinc-200">
+                <div className="px-4 sm:px-6 lg:px-10 pb-6 sm:pb-8 border-b border-zinc-200">
                   <div className="flex flex-wrap items-center gap-2">
                     <svg className="w-5 h-5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -2631,7 +2581,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
               )}
 
               {/* Like / Dislike / Comments */}
-              <div className="px-6 sm:px-8 lg:px-10 pb-8">
+              <div className="px-4 sm:px-6 lg:px-10 pb-6 sm:pb-8">
                 <ArticleEngagementClient articleId={article.id || article.slug || ''} />
               </div>
 
@@ -2644,7 +2594,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
 
               {/* Multiplex directly after reporter/publisher card for high-intent readers */}
               {adPolicy.article.showMultiplexHorizontal ? (
-                <div className="px-6 sm:px-8 lg:px-10 pb-8 pt-2">
+                <div className="px-4 sm:px-6 lg:px-10 pb-6 sm:pb-8 pt-2">
                   <MultiplexAd slot="article_multiplex_h" />
                 </div>
               ) : null}
