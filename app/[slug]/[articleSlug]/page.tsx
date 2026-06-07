@@ -15,6 +15,8 @@
 import { getArticleBySlug } from '@/lib/data'
 import { resolveTenant } from '@/lib/tenant'
 import { getSettingsResultForDomain, getEffectiveSettingsForDomain } from '@/lib/settings'
+import { agentEnhanceArticle } from '@/lib/ai-agent'
+import { ArticlePageAeo } from '@/components/seo'
 import { DomainNotLinked, TechnicalIssues } from '@/components/shared'
 import { notFound } from 'next/navigation'
 import type { Article } from '@/lib/data-sources'
@@ -250,8 +252,13 @@ export default async function SEOArticlePage({
   }
   
   // Fetch article by articleSlug (category is used for SEO URL, article is fetched by slug)
-  const article = await getArticleBySlug(tenant.id, articleSlug)
-  if (!article) return notFound()
+  const rawArticle = await getArticleBySlug(tenant.id, articleSlug)
+  if (!rawArticle) return notFound()
+
+  const settings = await getEffectiveSettingsForDomain(tenant.domain || 'localhost').catch(() => ({}))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const agentLang = (settings as any)?.content?.defaultLanguage || (settings as any)?.locale || 'te'
+  const article = await agentEnhanceArticle(rawArticle, { lang: agentLang, siteName: tenant.name })
   
   // Optional: Verify category matches (for SEO correctness)
   const articleCategorySlug = article.category?.slug || article.categories?.[0]?.slug
@@ -265,5 +272,16 @@ export default async function SEOArticlePage({
   type ArticleComp = (p: { tenantSlug: string; title: string; article: Article; tenantDomain?: string }) => ReactElement | Promise<ReactElement>
   const Comp = (await getThemeArticle(tenant.themeKey)) as ArticleComp
 
-  return <Comp tenantSlug={tenant.slug} title={tenant.name} article={article} tenantDomain={tenant.domain || undefined} />
+  return (
+    <>
+      <ArticlePageAeo
+        article={article}
+        categorySlug={categorySlug}
+        domain={tenant.domain || 'localhost'}
+        tenantName={tenant.name}
+        settings={settings}
+      />
+      <Comp tenantSlug={tenant.slug} title={tenant.name} article={article} tenantDomain={tenant.domain || undefined} />
+    </>
+  )
 }

@@ -1,0 +1,117 @@
+/* AEO / GEO content blocks — shared across all themes */
+.aeo-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.aeo-block-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.625rem;
+  color: #374151;
+}
+
+.aeo-tldr {
+  padding: 1rem 1.25rem;
+  border-left: 4px solid #dc2626;
+  background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+  border-radius: 0 0.75rem 0.75rem 0;
+}
+
+.aeo-tldr--compact {
+  padding: 0.75rem 1rem;
+}
+
+.aeo-tldr-text {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.aeo-key-facts {
+  padding: 1rem 1.25rem;
+  border-left: 4px solid #2563eb;
+  background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%);
+  border-radius: 0 0.75rem 0.75rem 0;
+}
+
+.aeo-key-facts--compact {
+  padding: 0.75rem 1rem;
+}
+
+.aeo-facts-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.aeo-facts-list li {
+  position: relative;
+  padding-left: 1.25rem;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: #1f2937;
+}
+
+.aeo-facts-list li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.aeo-faq {
+  padding: 1rem 1.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background: #fafafa;
+}
+
+.aeo-faq--compact {
+  padding: 0.75rem 1rem;
+}
+
+.aeo-faq-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.aeo-faq-item {
+  margin: 0;
+}
+
+.aeo-faq-question {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem;
+}
+
+.aeo-faq-answer {
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: #374151;
+  margin: 0;
+}
+
+.theme-style3 .aeo-tldr {
+  border-left-color: var(--s3-accent, #c0392b);
+  background: var(--s3-surface, #f8f8f8);
+}
+
+.theme-style3 .aeo-key-facts {
+  border-left-color: var(--s3-accent, #c0392b);
+  background: var(--s3-surface, #f8f8f8);
+}

@@ -37,7 +37,7 @@ import { FontSizeControl, CopyLinkButton, ScrollToTopButton, StickyShareBar, Vie
 import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapper'
 import { getDomainStats } from '@/lib/domain-stats'
 import { themeCssVarsFromSettings } from '@/lib/theme-vars'
-import { agentEnhanceArticle } from '@/lib/ai-agent'
+import { AeoContentBlocks } from '@/components/seo'
 
 // ── I18n: per-language UI strings ────────────────────────────────────────────
 type I18nStrings = {
@@ -2184,12 +2184,8 @@ function ArticleContentWithMustRead({
   )
 }
 
-export async function ThemeArticle({ tenantSlug, title, article: rawArticle, tenantDomain }: { tenantSlug: string; title: string; article: Article; tenantDomain?: string }) {
+export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }: { tenantSlug: string; title: string; article: Article; tenantDomain?: string }) {
   const settings = await getEffectiveSettings()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const agentLang = (settings as any)?.locale || (settings as any)?.content?.defaultLanguage || 'te'
-  // 🤖 AI Agent: auto-fill missing excerpt, highlights, SEO meta, reading time
-  const article = await agentEnhanceArticle(rawArticle, { lang: agentLang })
   const adPolicy = getAdsPlacementPolicy(settings)
 
   if (process.env.NODE_ENV !== 'production') {
@@ -2532,6 +2528,11 @@ export async function ThemeArticle({ tenantSlug, title, article: rawArticle, ten
                   </div>
                 </div>
               )}
+
+              {/* AEO FAQ block — complements highlights/summary above */}
+              <div className="px-6 sm:px-8 lg:px-10 pt-8">
+                <AeoContentBlocks article={article} lang={locale} sections={['faq']} />
+              </div>
 
               {/* Featured Image - Shows after highlights and excerpt */}
               {article.coverImage?.url && (

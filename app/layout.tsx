@@ -6,6 +6,7 @@ import { getSEOHomepage, generateJSONLD } from "@/lib/seo";
 import { ThemeColorVars } from "@/components/ConfigLoader";
 import { Analytics, SiteVerification, StructuredData, WebPushManager } from "@/components/seo";
 import "./globals.css";
+import "@/components/seo/aeo.css";
 import { OfflineDetector } from "@/components/shared/OfflineDetector";
 import { ReaderAuthProvider } from '@/context/ReaderAuthContext';
 // Load theme styles globally so root pages can apply theme-specific classes

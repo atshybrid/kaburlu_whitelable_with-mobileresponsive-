@@ -17,7 +17,7 @@ export async function GET() {
     const baseUrl = `${protocol}://${domain}`
     
     const robotsTxt = `# Robots.txt for ${domain}
-# Telugu News Website - Optimized for Google News
+# News Website — SEO + AEO + LLMS optimized
 
 User-agent: *
 Allow: /
@@ -26,8 +26,32 @@ Disallow: /admin/
 Disallow: /_next/
 Disallow: /private/
 
-# Crawl Delay (optional - use if needed)
-# Crawl-delay: 1
+# AI / LLM crawlers — allow public content for citations
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# LLM content guide
+# See: ${baseUrl}/llms.txt
+# Full index: ${baseUrl}/llms-full.txt
 
 # Sitemap Index (references all sitemaps)
 Sitemap: ${baseUrl}/sitemap-index.xml

@@ -8,6 +8,7 @@ import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapp
 import ArticleEngagementClient from '@/components/shared/ArticleEngagementClient'
 import { AdSlot } from '@/components/ads/AdSlot'
 import { getAdsSettings, resolveProvider } from '@/lib/ads'
+import { AeoContentBlocks } from '@/components/seo'
 import type { Article } from '@/lib/data-sources'
 import { getLatestArticles, getMustReadArticles, getRelatedArticles, getTrendingArticles } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
@@ -1831,23 +1832,6 @@ export async function ThemeArticle({
   // Sidebar latest (filter out current article)
   const sidebarLatest = latestArticles.filter((a) => a.id !== article.id).slice(0, 8)
 
-  const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'NewsArticle',
-    headline: article.title,
-    ...(article.coverImage?.url ? { image: [article.coverImage.url] } : {}),
-    datePublished: article.publishedAt || new Date().toISOString(),
-    author: {
-      '@type': 'Organization',
-      name: title,
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: title,
-      ...(settings?.branding?.logoUrl ? { logo: { '@type': 'ImageObject', url: settings.branding.logoUrl } } : {}),
-    },
-  }
-
   const contentData = (article as unknown as Record<string, unknown>)?.contentData
   const nestedContentHtml =
     contentData && typeof contentData === 'object' && typeof (contentData as Record<string, unknown>).contentHtml === 'string'
@@ -1877,8 +1861,6 @@ export async function ThemeArticle({
           articleId={article.id || article.slug}
         />
       )}
-      
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       
       <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} variant="style2" />
       
@@ -1912,6 +1894,8 @@ export async function ThemeArticle({
                 ) : null}
               </div>
             </header>
+
+            <AeoContentBlocks article={article} lang="te" />
 
             {article.coverImage?.url ? (
               <figure className="mb-6 -mx-4 sm:mx-0">

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { AdSlot } from '@/components/ads/AdSlot'
+import { AeoContentBlocks } from '@/components/seo'
 import type { Article } from '@/lib/data-sources'
 import type { EffectiveSettings } from '@/lib/remote'
 import { articleHrefFromArticle, categoryHref, homeHref } from '@/lib/url'
@@ -252,6 +253,8 @@ export function ThemeArticle({ tenantSlug, title, article, settings }: ThemeArti
               {article.viewCount ? <span>{article.viewCount.toLocaleString('en-IN')} views</span> : null}
             </div>
           </header>
+
+          <AeoContentBlocks article={article} lang="te" variant="compact" />
 
           <ArticleThumb article={article} className="s3-article-img" />
           <div className="s3-ad-wrap">
