@@ -667,6 +667,32 @@ function normalizeNewArticleResponse(response: Record<string, unknown>): Article
   const blocks = contentObj?.blocks
   const inlineImages = contentObj?.inlineImages
 
+  // Flatten nested content fields → top-level (backend may send either shape)
+  const flattenedContentHtml =
+    str(article.contentHtml) ||
+    str(article.content_html) ||
+    str(contentObj?.contentHtml) ||
+    str(contentObj?.content_html) ||
+    str(contentObj?.contentHTML) ||
+    undefined
+
+  const flattenedExcerpt =
+    str(article.excerpt) ||
+    str(article.summary) ||
+    str(contentObj?.excerpt) ||
+    undefined
+
+  const flattenedHighlights = (() => {
+    const fromTop = Array.isArray(article.highlights)
+      ? (article.highlights as unknown[]).filter((h) => typeof h === 'string') as string[]
+      : []
+    if (fromTop.length > 0) return fromTop
+    if (Array.isArray(contentObj?.highlights)) {
+      return (contentObj.highlights as unknown[]).filter((h) => typeof h === 'string') as string[]
+    }
+    return undefined
+  })()
+
   const articleObj = article as Record<string, unknown>
   const authorLike = obj(articleObj.author) || obj(articleObj.reporter) || obj(responseReporter)
   const normalizeName = (name?: string) => {
@@ -786,26 +812,20 @@ function normalizeNewArticleResponse(response: Record<string, unknown>): Article
     ...inlineImagesFromArticleImages,
   ]
 
-  // Content - check multiple field names + nested shapes
+  // Content - check multiple field names + nested shapes (flattened first)
   const contentCandidate =
-    str(article.content_html) ||
-    str(article.contentHtml) ||
+    flattenedContentHtml ||
     str(article.body_html) ||
     str(article.bodyHtml) ||
     str(article.description_html) ||
     str(article.descriptionHtml) ||
     str(article.html) ||
-    str(article.content) ||
+    (typeof article.content === 'string' ? str(article.content) : undefined) ||
     str(article.body) ||
-    // Some backends nest content inside `article.content` object
-    str(obj(article.content)?.content_html) ||
-    str(obj(article.content)?.contentHtml) ||
-    str(obj(article.content)?.contentHTML) ||
-    str(obj(article.content)?.html) ||
-    str(obj(article.content)?.rendered) ||
-    str(obj(article.content)?.value) ||
-    // Prefer HTML over plain text
-    str(obj(article.content)?.plainText) ||
+    str(contentObj?.html) ||
+    str(contentObj?.rendered) ||
+    str(contentObj?.value) ||
+    str(contentObj?.plainText) ||
     str(obj(article.body)?.html) ||
     str(obj(article.body)?.rendered) ||
     str(obj(article.body)?.value) ||
@@ -830,8 +850,8 @@ function normalizeNewArticleResponse(response: Record<string, unknown>): Article
     contentHtml: contentHtml,
     content: contentHtml, // Also set content for fallback
     plainText: str(article.plainText) || str(contentObj?.plainText),
-    excerpt: article.excerpt || article.summary || str(contentObj?.excerpt),
-    highlights: (Array.isArray(contentObj?.highlights) ? (contentObj?.highlights as unknown[]).filter((h) => typeof h === 'string') as string[] : undefined),
+    excerpt: flattenedExcerpt,
+    highlights: flattenedHighlights,
 
     // Preserve richer structured content for best UX renderers
     contentData: contentObj,

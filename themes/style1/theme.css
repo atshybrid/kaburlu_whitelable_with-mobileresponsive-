@@ -460,16 +460,22 @@
 .theme-style1 .s1-article-hero-frame {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
   border-radius: 0.75rem;
   overflow: hidden;
   background: #f4f4f5;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  max-height: min(72vh, 560px);
 }
 
 .theme-style1 .s1-article-hero-img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  max-height: min(72vh, 560px);
+  object-fit: contain;
+  object-position: top center;
+  display: block;
 }
 
 .theme-style1 .s1-article-hero-caption {

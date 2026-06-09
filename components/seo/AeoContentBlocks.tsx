@@ -23,6 +23,8 @@ export interface AeoContentBlocksProps {
   sections?: Array<'tldr' | 'facts' | 'faq'>
   /** Collapse FAQ items into accordion (better on mobile) */
   faqAccordion?: boolean
+  /** Skip duplicate summary FAQ when summary block is already visible */
+  skipSummaryQuestion?: boolean
 }
 
 /**
@@ -35,9 +37,10 @@ export function AeoContentBlocks({
   variant = 'default',
   sections = ['tldr', 'facts', 'faq'],
   faqAccordion = false,
+  skipSummaryQuestion = false,
 }: AeoContentBlocksProps) {
   const l = LABELS[normalizeLang(lang)] || LABELS.te
-  const faqItems = buildFaqFromArticle(article, lang)
+  const faqItems = buildFaqFromArticle(article, lang, { skipSummaryQuestion })
   const show = (s: 'tldr' | 'facts' | 'faq') => sections.includes(s)
   const hasTldr = show('tldr') && Boolean(article.excerpt?.trim())
   const hasFacts = show('facts') && Boolean(article.highlights?.length)

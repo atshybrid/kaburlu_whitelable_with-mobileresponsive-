@@ -38,6 +38,7 @@ import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapp
 import { getDomainStats } from '@/lib/domain-stats'
 import { themeCssVarsFromSettings } from '@/lib/theme-vars'
 import { AeoContentBlocks } from '@/components/seo'
+import { resolveArticleBodyHtml } from '@/lib/article-body'
 
 // ── I18n: per-language UI strings ────────────────────────────────────────────
 type I18nStrings = {
@@ -2066,17 +2067,10 @@ function ArticleContentWithMustRead({
   forceEarlyInline?: boolean;
 }) {
   if (!html) {
-    return (
-      <div className="px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
-        <div className="text-center py-12">
-          <p className="text-zinc-500 text-lg">ఆర్టికల్ కంటెంట్ లోడ్ అవుతోంది...</p>
-        </div>
-      </div>
-    )
+    return null
   }
 
   // Some backends return HTML without <p> blocks (e.g. <br>-based markup) or plain text.
-  // The enhanced renderer below expects </p> delimiters; when missing, render as a single block.
   const hasParagraphBlocks = /<\s*\/\s*p\s*>/i.test(html)
   if (!hasParagraphBlocks) {
     const looksLikeHtml = /<\s*([a-z][\w:-]*)\b/i.test(html)
@@ -2254,33 +2248,11 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
   const publisher = article.publisher
   
 
-  // Robust article body extraction (some backends nest content under `article.content` object)
-  const rawContent = (article as unknown as Record<string, unknown>)?.content
-  const contentData = (article as unknown as Record<string, unknown>)?.contentData
-  const nestedContentHtml =
-    rawContent && typeof rawContent === 'object' && typeof (rawContent as Record<string, unknown>).contentHtml === 'string'
-      ? String((rawContent as Record<string, unknown>).contentHtml)
-      : undefined
-  const nestedContentHtml2 =
-    contentData && typeof contentData === 'object' && typeof (contentData as Record<string, unknown>).contentHtml === 'string'
-      ? String((contentData as Record<string, unknown>).contentHtml)
-      : undefined
-  const nestedPlainText =
-    rawContent && typeof rawContent === 'object' && typeof (rawContent as Record<string, unknown>).plainText === 'string'
-      ? String((rawContent as Record<string, unknown>).plainText)
-      : undefined
-  const nestedPlainText2 =
-    contentData && typeof contentData === 'object' && typeof (contentData as Record<string, unknown>).plainText === 'string'
-      ? String((contentData as Record<string, unknown>).plainText)
-      : undefined
-  const articleBodyHtml =
-    (typeof article.contentHtml === 'string' && article.contentHtml.trim() ? article.contentHtml : undefined) ||
-    (typeof article.content === 'string' && article.content.trim() ? article.content : undefined) ||
-    (nestedContentHtml && nestedContentHtml.trim() ? nestedContentHtml : undefined) ||
-    (nestedContentHtml2 && nestedContentHtml2.trim() ? nestedContentHtml2 : undefined) ||
-    (nestedPlainText && nestedPlainText.trim() ? nestedPlainText : undefined) ||
-    (nestedPlainText2 && nestedPlainText2.trim() ? nestedPlainText2 : undefined) ||
-    ''
+  // Robust article body extraction (handles all backend field shapes)
+  const articleBodyHtml = resolveArticleBodyHtml(article, {
+    skipExcerptFallback: Boolean(article.excerpt?.trim()),
+    skipHighlightsFallback: Boolean(article.highlights?.length),
+  })
   
   // Use fetched data for sidebar/bottom sections
   const trending = trendingArticles
@@ -2501,7 +2473,13 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
               )}
 
               <div className="s1-article-insights s1-article-insights--faq">
-                <AeoContentBlocks article={article} lang={locale} sections={['faq']} faqAccordion />
+                <AeoContentBlocks
+                  article={article}
+                  lang={locale}
+                  sections={['faq']}
+                  faqAccordion
+                  skipSummaryQuestion={Boolean(article.excerpt?.trim())}
+                />
               </div>
 
               {/* Top Ad - Above Content */}
@@ -2513,6 +2491,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
               ) : null}
 
               {/* Article Content with Must-Read Card and In-Article Images */}
+              {articleBodyHtml ? (
               <ArticleContentWithMustRead 
                 html={articleBodyHtml} 
                 tenantSlug={tenantSlug}
@@ -2522,6 +2501,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 inlineMax={adPolicy.article.inlineMax}
                 forceEarlyInline={adPolicy.article.forceEarlyInline}
               />
+              ) : null}
 
               {/* Additional Images Gallery */}
               {article.media?.images && article.media.images.length > 0 && (

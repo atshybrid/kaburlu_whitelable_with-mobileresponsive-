@@ -50,8 +50,12 @@ function pickImageUrl(article: Article): string | undefined {
   )
 }
 
-/** Build FAQ pairs from excerpt + highlights (AEO / Answer Engine Optimization) */
-export function buildFaqFromArticle(article: Article, lang = 'te'): FaqItem[] {
+/** Build FAQ pairs from highlights only (summary shown separately on article page) */
+export function buildFaqFromArticle(
+  article: Article,
+  lang = 'te',
+  opts?: { skipSummaryQuestion?: boolean },
+): FaqItem[] {
   const items: FaqItem[] = []
   const title = article.title?.trim()
   if (!title) return items
@@ -65,11 +69,13 @@ export function buildFaqFromArticle(article: Article, lang = 'te'): FaqItem[] {
   }
   const l = labels[normalizeLang(lang)] || labels.te
 
-  if (article.excerpt?.trim()) {
+  const highlights = (article.highlights || []).filter(Boolean).slice(0, 4)
+
+  // Only add summary FAQ when summary is NOT already shown on the page
+  if (!opts?.skipSummaryQuestion && article.excerpt?.trim() && highlights.length === 0) {
     items.push({ question: l.about, answer: article.excerpt.trim() })
   }
 
-  const highlights = (article.highlights || []).filter(Boolean).slice(0, 4)
   highlights.forEach((h, i) => {
     items.push({
       question: `${l.key} ${i + 1}`,
