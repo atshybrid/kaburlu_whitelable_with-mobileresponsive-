@@ -91,12 +91,12 @@ export function proxy(request: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/t/') || // Already rewritten
-    pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot)$/)
+    pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot|txt|xml|json|webmanifest)$/)
   ) {
     const response = NextResponse.next({ request: { headers: requestHeaders } })
     response.headers.set('X-Tenant-Domain', tenantDomain)
     // Static files can be cached, but HTML should not
-    if (!pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot)$/)) {
+    if (!pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot|txt|xml|json|webmanifest)$/)) {
       response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
       response.headers.set('Pragma', 'no-cache')
       response.headers.set('Expires', '0')
