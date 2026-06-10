@@ -41,7 +41,7 @@ export function WebPushManager({
   fcmSenderId,
   enabled = true,
 }: WebPushManagerProps) {
-  const { permission, isSupported, isSubscribed, isBusy, handleSubscribe, handleUnsubscribe } =
+  const { permission, isSupported, isSubscribed, isBusy, handleSubscribe } =
     useWebPush({ vapidPublicKey, fcmSenderId, enabled })
 
   const [showPopup, setShowPopup] = useState(false)
@@ -129,17 +129,6 @@ export function WebPushManager({
         </div>
       )}
 
-      {isSubscribed && (
-        <button
-          onClick={() => void handleUnsubscribe()}
-          disabled={isBusy}
-          title="Notifications on — click to disable"
-          className="fixed bottom-20 right-4 z-[70] flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-lg shadow-lg transition-opacity hover:opacity-80 disabled:opacity-50 sm:bottom-4"
-          aria-label="Disable push notifications"
-        >
-          🔔
-        </button>
-      )}
     </>
   )
 }
