@@ -194,7 +194,7 @@ export async function Navbar({
   }
 
   return (
-    <header id="top" className="w-full border-b border-zinc-200 bg-white sticky top-0 z-50 shadow-sm">
+    <header id="top" className="relative z-[100] w-full overflow-visible border-b border-zinc-200 bg-white sticky top-0 shadow-sm">
       <div className="mx-auto max-w-7xl px-3 sm:px-4">
         {/* Top bar with logo and title - Mobile optimized */}
         <div className="flex h-14 items-center justify-between sm:h-20">
@@ -217,7 +217,7 @@ export async function Navbar({
           </div>
         </div>
         {/* Navigation row - Desktop only */}
-        <div className="hidden pb-2 sm:block">
+        <div className="hidden overflow-visible pb-2 sm:block">
           <NavbarMenuClient items={items} />
         </div>
       </div>

@@ -33,7 +33,7 @@ import {
   type HomepageSmartV2SectionHero,
   type HomepageSmartV2SectionTicker
 } from '@/lib/homepage'
-import { FontSizeControl, ScrollToTopButton, StickyShareBar, ViewCounter } from '@/components/shared/ArticleEnhancements'
+import { FontSizeControl, ScrollToTopButton, StickyShareBar } from '@/components/shared/ArticleEnhancements'
 import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapper'
 import { getDomainStats } from '@/lib/domain-stats'
 import { themeCssVarsFromSettings } from '@/lib/theme-vars'
@@ -171,7 +171,7 @@ function ShimmerBox({ className }: { className?: string }) {
 
 function ArticlePageSkeleton() {
   return (
-    <div className="theme-style1 bg-zinc-50 min-h-screen">
+    <div className="theme-style1 min-h-screen bg-zinc-50 pb-20 sm:pb-0">
       {/* Shimmer Animation Keyframes - injected via style tag */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes shimmer {
@@ -592,9 +592,9 @@ function Section({ title, children, noShadow, flushBody, viewMoreHref, bodyClass
   return (
     <section className={`mb-6 sm:mb-8 rounded-xl bg-white border border-zinc-100 ${noShadow ? '' : 'shadow-sm'}`}>
       {hasTitle && (
-        <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-zinc-100 bg-linear-to-r from-zinc-50 to-white">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-zinc-100 bg-gradient-to-r from-zinc-50 to-white">
           <div className="inline-flex items-center gap-2">
-            <span className="inline-block h-5 sm:h-6 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500 shadow-sm" />
+            <span className="inline-block h-5 sm:h-6 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500 shadow-sm" />
             <span className="text-[13px] sm:text-sm font-bold uppercase tracking-wide text-zinc-900">{title}</span>
           </div>
           {viewMoreHref ? (
@@ -692,7 +692,7 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
       <section className="mb-8 rounded-xl bg-white">
         <div className="flex items-center justify-between px-4 py-2">
           <div className="inline-flex items-center gap-2">
-            <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
+            <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
             <span className="text-sm font-bold uppercase tracking-wide">{extractCategoryName(category.name)}</span>
           </div>
         </div>
@@ -708,7 +708,7 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
       <section className="mb-8 rounded-xl bg-white">
         <div className="flex items-center justify-between px-4 py-2">
           <div className="inline-flex items-center gap-2">
-            <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
+            <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
             <span className="text-sm font-bold uppercase tracking-wide">{extractCategoryName(category.name)}</span>
           </div>
         </div>
@@ -734,7 +734,7 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
     <section className="mb-8 rounded-xl bg-white">
       <div className="flex items-center justify-between px-4 py-2">
         <div className="inline-flex items-center gap-2">
-          <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
+          <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
           {href ? (
             <a href={href} className="text-sm font-bold uppercase tracking-wide hover:text-red-600">
               {title}
@@ -761,7 +761,7 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
             >
               {a.title}
             </a>
-            <div className="h-17 w-25 overflow-hidden rounded">
+            <div className="h-[4.25rem] w-[6.25rem] shrink-0 overflow-hidden rounded">
               {a.coverImage?.url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={a.coverImage.url} alt={a.title} className="h-full w-full object-cover" />
@@ -1147,14 +1147,7 @@ export async function ThemeHome({
     shapedHomepage = shapedHomepageResult.data
     homepage = homepageResult.data
 
-    if (shapedHomepage) {
-      console.log('✅ Shaped homepage loaded (fallback):', {
-        hasHero: !!shapedHomepage?.hero,
-        hasTopStories: !!shapedHomepage?.topStories,
-        sectionsCount: shapedHomepage?.sections?.length || 0,
-        dataKeys: Object.keys(shapedHomepage?.data || {}),
-      })
-    } else if (shapedHomepageResult.error) {
+    if (!shapedHomepage && shapedHomepageResult.error) {
       console.error('❌ Shaped homepage failed (fallback):', shapedHomepageResult.error)
     }
   }
@@ -1412,7 +1405,7 @@ export async function ThemeHome({
               <div key={block.id} className="flex flex-col flex-1">
                 <section className="rounded-xl bg-white p-4">
                   <h3 className="mb-3 text-sm font-bold uppercase tracking-wide flex items-center gap-2">
-                    <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-orange-500 to-orange-400" />
+                    <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-orange-500 to-orange-400" />
                     {i18n.mustRead}
                   </h3>
                   <div className="grid grid-cols-1 gap-3">
@@ -1431,7 +1424,7 @@ export async function ThemeHome({
               <div key={block.id} className="flex flex-col flex-1">
                 <section className="rounded-xl bg-white p-4 h-full">
                   <h3 className="mb-3 text-sm font-bold uppercase tracking-wide flex items-center gap-2">
-                    <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
+                    <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
                     {i18n.topArticles}
                   </h3>
                   <div className="grid grid-cols-1 gap-3">
@@ -1751,7 +1744,7 @@ export async function ThemeHome({
   // ⚡ domainStats already fetched in parallel at the top - no extra call needed!
 
   return (
-    <div className="theme-style1" style={cssVars}>
+    <div className="theme-style1 pb-20 sm:pb-0" style={cssVars}>
       <Navbar tenantSlug={tenantSlugForLinks} title={siteName} logoUrl={logoUrl} />
       {/* Top Leaderboard Banner — 728×90 desktop / 320×50 mobile */}
       {adPolicy.home.showTopBanner && resolveProvider(getAdsSettings(settings ?? undefined), 'home_top_banner') !== 'none' ? (
@@ -2271,7 +2264,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
   const cssVars = themeCssVarsFromSettings(settings)
 
   return (
-    <div className="theme-style1 bg-zinc-50" style={cssVars}>
+    <div className="theme-style1 bg-zinc-50 pb-20 sm:pb-0" style={cssVars}>
       {/* Congratulations Overlay for View Milestones */}
       {article.viewCount && article.viewCount > 0 && (
         <CongratulationsWrapper 
@@ -2285,7 +2278,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
       <ReadingProgress />
       <Navbar tenantSlug={tenantSlug} title={title} logoUrl={settings?.branding?.logoUrl} />
       
-      <main className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 lg:py-6">
+      <main id="main-content" className="mx-auto max-w-7xl px-3 py-3 sm:px-4 sm:py-4 lg:py-6">
         {/* Enhanced Breadcrumbs — hidden on mobile for cleaner reading */}
         <nav className="mb-3 sm:mb-6 hidden sm:block" aria-label="Breadcrumb">
           <ol className="flex items-center gap-2 text-sm">
@@ -2308,8 +2301,8 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
               </>
             )}
             <li className="text-zinc-400">/</li>
-            <li className="text-zinc-900 font-medium truncate max-w-xs" title={article.title}>
-              {article.title.substring(0, 40)}...
+            <li className="max-w-xs truncate font-medium text-zinc-900" title={article.title}>
+              {article.title.length > 48 ? `${article.title.substring(0, 48)}…` : article.title}
             </li>
           </ol>
         </nav>
@@ -2411,11 +2404,6 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                       <div className="font-semibold text-sm sm:text-base text-zinc-900 truncate">{reporter?.name || primaryAuthor.name || 'Staff Reporter'}</div>
                     </div>
                   </div>
-                  {article.viewCount && article.viewCount > 0 ? (
-                    <div className="hidden sm:flex">
-                      <ViewCounter viewCount={article.viewCount} />
-                    </div>
-                  ) : null}
                 </div>
 
                 {/* Share + font controls */}
@@ -2551,7 +2539,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                     {article.tags.map((tag, idx) => (
                       <span 
                         key={idx} 
-                        className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-zinc-100 text-zinc-700 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
+                        className="inline-flex items-center rounded-full bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-700"
                       >
                         #{tag}
                       </span>
@@ -2929,13 +2917,7 @@ async function ConditionalAdBanner({ variant }: { variant: 'horizontal' | 'tall'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function InterleavedArticle({ html }: { html: string }) {
-  if (!html) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-zinc-500 text-lg">Article content is loading...</p>
-      </div>
-    )
-  }
+  if (!html) return null
   
   const parts = html.split(/<\/p>/i)
   const every = getAdEveryN()
@@ -2997,7 +2979,7 @@ async function MustReadSection({ tenantSlug, currentArticleId }: { tenantSlug: s
     <section id="must-read" className="mb-12 scroll-mt-24">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-zinc-900 flex items-center gap-3">
-          <span className="inline-block h-8 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
+          <span className="inline-block h-8 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
           Must Read
         </h2>
         <p className="mt-2 text-zinc-600">Don&apos;t miss these trending stories</p>
@@ -3048,8 +3030,8 @@ async function MustReadSection({ tenantSlug, currentArticleId }: { tenantSlug: s
 function ReporterSection({ reporter }: { reporter: { name: string; photo: string; designation: string; bio: string } }) {
   return (
     <section id="author" className="mb-12 scroll-mt-24">
-      <div className="rounded-2xl bg-linear-to-br from-zinc-50 to-white border border-zinc-200 shadow-sm overflow-hidden">
-        <div className="bg-linear-to-r from-red-600 to-red-500 px-6 py-4">
+      <div className="rounded-2xl bg-gradient-to-br from-zinc-50 to-white border border-zinc-200 shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-red-600 to-red-500 px-6 py-4">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -3070,7 +3052,7 @@ function ReporterSection({ reporter }: { reporter: { name: string; photo: string
                   loading="lazy"
                 />
               ) : (
-                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-linear-to-br from-red-600 to-red-500 flex items-center justify-center border-4 border-white shadow-lg">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-red-600 to-red-500 flex items-center justify-center border-4 border-white shadow-lg">
                   <span className="text-white text-3xl sm:text-4xl font-bold">
                     {reporter.name.charAt(0).toUpperCase()}
                   </span>
@@ -3190,7 +3172,7 @@ async function MostReadSidebar({ tenantSlug, currentArticleId }: { tenantSlug: s
 
   return (
     <div className="rounded-xl bg-white shadow-lg overflow-hidden border border-zinc-100">
-      <div className="bg-linear-to-r from-red-600 via-red-500 to-pink-600 px-5 py-4">
+      <div className="bg-gradient-to-r from-red-600 via-red-500 to-pink-600 px-5 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
             <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3209,13 +3191,13 @@ async function MostReadSidebar({ tenantSlug, currentArticleId }: { tenantSlug: s
           <a 
             key={a.id} 
             href={articleHref(tenantSlug, a.slug || a.id)} 
-            className="group flex gap-3 p-4 hover:bg-linear-to-r hover:from-red-50 hover:to-transparent transition-all"
+            className="group flex gap-3 p-4 hover:bg-gradient-to-r hover:from-red-50 hover:to-transparent transition-all"
           >
             {/* Rank Number */}
             <div className="shrink-0">
               <div className={`flex h-8 w-8 items-center justify-center rounded-lg font-bold text-sm ${
                 index < 3 
-                  ? 'bg-linear-to-br from-red-600 to-red-500 text-white shadow-md' 
+                  ? 'bg-gradient-to-br from-red-600 to-red-500 text-white shadow-md' 
                   : 'bg-zinc-100 text-zinc-600 group-hover:bg-red-100 group-hover:text-red-600'
               }`}>
                 {index + 1}
@@ -3502,15 +3484,11 @@ async function CategoryColumns({
     let items: Article[] = []
     for (const slug of slugsToCheck) {
       items = sectionDataMap[slug] || []
-      if (items.length > 0) {
-        console.log(`✅ Using pre-fetched data for ${c.name} (${slug}): ${items.length} items`)
-        break
-      }
+      if (items.length > 0) break
     }
 
     // If not enough items, fetch from category API
     if (items.length < 5) {
-      console.log(`⚠️ Fetching more for ${c.name}...`)
       const categoryArticles = await getArticlesByCategory('na', c.slug)
       items = fillToCount(items.length > 0 ? items : categoryArticles, feed, 5)
     }
@@ -3670,7 +3648,7 @@ async function CategoryColumns({
     <section className="mb-8 rounded-xl bg-white">
       <div className="flex items-center justify-between border-b px-4 py-2">
         <div className="inline-flex items-center gap-2">
-          <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
+          <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
           {href ? (
             <a href={href} className="text-sm font-bold uppercase tracking-wide hover:text-red-600">
               {title}
@@ -3796,7 +3774,7 @@ async function HGBlock({ tenantSlug }: { tenantSlug: string }) {
         <div key={c.id} className={idx > 0 ? 'mt-6' : ''}>
           <div className="flex items-center justify-between px-3 py-2">
             <a href={categoryHref(tenantSlug, c.slug)} className="inline-flex items-center gap-2 text-base font-bold">
-              <span className="inline-block h-5 w-1.5 rounded-full bg-linear-to-b from-red-600 to-red-500" />
+              <span className="inline-block h-5 w-1.5 rounded-full bg-gradient-to-b from-red-600 to-red-500" />
               <span className="hover:text-red-600">{extractCategoryName(c.name)}</span>
             </a>
             <a
@@ -3840,7 +3818,7 @@ async function HGBlock({ tenantSlug }: { tenantSlug: string }) {
                     ) : (
                       <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
                     )}
-                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/10 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-4">
                       <h3 className="text-white text-lg font-extrabold leading-snug line-clamp-2 drop-shadow-md">{featured.title}</h3>
                     </div>

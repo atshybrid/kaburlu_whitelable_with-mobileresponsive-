@@ -374,15 +374,38 @@
 }
 
 /* Reading Progress Bar */
-.theme-style1 .reading-progress-bar {
+.theme-style1 .reading-progress-bar,
+.theme-style1 .reading-progress-track {
   position: fixed;
   top: 0;
   left: 0;
+  right: 0;
   height: 3px;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.theme-style1 .reading-progress-bar {
   background: linear-gradient(90deg, #dc2626, #ef4444, #f97316);
   transform-origin: left;
   transition: transform 0.1s ease-out;
-  z-index: 9999;
+}
+
+.theme-style1 .reading-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #dc2626, #ef4444, #f97316);
+  transform-origin: left;
+}
+
+/* Mobile bottom nav clearance */
+.theme-style1 {
+  --s1-mobile-nav-height: 4rem;
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .theme-style1.pb-20 {
+    padding-bottom: calc(var(--s1-mobile-nav-height) + env(safe-area-inset-bottom));
+  }
 }
 
 /* ── Article insights (highlights, summary, FAQ) — mobile-first ─────────── */
@@ -431,8 +454,16 @@
   gap: 0.5rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
   padding-bottom: 0.125rem;
+}
+
+.theme-style1 .s1-article-actions:focus,
+.theme-style1 .s1-article-actions:focus-within,
+.theme-style1 .s1-article-actions *:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
 }
 
 .theme-style1 .s1-article-actions::-webkit-scrollbar {
@@ -516,6 +547,7 @@
   flex-direction: column;
   gap: 0.75rem;
   padding: 0.75rem 1rem 0;
+  touch-action: pan-y;
 }
 
 @media (min-width: 640px) {
@@ -556,6 +588,20 @@
 .theme-style1 .s1-insight-card--summary {
   background: #fffbeb;
   border-left: 3px solid hsl(var(--primary, 0 72% 51%));
+}
+
+/* No spurious focus ring when scrolling with mouse over insight blocks */
+.theme-style1 .s1-insight-card:focus,
+.theme-style1 .s1-insight-card:focus-within,
+.theme-style1 .s1-article-insights:focus,
+.theme-style1 .s1-article-insights:focus-within {
+  outline: none;
+  box-shadow: none;
+}
+
+.theme-style1 .s1-article-insights *:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
 }
 
 .theme-style1 .s1-insight-title {

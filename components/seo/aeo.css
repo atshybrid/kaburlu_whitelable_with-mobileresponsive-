@@ -115,3 +115,22 @@
   border-left-color: var(--s3-accent, #c0392b);
   background: var(--s3-surface, #f8f8f8);
 }
+
+/* Prevent blue focus rings when scrolling with mouse (keep keyboard a11y) */
+.aeo-blocks:focus,
+.aeo-blocks:focus-within,
+.aeo-tldr:focus,
+.aeo-key-facts:focus,
+.aeo-faq:focus {
+  outline: none;
+}
+
+.aeo-faq-details summary:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.aeo-faq-details summary:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}

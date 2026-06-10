@@ -1,3 +1,5 @@
+'use client'
+
 import { buildFaqFromArticle } from '@/lib/aeo'
 import type { Article } from '@/lib/data-sources'
 
@@ -77,7 +79,15 @@ export function AeoContentBlocks({
             <div className="aeo-faq-accordion">
               {faqItems.map((item, i) => (
                 <details key={i} className="aeo-faq-details" open={i === 0}>
-                  <summary className="aeo-faq-question">{item.question}</summary>
+                  <summary
+                    className="aeo-faq-question"
+                    onMouseDown={(e) => {
+                      // Prevent focus ring when scrolling/clicking with mouse
+                      if (e.detail > 0) e.preventDefault()
+                    }}
+                  >
+                    {item.question}
+                  </summary>
                   <p className="aeo-faq-answer">{item.answer}</p>
                 </details>
               ))}

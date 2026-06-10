@@ -61,35 +61,61 @@ export default function ArticleEngagementClient({ articleId }: { articleId: stri
   const [signInError, setSignInError] = useState<string | null>(null)
   const gBtnRef = useRef<HTMLDivElement>(null)
 
-  // ── Load reaction counts (+ user's own reaction if logged in) ──────────────
-  useEffect(() => {
+  const fetchReactions = useCallback(async () => {
     const headers: Record<string, string> = {}
     if (jwt) headers['Authorization'] = `Bearer ${jwt}`
 
-    fetch(`/api/reader/reactions?articleId=${encodeURIComponent(articleId)}`, { headers })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!data) return
-        setReaction(data.reaction ?? 'NONE')
-        setCounts({ likes: data.likeCount ?? 0, dislikes: data.dislikeCount ?? 0 })
+    try {
+      const res = await fetch(`/api/reader/reactions?articleId=${encodeURIComponent(articleId)}`, {
+        headers,
+        cache: 'no-store',
       })
-      .catch(() => {})
+      if (!res.ok) return
+      const data = await res.json()
+      setReaction(data.reaction ?? 'NONE')
+      setCounts({ likes: data.likeCount ?? 0, dislikes: data.dislikeCount ?? 0 })
+    } catch {
+      // ignore transient network errors
+    }
   }, [articleId, jwt])
 
-  // ── Load comments when section is opened ──────────────────────────────────
-  useEffect(() => {
-    if (!showComments || commentsLoaded) return
-    fetch(`/api/reader/comments?articleId=${encodeURIComponent(articleId)}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!data) return
-        setComments(
-          Array.isArray(data.comments) ? data.comments : Array.isArray(data) ? data : []
-        )
-        setCommentsLoaded(true)
+  const fetchComments = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/reader/comments?articleId=${encodeURIComponent(articleId)}`, {
+        cache: 'no-store',
       })
-      .catch(() => {})
-  }, [articleId, showComments, commentsLoaded])
+      if (!res.ok) return
+      const data = await res.json()
+      setComments(
+        Array.isArray(data.comments) ? data.comments : Array.isArray(data) ? data : []
+      )
+      setCommentsLoaded(true)
+    } catch {
+      // ignore transient network errors
+    }
+  }, [articleId])
+
+  // ── Load + refresh reaction counts (near real-time polling) ───────────────
+  useEffect(() => {
+    void fetchReactions()
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void fetchReactions()
+    }, 30000)
+    return () => window.clearInterval(interval)
+  }, [fetchReactions])
+
+  // ── Load comment count on mount; refresh when comments panel is open ──────
+  useEffect(() => {
+    void fetchComments()
+  }, [fetchComments])
+
+  useEffect(() => {
+    if (!showComments) return
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void fetchComments()
+    }, 30000)
+    return () => window.clearInterval(interval)
+  }, [showComments, fetchComments])
 
   // ── Initialize + render Google Sign-In button when modal opens ─────────────
   useEffect(() => {
@@ -169,6 +195,7 @@ export default function ArticleEngagementClient({ articleId }: { articleId: stri
         const data = await res.json()
         if (typeof data.likeCount === 'number') {
           setCounts({ likes: data.likeCount, dislikes: data.dislikeCount ?? 0 })
+          if (data.reaction) setReaction(data.reaction)
         }
       } catch {
         // Revert on failure
@@ -200,6 +227,8 @@ export default function ArticleEngagementClient({ articleId }: { articleId: stri
       if (newComment?.id) {
         setComments((prev) => [newComment, ...prev])
         setDraft('')
+        setCommentsLoaded(true)
+        void fetchComments()
       }
     } catch {
       // silently fail; user can retry

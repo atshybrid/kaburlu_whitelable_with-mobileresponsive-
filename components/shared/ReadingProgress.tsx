@@ -24,15 +24,13 @@ export function ReadingProgress() {
   }, [])
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50">
+    <div
+      className="reading-progress-track pointer-events-none fixed top-0 left-0 right-0 z-30 h-[3px]"
+      aria-hidden="true"
+    >
       <div
-        className="h-full bg-gradient-to-r from-red-600 via-red-500 to-pink-600 transition-all duration-150 ease-out"
+        className="reading-progress-fill h-full bg-gradient-to-r from-red-600 via-red-500 to-pink-600 transition-[width] duration-150 ease-out"
         style={{ width: `${progress}%` }}
-        role="progressbar"
-        aria-valuenow={Math.round(progress)}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label="Reading progress"
       />
     </div>
   )

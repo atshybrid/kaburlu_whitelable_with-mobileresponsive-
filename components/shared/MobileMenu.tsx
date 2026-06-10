@@ -51,7 +51,7 @@ export function MobileMenu({ items, homeHref }: { items: MenuItem[]; homeHref?: 
 
       {/* Mobile Menu Overlay */}
       {open && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-[110] lg:hidden">
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm"
