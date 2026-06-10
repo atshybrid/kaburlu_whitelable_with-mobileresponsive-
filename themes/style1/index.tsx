@@ -38,6 +38,7 @@ import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapp
 import { getDomainStats } from '@/lib/domain-stats'
 import { themeCssVarsFromSettings } from '@/lib/theme-vars'
 import { AeoContentBlocks } from '@/components/seo'
+import { buildFaqFromArticle } from '@/lib/aeo'
 import { resolveArticleBodyHtml } from '@/lib/article-body'
 
 // ── I18n: per-language UI strings ────────────────────────────────────────────
@@ -2262,6 +2263,12 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
   const locale = (settings as any)?.locale || (settings as any)?.language?.code || 'te'
   const i18n = getI18n(locale)
   const cssVars = themeCssVarsFromSettings(settings)
+  const skipSummaryFaq = Boolean(article.excerpt?.trim())
+  const skipHighlightsFaq = Boolean(article.highlights?.length)
+  const visibleFaqItems = buildFaqFromArticle(article, locale, {
+    skipSummaryQuestion: skipSummaryFaq,
+    skipHighlightsInFaq: skipHighlightsFaq,
+  })
 
   return (
     <div className="theme-style1 bg-zinc-50 pb-20 sm:pb-0" style={cssVars}>
@@ -2460,15 +2467,18 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 </div>
               )}
 
-              <div className="s1-article-insights s1-article-insights--faq">
-                <AeoContentBlocks
-                  article={article}
-                  lang={locale}
-                  sections={['faq']}
-                  faqAccordion
-                  skipSummaryQuestion={Boolean(article.excerpt?.trim())}
-                />
-              </div>
+              {visibleFaqItems.length > 0 && (
+                <div className="s1-article-insights s1-article-insights--faq">
+                  <AeoContentBlocks
+                    article={article}
+                    lang={locale}
+                    sections={['faq']}
+                    faqAccordion
+                    skipSummaryQuestion={skipSummaryFaq}
+                    skipHighlightsInFaq={skipHighlightsFaq}
+                  />
+                </div>
+              )}
 
               {/* Top Ad - Above Content */}
               {adPolicy.article.showTopHorizontal ? (

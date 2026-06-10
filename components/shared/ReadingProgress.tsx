@@ -29,7 +29,7 @@ export function ReadingProgress() {
       aria-hidden="true"
     >
       <div
-        className="reading-progress-fill h-full bg-gradient-to-r from-red-600 via-red-500 to-pink-600 transition-[width] duration-150 ease-out"
+        className="reading-progress-fill s1-reading-progress-fill h-full transition-[width] duration-150 ease-out"
         style={{ width: `${progress}%` }}
       />
     </div>

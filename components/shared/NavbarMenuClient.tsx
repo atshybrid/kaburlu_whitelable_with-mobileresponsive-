@@ -125,14 +125,14 @@ export default function NavbarMenuClient({
         href={it.href as unknown as Route}
         aria-label={isHome ? 'Home' : undefined}
         title={isHome ? 'Home' : undefined}
-        className="group relative inline-flex items-center gap-2 whitespace-nowrap font-medium text-[15px] text-zinc-800 hover:text-[hsl(var(--primary,0_72%_51%))] transition-all px-3 py-2.5 rounded-lg shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary,0_72%_51%))]/30"
+        className="group relative inline-flex items-center gap-2 whitespace-nowrap font-medium text-[15px] text-zinc-800 hover:text-[hsl(var(--nav-accent, 0 72% 51%))] transition-all px-3 py-2.5 rounded-lg shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--nav-accent, 0 72% 51%))]/30"
       >
         {isHome ? (
           <HomeIcon className="h-[18px] w-[18px]" />
         ) : (
           it.label
         )}
-        <span className="pointer-events-none absolute bottom-0 left-1/2 h-0.5 w-0 bg-[hsl(var(--primary,0_72%_51%))] transition-all duration-300 group-hover:w-3/4 group-hover:left-[12.5%]" />
+        <span className="pointer-events-none absolute bottom-0 left-1/2 h-0.5 w-0 bg-[hsl(var(--nav-accent, 0 72% 51%))] transition-all duration-300 group-hover:w-3/4 group-hover:left-[12.5%]" />
       </Link>
     )
   }
@@ -150,13 +150,13 @@ export default function NavbarMenuClient({
         <div key={it.href} className="overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50/80">
           <Link
             href={it.href as unknown as Route}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-[15px] font-semibold text-zinc-900 hover:bg-white hover:text-[hsl(var(--primary,0_72%_51%))] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(var(--primary,0_72%_51%))]/30"
+            className="flex items-center gap-2.5 px-3 py-2.5 text-[15px] font-semibold text-zinc-900 hover:bg-white hover:text-[hsl(var(--nav-accent, 0 72% 51%))] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(var(--nav-accent, 0 72% 51%))]/30"
             onClick={() => {
               setOpenMore(false)
               setOpenItemHref(null)
             }}
           >
-            <CategoryIcon className="h-4 w-4 shrink-0 text-[hsl(var(--primary,0_72%_51%))]" />
+            <CategoryIcon className="h-4 w-4 shrink-0 text-[hsl(var(--nav-accent, 0 72% 51%))]" />
             <span className="min-w-0 flex-1 truncate">{it.label}</span>
           </Link>
           {kids.length > 0 && (
@@ -165,7 +165,7 @@ export default function NavbarMenuClient({
                 <Link
                   key={k.href}
                   href={k.href as unknown as Route}
-                  className="block rounded-md px-2.5 py-2 text-sm text-zinc-600 hover:bg-zinc-50 hover:text-[hsl(var(--primary,0_72%_51%))] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary,0_72%_51%))]/30"
+                  className="block rounded-md px-2.5 py-2 text-sm text-zinc-600 hover:bg-zinc-50 hover:text-[hsl(var(--nav-accent, 0 72% 51%))] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--nav-accent, 0 72% 51%))]/30"
                   onClick={() => {
                     setOpenMore(false)
                     setOpenItemHref(null)
@@ -195,7 +195,7 @@ export default function NavbarMenuClient({
           aria-expanded={isOpen}
           onClick={() => setOpenItemHref((cur) => (cur === it.href ? null : it.href))}
           className={`group relative inline-flex items-center gap-2 whitespace-nowrap font-medium text-[15px] transition-all px-3 py-2.5 rounded-lg shrink-0 ${
-            isOpen ? 'text-[hsl(var(--primary,0_72%_51%))] bg-[hsl(var(--primary,0_72%_51%))]/5' : 'text-zinc-800 hover:text-[hsl(var(--primary,0_72%_51%))]'
+            isOpen ? 'text-[hsl(var(--nav-accent, 0 72% 51%))] bg-[hsl(var(--nav-accent, 0 72% 51%))]/5' : 'text-zinc-800 hover:text-[hsl(var(--nav-accent, 0 72% 51%))]'
           }`}
         >
           {isHome ? (
@@ -204,7 +204,7 @@ export default function NavbarMenuClient({
             it.label
           )}
           <ChevronIcon isOpen={isOpen} className="shrink-0" />
-          <span className={`absolute bottom-0 left-1/2 h-0.5 transition-all duration-300 ${isOpen ? 'w-3/4 left-[12.5%] bg-[hsl(var(--primary,0_72%_51%))]' : 'w-0 bg-[hsl(var(--primary,0_72%_51%))] group-hover:w-3/4 group-hover:left-[12.5%]'}`} />
+          <span className={`absolute bottom-0 left-1/2 h-0.5 transition-all duration-300 ${isOpen ? 'w-3/4 left-[12.5%] bg-[hsl(var(--nav-accent, 0 72% 51%))]' : 'w-0 bg-[hsl(var(--nav-accent, 0 72% 51%))] group-hover:w-3/4 group-hover:left-[12.5%]'}`} />
         </button>
 
         {isOpen && (
@@ -215,14 +215,14 @@ export default function NavbarMenuClient({
             onMouseLeave={handleMouseLeave}
           >
             {/* Header with parent category */}
-            <div className="border-b border-zinc-100 bg-gradient-to-r from-[hsl(var(--primary,0_72%_51%))]/5 to-transparent px-6 py-4">
+            <div className="border-b border-zinc-100 bg-gradient-to-r from-[hsl(var(--nav-accent, 0 72% 51%))]/5 to-transparent px-6 py-4">
               <Link
                 href={it.href as unknown as Route}
-                className="group inline-flex items-center gap-3 text-lg font-bold text-zinc-900 hover:text-[hsl(var(--primary,0_72%_51%))] transition-colors"
+                className="group inline-flex items-center gap-3 text-lg font-bold text-zinc-900 hover:text-[hsl(var(--nav-accent, 0 72% 51%))] transition-colors"
                 onClick={() => setOpenItemHref(null)}
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(var(--primary,0_72%_51%))]/10 group-hover:bg-[hsl(var(--primary,0_72%_51%))]/20 transition-colors">
-                  <CategoryIcon className="h-5 w-5 text-[hsl(var(--primary,0_72%_51%))]" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(var(--nav-accent, 0 72% 51%))]/10 group-hover:bg-[hsl(var(--nav-accent, 0 72% 51%))]/20 transition-colors">
+                  <CategoryIcon className="h-5 w-5 text-[hsl(var(--nav-accent, 0 72% 51%))]" />
                 </div>
                 <span>{it.label}</span>
                 <svg className="h-5 w-5 opacity-0 -ml-2 group-hover:opacity-100 group-hover:ml-0 transition-all" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -240,8 +240,8 @@ export default function NavbarMenuClient({
                   href={k.href as unknown as Route}
                   className={`group relative flex items-start gap-3 rounded-xl p-4 transition-all duration-200 ${
                     hoveredChild === k.href
-                      ? 'bg-[hsl(var(--primary,0_72%_51%))]/10 shadow-md scale-[1.02]'
-                      : 'bg-zinc-50/50 hover:bg-[hsl(var(--primary,0_72%_51%))]/10 hover:shadow-md hover:scale-[1.02]'
+                      ? 'bg-[hsl(var(--nav-accent, 0 72% 51%))]/10 shadow-md scale-[1.02]'
+                      : 'bg-zinc-50/50 hover:bg-[hsl(var(--nav-accent, 0 72% 51%))]/10 hover:shadow-md hover:scale-[1.02]'
                   }`}
                   onMouseEnter={() => setHoveredChild(k.href)}
                   onMouseLeave={() => setHoveredChild(null)}
@@ -251,7 +251,7 @@ export default function NavbarMenuClient({
                   }}
                 >
                   {/* Accent bar */}
-                  <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-0 w-1 rounded-r-full bg-[hsl(var(--primary,0_72%_51%))] transition-all duration-200 ${
+                  <div className={`absolute left-0 top-1/2 -translate-y-1/2 h-0 w-1 rounded-r-full bg-[hsl(var(--nav-accent, 0 72% 51%))] transition-all duration-200 ${
                     hoveredChild === k.href ? 'h-12' : 'h-0 group-hover:h-8'
                   }`} />
                   
@@ -259,8 +259,8 @@ export default function NavbarMenuClient({
                   <div className="relative shrink-0">
                     <div className={`flex h-11 w-11 items-center justify-center rounded-lg transition-all duration-200 ${
                       hoveredChild === k.href
-                        ? 'bg-[hsl(var(--primary,0_72%_51%))] text-white shadow-lg shadow-[hsl(var(--primary,0_72%_51%))]/30'
-                        : 'bg-white text-[hsl(var(--primary,0_72%_51%))] group-hover:bg-[hsl(var(--primary,0_72%_51%))] group-hover:text-white group-hover:shadow-lg group-hover:shadow-[hsl(var(--primary,0_72%_51%))]/30'
+                        ? 'bg-[hsl(var(--nav-accent, 0 72% 51%))] text-white shadow-lg shadow-[hsl(var(--nav-accent, 0 72% 51%))]/30'
+                        : 'bg-white text-[hsl(var(--nav-accent, 0 72% 51%))] group-hover:bg-[hsl(var(--nav-accent, 0 72% 51%))] group-hover:text-white group-hover:shadow-lg group-hover:shadow-[hsl(var(--nav-accent, 0 72% 51%))]/30'
                     }`}>
                       <CategoryIcon className="h-5 w-5" />
                     </div>
@@ -272,7 +272,7 @@ export default function NavbarMenuClient({
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className={`text-[15px] font-semibold leading-tight transition-colors line-clamp-2 ${
-                      hoveredChild === k.href ? 'text-[hsl(var(--primary,0_72%_51%))]' : 'text-zinc-900 group-hover:text-[hsl(var(--primary,0_72%_51%))]'
+                      hoveredChild === k.href ? 'text-[hsl(var(--nav-accent, 0 72% 51%))]' : 'text-zinc-900 group-hover:text-[hsl(var(--nav-accent, 0 72% 51%))]'
                     }`}>
                       {k.label}
                     </div>
@@ -292,7 +292,7 @@ export default function NavbarMenuClient({
             <div className="border-t border-zinc-100 bg-zinc-50/50 px-6 py-3">
               <Link
                 href={it.href as unknown as Route}
-                className="group inline-flex items-center gap-2 text-sm font-semibold text-[hsl(var(--primary,0_72%_51%))] hover:gap-3 transition-all"
+                className="group inline-flex items-center gap-2 text-sm font-semibold text-[hsl(var(--nav-accent, 0 72% 51%))] hover:gap-3 transition-all"
                 onClick={() => setOpenItemHref(null)}
               >
                 <span>View all in {it.label}</span>
@@ -319,11 +319,11 @@ export default function NavbarMenuClient({
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: hsl(var(--primary, 0 72% 51%) / 0.35);
+          background: hsl(var(--nav-accent, 0 72% 51%) / 0.35);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: hsl(var(--primary, 0 72% 51%) / 0.55);
+          background: hsl(var(--nav-accent, 0 72% 51%) / 0.55);
         }
         @keyframes slide-in-from-top-2 {
           from {
@@ -381,10 +381,10 @@ export default function NavbarMenuClient({
               onMouseDown={(e) => {
                 if (e.detail > 0) e.preventDefault()
               }}
-              className={`inline-flex items-center gap-2 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary,0_72%_51%))]/30 ${
+              className={`inline-flex items-center gap-2 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--nav-accent, 0 72% 51%))]/30 ${
                 openMore
-                  ? 'bg-[hsl(var(--primary,0_72%_51%))]/5 text-[hsl(var(--primary,0_72%_51%))]'
-                  : 'text-zinc-800 hover:text-[hsl(var(--primary,0_72%_51%))]'
+                  ? 'bg-[hsl(var(--nav-accent, 0 72% 51%))]/5 text-[hsl(var(--nav-accent, 0 72% 51%))]'
+                  : 'text-zinc-800 hover:text-[hsl(var(--nav-accent, 0 72% 51%))]'
               }`}
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -414,20 +414,21 @@ export default function NavbarMenuClient({
                         <Link
                           key={typed.href}
                           href={typed.href as unknown as Route}
-                          className="group flex items-center gap-3 rounded-xl border border-zinc-100 bg-white px-3 py-2.5 text-[15px] font-semibold text-zinc-900 transition-colors hover:border-[hsl(var(--primary,0_72%_51%))]/20 hover:bg-[hsl(var(--primary,0_72%_51%))]/5 hover:text-[hsl(var(--primary,0_72%_51%))] outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary,0_72%_51%))]/30"
+                          className="group flex items-center gap-3 rounded-xl border border-zinc-100 bg-white px-3 py-2.5 text-[15px] font-semibold text-zinc-900 transition-colors hover:border-[hsl(var(--nav-accent,0_72%_51%))]/20 hover:bg-[hsl(var(--nav-accent,0_72%_51%))]/5 hover:text-[hsl(var(--nav-accent,0_72%_51%))] outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--nav-accent,0_72%_51%))]/30"
+                          onMouseDown={(e) => { if (e.detail > 0) e.preventDefault() }}
                           onClick={() => setOpenMore(false)}
                         >
                           {typed.label === 'Home' ? (
                             <>
-                              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white group-hover:bg-[hsl(var(--primary,0_72%_51%))] transition-colors">
-                                <HomeIcon className="h-5 w-5 text-[hsl(var(--primary,0_72%_51%))] group-hover:text-white transition-colors" />
+                              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white group-hover:bg-[hsl(var(--nav-accent, 0 72% 51%))] transition-colors">
+                                <HomeIcon className="h-5 w-5 text-[hsl(var(--nav-accent, 0 72% 51%))] group-hover:text-white transition-colors" />
                               </div>
                               <span>Home</span>
                             </>
                           ) : (
                             <>
-                              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white group-hover:bg-[hsl(var(--primary,0_72%_51%))] transition-colors">
-                                <CategoryIcon className="h-5 w-5 text-[hsl(var(--primary,0_72%_51%))] group-hover:text-white transition-colors" />
+                              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white group-hover:bg-[hsl(var(--nav-accent, 0 72% 51%))] transition-colors">
+                                <CategoryIcon className="h-5 w-5 text-[hsl(var(--nav-accent, 0 72% 51%))] group-hover:text-white transition-colors" />
                               </div>
                               <span>{typed.label}</span>
                             </>

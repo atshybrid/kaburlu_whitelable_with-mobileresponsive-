@@ -222,7 +222,7 @@ export async function Navbar({
         </div>
       </div>
       {/* Primary color accent strip - Thinner on mobile */}
-      <div className="h-0.5 sm:h-1 w-full bg-gradient-to-r from-red-600 via-red-500 to-red-600" />
+      <div className="s1-header-accent h-0.5 sm:h-1 w-full" />
     </header>
   )
 }

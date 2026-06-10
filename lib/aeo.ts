@@ -54,7 +54,7 @@ function pickImageUrl(article: Article): string | undefined {
 export function buildFaqFromArticle(
   article: Article,
   lang = 'te',
-  opts?: { skipSummaryQuestion?: boolean },
+  opts?: { skipSummaryQuestion?: boolean; skipHighlightsInFaq?: boolean },
 ): FaqItem[] {
   const items: FaqItem[] = []
   const title = article.title?.trim()
@@ -76,12 +76,14 @@ export function buildFaqFromArticle(
     items.push({ question: l.about, answer: article.excerpt.trim() })
   }
 
-  highlights.forEach((h, i) => {
-    items.push({
-      question: `${l.key} ${i + 1}`,
-      answer: h.trim(),
+  if (!opts?.skipHighlightsInFaq) {
+    highlights.forEach((h, i) => {
+      items.push({
+        question: `${l.key} ${i + 1}`,
+        answer: h.trim(),
+      })
     })
-  })
+  }
 
   return items.slice(0, 6)
 }

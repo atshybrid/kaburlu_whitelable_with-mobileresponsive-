@@ -7,6 +7,8 @@
 /* Theme Variables */
 .theme-style1 { 
   --accent: 220 70% 55%;
+  /* Nav/chrome accent — always red for style1 (tenant --primary may be blue) */
+  --nav-accent: 0 72% 51%;
   /* Per-tenant primary color — overridden at runtime via inline style from themeCssVarsFromSettings() */
   /* Default matches Tailwind red-600 (#dc2626) so fallback looks identical to before */
   --primary: 0 72% 51%;
@@ -391,10 +393,17 @@
   transition: transform 0.1s ease-out;
 }
 
-.theme-style1 .reading-progress-fill {
+/* Keep progress bar red — do not inherit tenant blue --primary */
+.theme-style1 .reading-progress-fill,
+.theme-style1 .s1-reading-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #dc2626, #ef4444, #f97316);
+  background: linear-gradient(90deg, #dc2626, #ef4444, #f97316) !important;
   transform-origin: left;
+}
+
+/* Header accent strip — fixed red, not tenant primary */
+.theme-style1 .s1-header-accent {
+  background: linear-gradient(90deg, #dc2626, #ef4444, #dc2626) !important;
 }
 
 /* Mobile bottom nav clearance */
@@ -587,7 +596,7 @@
 
 .theme-style1 .s1-insight-card--summary {
   background: #fffbeb;
-  border-left: 3px solid hsl(var(--primary, 0 72% 51%));
+  border-left: 3px solid hsl(var(--nav-accent, 0 72% 51%));
 }
 
 /* No spurious focus ring when scrolling with mouse over insight blocks */
@@ -618,7 +627,7 @@
 }
 
 .theme-style1 .s1-insight-card--summary .s1-insight-title {
-  color: hsl(var(--primary, 0 72% 51%));
+  color: hsl(var(--nav-accent, 0 72% 51%));
 }
 
 .theme-style1 .s1-highlights-list {
