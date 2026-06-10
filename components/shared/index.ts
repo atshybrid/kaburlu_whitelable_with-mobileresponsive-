@@ -18,4 +18,5 @@ export { CongratulationsOverlay, useCongratulations } from './CongratulationsOve
 export { CongratulationsWrapper } from './CongratulationsWrapper'
 export * from './Skeletons'
 export { default as ArticleEngagementClient } from './ArticleEngagementClient'
+export { PushSubscribeButton } from './PushSubscribeButton'
 

@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { PushSubscribeButton } from './PushSubscribeButton'
 
 interface MenuItem {
   href: string
@@ -8,7 +9,21 @@ interface MenuItem {
   children?: Array<{ href: string; label: string }>
 }
 
-export function MobileMenu({ items, homeHref }: { items: MenuItem[]; homeHref?: string }) {
+export function MobileMenu({
+  items,
+  homeHref,
+  pushEnabled = false,
+  vapidPublicKey = null,
+  fcmSenderId = null,
+  lang = 'te',
+}: {
+  items: MenuItem[]
+  homeHref?: string
+  pushEnabled?: boolean
+  vapidPublicKey?: string | null
+  fcmSenderId?: string | null
+  lang?: string
+}) {
   const [open, setOpen] = useState(false)
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
 
@@ -143,7 +158,15 @@ export function MobileMenu({ items, homeHref }: { items: MenuItem[]; homeHref?: 
             </nav>
 
             {/* Footer */}
-            <div className="sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent px-4 py-4 border-t border-zinc-200">
+            <div className="sticky bottom-0 border-t border-zinc-200 bg-white px-4 py-4">
+              <div className="mb-3 flex justify-center">
+                <PushSubscribeButton
+                  enabled={pushEnabled}
+                  vapidPublicKey={vapidPublicKey}
+                  fcmSenderId={fcmSenderId}
+                  lang={lang}
+                />
+              </div>
               <div className="text-xs text-center text-zinc-500">
                 © {new Date().getFullYear()} All rights reserved
               </div>

@@ -9,6 +9,7 @@ import HeaderCollapseOnScrollClient from './HeaderCollapseOnScrollClient'
 import { MobileMenu } from './MobileMenu'
 import { SearchBar } from './SearchBar'
 import TranslateMenuClient from './TranslateMenuClient'
+import { PushSubscribeButton } from './PushSubscribeButton'
 import { isWrongTenantLogo } from '@/lib/fallback-data'
 
 function toHref(pathname: string): UrlObject {
@@ -39,6 +40,18 @@ export async function Navbar({
     ? config.content.defaultLanguage 
     : String(settings?.content?.defaultLanguage || settings?.settings?.content?.defaultLanguage || 'en')
   const primaryLang = (langRaw.toLowerCase() === 'telugu' ? 'te' : langRaw.toLowerCase().split('-')[0]) || 'en'
+
+  const pushConfig = config?.integrations?.push
+  const vapidKey =
+    pushConfig?.webPushVapidPublicKey ||
+    pushConfig?.vapidPublicKey ||
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+    null
+  const isPushEnabled = Boolean(
+    config?.features?.pwaPushNotifications &&
+      pushConfig?.enabled &&
+      vapidKey
+  )
 
   // Safe category name extraction
   const extractCategoryName = (val: unknown): string => {
@@ -176,13 +189,26 @@ export async function Navbar({
             <nav className="min-w-0 flex-1" aria-label="Main navigation">
               <NavbarMenuClient items={items} />
             </nav>
-            <div className="shrink-0">
+            <div className="flex shrink-0 items-center gap-2">
+              <PushSubscribeButton
+                enabled={isPushEnabled}
+                vapidPublicKey={vapidKey}
+                fcmSenderId={pushConfig?.fcmSenderId || null}
+                lang={primaryLang}
+              />
               <TranslateMenuClient compact />
             </div>
           </div>
 
-          {/* Mobile translator (right corner) */}
-          <div className="flex justify-end pb-2 sm:hidden">
+          {/* Mobile controls */}
+          <div className="flex items-center justify-end gap-2 pb-2 sm:hidden">
+            <PushSubscribeButton
+              enabled={isPushEnabled}
+              vapidPublicKey={vapidKey}
+              fcmSenderId={pushConfig?.fcmSenderId || null}
+              lang={primaryLang}
+              compact
+            />
             <TranslateMenuClient compact />
           </div>
         </div>
@@ -212,13 +238,37 @@ export async function Navbar({
           
           {/* Right side controls - Touch-friendly */}
           <div className="flex items-center gap-1 sm:gap-2">
+            <PushSubscribeButton
+              enabled={isPushEnabled}
+              vapidPublicKey={vapidKey}
+              fcmSenderId={pushConfig?.fcmSenderId || null}
+              lang={primaryLang}
+              compact
+            />
             <SearchBar tenantSlug={tenantSlug} />
-            <MobileMenu items={items} homeHref={homeHref(tenantSlug)} />
+            <MobileMenu
+              items={items}
+              homeHref={homeHref(tenantSlug)}
+              pushEnabled={isPushEnabled}
+              vapidPublicKey={vapidKey}
+              fcmSenderId={pushConfig?.fcmSenderId || null}
+              lang={primaryLang}
+            />
           </div>
         </div>
         {/* Navigation row - Desktop only */}
-        <div className="hidden overflow-visible pb-2 sm:block">
-          <NavbarMenuClient items={items} />
+        <div className="hidden overflow-visible pb-2 sm:flex sm:items-center sm:justify-between sm:gap-3">
+          <nav className="min-w-0 flex-1" aria-label="Main navigation">
+            <NavbarMenuClient items={items} />
+          </nav>
+          <div className="hidden shrink-0 sm:flex">
+            <PushSubscribeButton
+              enabled={isPushEnabled}
+              vapidPublicKey={vapidKey}
+              fcmSenderId={pushConfig?.fcmSenderId || null}
+              lang={primaryLang}
+            />
+          </div>
         </div>
       </div>
       {/* Primary color accent strip - Thinner on mobile */}

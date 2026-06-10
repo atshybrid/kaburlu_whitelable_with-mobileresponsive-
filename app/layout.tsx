@@ -259,7 +259,11 @@ async function RootLayoutInner({
 
   const pushConfig = config?.integrations?.push
   // webPushVapidPublicKey is the preferred field; vapidPublicKey is the fallback
-  const vapidKey = pushConfig?.webPushVapidPublicKey || pushConfig?.vapidPublicKey || null
+  const vapidKey =
+    pushConfig?.webPushVapidPublicKey ||
+    pushConfig?.vapidPublicKey ||
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+    null
   const isPushEnabled = Boolean(
     config?.features?.pwaPushNotifications &&
       pushConfig?.enabled &&
