@@ -90,6 +90,18 @@ export function MobileMenu({
               </button>
             </div>
 
+            {pushEnabled && vapidPublicKey ? (
+              <div className="border-b border-zinc-100 px-4 py-4">
+                <PushSubscribeButton
+                  enabled={pushEnabled}
+                  vapidPublicKey={vapidPublicKey}
+                  fcmSenderId={fcmSenderId}
+                  lang={lang}
+                  variant="card"
+                />
+              </div>
+            ) : null}
+
             {/* Navigation */}
             <nav className="px-2 py-4" role="navigation" aria-label="Mobile navigation">
               {/* Home Link */}
@@ -159,14 +171,6 @@ export function MobileMenu({
 
             {/* Footer */}
             <div className="sticky bottom-0 border-t border-zinc-200 bg-white px-4 py-4">
-              <div className="mb-3 flex justify-center">
-                <PushSubscribeButton
-                  enabled={pushEnabled}
-                  vapidPublicKey={vapidPublicKey}
-                  fcmSenderId={fcmSenderId}
-                  lang={lang}
-                />
-              </div>
               <div className="text-xs text-center text-zinc-500">
                 © {new Date().getFullYear()} All rights reserved
               </div>

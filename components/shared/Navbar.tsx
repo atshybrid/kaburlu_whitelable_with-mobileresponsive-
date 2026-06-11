@@ -195,6 +195,7 @@ export async function Navbar({
                 vapidPublicKey={vapidKey}
                 fcmSenderId={pushConfig?.fcmSenderId || null}
                 lang={primaryLang}
+                variant="chip"
               />
               <TranslateMenuClient compact />
             </div>
@@ -207,7 +208,7 @@ export async function Navbar({
               vapidPublicKey={vapidKey}
               fcmSenderId={pushConfig?.fcmSenderId || null}
               lang={primaryLang}
-              compact
+              variant="icon"
             />
             <TranslateMenuClient compact />
           </div>
@@ -236,17 +237,15 @@ export async function Navbar({
             </Link>
           </div>
           
-          {/* Right side controls - Touch-friendly (push toggle lives in desktop nav row) */}
-          <div className="flex items-center gap-1 sm:gap-2">
-            <div className="sm:hidden">
-              <PushSubscribeButton
-                enabled={isPushEnabled}
-                vapidPublicKey={vapidKey}
-                fcmSenderId={pushConfig?.fcmSenderId || null}
-                lang={primaryLang}
-                compact
-              />
-            </div>
+          {/* Right side: bell icon + search + menu (standard news-site pattern) */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <PushSubscribeButton
+              enabled={isPushEnabled}
+              vapidPublicKey={vapidKey}
+              fcmSenderId={pushConfig?.fcmSenderId || null}
+              lang={primaryLang}
+              variant="icon"
+            />
             <SearchBar tenantSlug={tenantSlug} />
             <MobileMenu
               items={items}
@@ -263,12 +262,13 @@ export async function Navbar({
           <nav className="min-w-0 flex-1" aria-label="Main navigation">
             <NavbarMenuClient items={items} />
           </nav>
-          <div className="relative hidden shrink-0 items-center sm:flex" data-push-anchor>
+          <div className="hidden shrink-0 sm:flex">
             <PushSubscribeButton
               enabled={isPushEnabled}
               vapidPublicKey={vapidKey}
               fcmSenderId={pushConfig?.fcmSenderId || null}
               lang={primaryLang}
+              variant="chip"
             />
           </div>
         </div>
