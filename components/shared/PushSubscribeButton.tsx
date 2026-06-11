@@ -1,6 +1,7 @@
 'use client'
 
 import { useWebPush } from '@/hooks/useWebPush'
+import { openPushPrompt } from '@/lib/push-prompt'
 
 const LABELS: Record<string, {
   on: string
@@ -133,7 +134,7 @@ export function PushSubscribeButton({
     void handleUnsubscribe()
   }
 
-  const onTurnOn = () => void handleSubscribe()
+  const onTurnOn = () => openPushPrompt()
 
   if (resolvedVariant === 'card') {
     return (
@@ -168,14 +169,14 @@ export function PushSubscribeButton({
         <button
           type="button"
           onClick={isSubscribed ? onTurnOff : onTurnOn}
-          disabled={isBusy}
+          disabled={isBusy && isSubscribed}
           className={`mt-3 w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-60 ${
             isSubscribed
               ? 'border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 focus-visible:ring-emerald-400'
               : 'bg-red-600 text-white shadow-sm hover:bg-red-700 focus-visible:ring-red-500'
           }`}
         >
-          {isBusy ? (isSubscribed ? l.disabling : l.enabling) : isSubscribed ? `${l.on} · ${l.turnOff}` : l.turnOn}
+          {isSubscribed ? (isBusy ? l.disabling : `${l.on} · ${l.turnOff}`) : `🔔 ${l.turnOn}`}
         </button>
       </div>
     )
@@ -185,48 +186,24 @@ export function PushSubscribeButton({
     return (
       <button
         type="button"
-        data-push-anchor
         onClick={isSubscribed ? onTurnOff : onTurnOn}
         disabled={isBusy}
         title={isSubscribed ? l.turnOff : l.turnOn}
         aria-label={isSubscribed ? l.turnOff : l.turnOn}
         aria-pressed={isSubscribed}
-        className={`relative inline-flex h-10 w-10 items-center justify-center rounded-full border transition-all outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 disabled:opacity-50 ${
+        className={`relative inline-flex h-9 w-9 items-center justify-center rounded-lg transition-all outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 disabled:opacity-50 sm:h-10 sm:w-10 ${
           isSubscribed
-            ? 'border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-            : 'border-zinc-200 bg-white text-zinc-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600'
+            ? 'text-emerald-600 hover:bg-emerald-50'
+            : 'text-zinc-400 hover:bg-red-50 hover:text-red-600'
         } ${className}`}
       >
         <BellIcon className="h-[18px] w-[18px]" muted={!isSubscribed} />
-        {isSubscribed ? (
-          <span className="absolute right-1 top-1 h-2 w-2 rounded-full border-2 border-white bg-emerald-500" />
-        ) : (
-          <span className="absolute right-1 top-1 h-2 w-2 rounded-full border-2 border-white bg-red-500 animate-pulse" />
+        {!isSubscribed && (
+          <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white animate-pulse" />
         )}
       </button>
     )
   }
 
-  // chip — desktop nav utility (no data-push-anchor; popup anchors to header bell icon)
-  return (
-    <button
-      type="button"
-      onClick={isSubscribed ? onTurnOff : onTurnOn}
-      disabled={isBusy}
-      title={isSubscribed ? l.turnOff : l.turnOn}
-      aria-label={isSubscribed ? l.turnOff : l.turnOn}
-      aria-pressed={isSubscribed}
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all outline-none focus:outline-none focus-visible:ring-2 disabled:opacity-50 sm:text-sm ${
-        isSubscribed
-          ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-400/40'
-          : 'border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:ring-red-500/30'
-      } ${className}`}
-    >
-      <BellIcon className="h-4 w-4 shrink-0" muted={!isSubscribed} />
-      <span>{isBusy ? (isSubscribed ? l.disabling : l.enabling) : isSubscribed ? l.on : l.alerts}</span>
-      {isSubscribed && (
-        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-      )}
-    </button>
-  )
+  return null
 }

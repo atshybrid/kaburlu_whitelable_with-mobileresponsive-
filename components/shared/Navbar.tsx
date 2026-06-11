@@ -189,20 +189,20 @@ export async function Navbar({
             <nav className="min-w-0 flex-1" aria-label="Main navigation">
               <NavbarMenuClient items={items} />
             </nav>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1">
               <PushSubscribeButton
                 enabled={isPushEnabled}
                 vapidPublicKey={vapidKey}
                 fcmSenderId={pushConfig?.fcmSenderId || null}
                 lang={primaryLang}
-                variant="chip"
+                variant="icon"
               />
               <TranslateMenuClient compact />
             </div>
           </div>
 
           {/* Mobile controls */}
-          <div className="flex items-center justify-end gap-2 pb-2 sm:hidden">
+          <div className="flex items-center justify-end gap-1 pb-2 sm:hidden">
             <PushSubscribeButton
               enabled={isPushEnabled}
               vapidPublicKey={vapidKey}
@@ -258,19 +258,10 @@ export async function Navbar({
           </div>
         </div>
         {/* Navigation row - Desktop only */}
-        <div className="hidden overflow-visible pb-2 sm:flex sm:items-center sm:justify-between sm:gap-3">
-          <nav className="min-w-0 flex-1" aria-label="Main navigation">
+        <div className="hidden overflow-visible pb-2 sm:block">
+          <nav aria-label="Main navigation">
             <NavbarMenuClient items={items} />
           </nav>
-          <div className="hidden shrink-0 sm:flex">
-            <PushSubscribeButton
-              enabled={isPushEnabled}
-              vapidPublicKey={vapidKey}
-              fcmSenderId={pushConfig?.fcmSenderId || null}
-              lang={primaryLang}
-              variant="chip"
-            />
-          </div>
         </div>
       </div>
       {/* Primary color accent strip - Thinner on mobile */}
