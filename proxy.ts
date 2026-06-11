@@ -24,6 +24,38 @@ const DOMAIN_TO_TENANT: Record<string, string> = {
   'daxintimes.com': 'daxin-times',
   'kurnoolnews.com': 'kurnool-news', // Verify if this tenant exists in backend
   'chrnews.com': 'crown-human-rights',
+  'aksharavekuva.com': 'aksharavekuva',
+}
+
+const API_BASE =
+  process.env.API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  'https://api.kaburlumedia.com/api/v1'
+
+const slugCache = new Map<string, { slug: string; expires: number }>()
+
+/** Resolve tenant slug for any domain — no manual proxy map entry required */
+async function resolveTenantSlug(domain: string): Promise<string | null> {
+  const mapped = DOMAIN_TO_TENANT[domain]
+  if (mapped) return mapped
+
+  const hit = slugCache.get(domain)
+  if (hit && hit.expires > Date.now()) return hit.slug
+
+  try {
+    const res = await fetch(`${API_BASE}/public/config`, {
+      headers: { 'X-Tenant-Domain': domain },
+      next: { revalidate: 300 },
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as { tenant?: { slug?: string } }
+    const slug = data?.tenant?.slug?.trim()
+    if (!slug) return null
+    slugCache.set(domain, { slug, expires: Date.now() + 5 * 60 * 1000 })
+    return slug
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -36,7 +68,7 @@ function normalizeDomain(hostname: string): string {
     .replace(/^www\./, '') // Remove www
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // =========================================================================
   // STEP 1: Read Host header (ONLY place in entire app that does this)
   // =========================================================================
@@ -69,11 +101,10 @@ export function proxy(request: NextRequest) {
   // =========================================================================
   // STEP 3: Get tenant slug for URL rewriting
   // =========================================================================
-  const tenantSlug = DOMAIN_TO_TENANT[tenantDomain]
-  
+  const tenantSlug = await resolveTenantSlug(tenantDomain)
+
   if (!tenantSlug) {
-    console.warn(`⚠️ Unknown domain: ${tenantDomain}, using fallback tenant`)
-    // Unknown domain - use kaburlutoday as fallback and continue processing
+    console.warn(`⚠️ Unknown domain: ${tenantDomain}, no tenant slug from API`)
     const response = NextResponse.next({ request: { headers: requestHeaders } })
     response.headers.set('X-Tenant-Domain', tenantDomain)
     response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')

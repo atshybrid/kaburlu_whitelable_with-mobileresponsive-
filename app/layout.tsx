@@ -1,7 +1,20 @@
 import type { Metadata } from "next";
 import Script from 'next/script';
 import { getEffectiveSettings } from "@/lib/settings";
-import { getConfig, getDefaultLanguage, getDefaultLanguageDirection } from "@/lib/config";
+import { getConfig, getDefaultLanguage, getDefaultLanguageDirection, type TenantConfig } from "@/lib/config";
+
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+
+function adsenseAccountIdFromConfig(config: TenantConfig | null): string | null {
+  const adsConfig = config?.integrations?.ads
+  const client =
+    adsConfig?.adsense ||
+    ((adsConfig as Record<string, unknown> | undefined)?.adsenseClientId as string | undefined) ||
+    null
+  if (!client) return null
+  return client.startsWith('ca-') ? client : `ca-${client}`
+}
 import { getSEOHomepage, generateJSONLD } from "@/lib/seo";
 import { ThemeColorVars } from "@/components/ConfigLoader";
 import { Analytics, SiteVerification, StructuredData, WebPushManager } from "@/components/seo";
@@ -149,10 +162,14 @@ export async function generateMetadata(): Promise<Metadata> {
     const config = await getConfig()
     
     if (config) {
+      const adsenseAccountId = adsenseAccountIdFromConfig(config)
       return {
         title: config.seo.meta.title,
         description: config.seo.meta.description,
         keywords: config.seo.meta.keywords || undefined,
+        ...(adsenseAccountId
+          ? { other: { 'google-adsense-account': adsenseAccountId } }
+          : {}),
         openGraph: {
           title: config.seo.openGraph.title,
           description: config.seo.openGraph.description,
@@ -272,15 +289,11 @@ async function RootLayoutInner({
 
   // AdSense: accept both field names backend may send
   const adsConfig = config?.integrations?.ads
+  const adsenseAccountId = adsenseAccountIdFromConfig(config)
   const adsenseClient =
     adsConfig?.adsense ||
     ((adsConfig as Record<string, unknown>)?.adsenseClientId as string) ||
     null
-  const adsenseAccountId = adsenseClient
-    ? adsenseClient.startsWith('ca-')
-      ? adsenseClient
-      : `ca-${adsenseClient}`
-    : null
   const adsEnabled = Boolean(adsConfig?.enabled && adsenseClient)
   const googleClientId = config?.integrations?.auth?.googleClientId ?? null
 
