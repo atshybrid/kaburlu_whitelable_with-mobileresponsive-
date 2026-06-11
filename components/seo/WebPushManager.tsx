@@ -87,8 +87,8 @@ export function WebPushManager({
           role="dialog"
           aria-modal="false"
           aria-label="Enable notifications"
-          className={`fixed bottom-20 left-1/2 z-[9999] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 transition-all duration-300 ease-out sm:bottom-4 sm:left-auto sm:right-4 sm:translate-x-0 ${
-            visible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+          className={`fixed top-[5.25rem] right-3 z-[150] hidden w-[min(100vw-1.5rem,20rem)] max-w-xs transition-all duration-300 ease-out sm:block lg:top-[7.5rem] lg:right-4 ${
+            visible ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0 pointer-events-none'
           }`}
         >
           <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-2xl ring-1 ring-black/10">

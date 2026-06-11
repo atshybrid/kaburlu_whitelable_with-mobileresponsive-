@@ -2361,7 +2361,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
 
                 {/* Article Title */}
                 <h1 
-                  className="mb-3 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-black leading-snug sm:leading-[1.15] text-zinc-900"
+                  className="s1-article-page-title mb-3 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-black leading-snug sm:leading-[1.15] text-zinc-900"
                   style={{ fontFamily: 'Noto Serif Telugu, serif', lineHeight: '1.45' }}
                 >
                   {article.title}

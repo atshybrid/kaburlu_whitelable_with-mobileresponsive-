@@ -106,7 +106,7 @@ export function PushSubscribeButton({
         title={l.turnOff}
         aria-label={l.turnOff}
         aria-pressed="true"
-        className={`${base} ${size} border-emerald-300 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100 ${className}`}
+        className={`${base} ${size} border-emerald-300 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30 ${className}`}
       >
         <span aria-hidden>🔔</span>
         <span>{isBusy ? l.disabling : l.on}</span>
@@ -122,7 +122,7 @@ export function PushSubscribeButton({
       title={l.turnOn}
       aria-label={l.turnOn}
       aria-pressed="false"
-      className={`${base} ${size} border-zinc-300 bg-zinc-50 text-zinc-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700 ${className}`}
+      className={`${base} ${size} border-zinc-300 bg-zinc-50 text-zinc-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30 ${className}`}
     >
       <span aria-hidden className="opacity-60">🔕</span>
       <span>{isBusy ? l.enabling : (compact ? l.off : l.turnOn)}</span>

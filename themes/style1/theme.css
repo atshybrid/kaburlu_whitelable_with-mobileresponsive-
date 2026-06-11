@@ -62,6 +62,40 @@
 .theme-style1 header {
   background-color: var(--header-bg, white) !important;
 }
+
+/* Sticky header: solid layer so article title never bleeds through on scroll */
+.theme-style1 .s1-site-header {
+  isolation: isolate;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* No mouse-focus ring on nav while scrolling (keyboard focus-visible still works) */
+.theme-style1 .s1-site-header a:focus:not(:focus-visible),
+.theme-style1 .s1-site-header button:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Article title scroll offset — stays below sticky header when focused/anchored */
+.theme-style1 .s1-article-page-title {
+  position: relative;
+  z-index: 0;
+  scroll-margin-top: 7.5rem;
+}
+
+@media (min-width: 640px) {
+  .theme-style1 .s1-article-page-title {
+    scroll-margin-top: 8.5rem;
+  }
+}
+
+.theme-style1 #main-content {
+  position: relative;
+  z-index: 1;
+}
+
 .theme-style1 footer {
   background-color: var(--footer-bg, #f9fafb) !important;
 }

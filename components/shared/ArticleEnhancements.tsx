@@ -151,9 +151,29 @@ export function ScrollToTopButton() {
   )
 }
 
-// Sticky Share Bar Component
-export function StickyShareBar({ url, title, visible }: { url: string; title: string; visible: boolean }) {
-  if (!visible) return null
+// Sticky Share Bar Component — only after user scrolls past the article title
+export function StickyShareBar({
+  url,
+  title,
+  visible = true,
+  scrollThreshold = 320,
+}: {
+  url: string
+  title: string
+  visible?: boolean
+  scrollThreshold?: number
+}) {
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    if (!visible) return
+    const onScroll = () => setScrolled(window.scrollY > scrollThreshold)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [visible, scrollThreshold])
+
+  if (!visible || !scrolled) return null
 
   const shareOnFacebook = () => {
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank', 'width=600,height=400')

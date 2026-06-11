@@ -220,7 +220,7 @@ export async function Navbar({
   }
 
   return (
-    <header id="top" className="relative z-[100] w-full overflow-visible border-b border-zinc-200 bg-white sticky top-0 shadow-sm">
+    <header id="top" className="s1-site-header relative z-[100] w-full overflow-visible border-b border-zinc-200 bg-white sticky top-0 shadow-sm">
       <div className="mx-auto max-w-7xl px-3 sm:px-4">
         {/* Top bar with logo and title - Mobile optimized */}
         <div className="flex h-14 items-center justify-between sm:h-20">
@@ -236,15 +236,17 @@ export async function Navbar({
             </Link>
           </div>
           
-          {/* Right side controls - Touch-friendly */}
+          {/* Right side controls - Touch-friendly (push toggle lives in desktop nav row) */}
           <div className="flex items-center gap-1 sm:gap-2">
-            <PushSubscribeButton
-              enabled={isPushEnabled}
-              vapidPublicKey={vapidKey}
-              fcmSenderId={pushConfig?.fcmSenderId || null}
-              lang={primaryLang}
-              compact
-            />
+            <div className="sm:hidden">
+              <PushSubscribeButton
+                enabled={isPushEnabled}
+                vapidPublicKey={vapidKey}
+                fcmSenderId={pushConfig?.fcmSenderId || null}
+                lang={primaryLang}
+                compact
+              />
+            </div>
             <SearchBar tenantSlug={tenantSlug} />
             <MobileMenu
               items={items}
@@ -261,7 +263,7 @@ export async function Navbar({
           <nav className="min-w-0 flex-1" aria-label="Main navigation">
             <NavbarMenuClient items={items} />
           </nav>
-          <div className="hidden shrink-0 sm:flex">
+          <div className="relative hidden shrink-0 items-center sm:flex" data-push-anchor>
             <PushSubscribeButton
               enabled={isPushEnabled}
               vapidPublicKey={vapidKey}

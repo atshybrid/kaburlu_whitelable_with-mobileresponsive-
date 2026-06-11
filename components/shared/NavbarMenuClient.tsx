@@ -105,6 +105,17 @@ export default function NavbarMenuClient({
     }
   }, [])
 
+  // Close dropdowns while scrolling — prevents flicker on article pages
+  useEffect(() => {
+    const closeOnScroll = () => {
+      setOpenMore(false)
+      setOpenItemHref(null)
+      setHoveredChild(null)
+    }
+    window.addEventListener('scroll', closeOnScroll, { passive: true })
+    return () => window.removeEventListener('scroll', closeOnScroll)
+  }, [])
+
   function handleMouseEnter(href: string) {
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
     setOpenItemHref(href)
@@ -125,7 +136,7 @@ export default function NavbarMenuClient({
         href={it.href as unknown as Route}
         aria-label={isHome ? 'Home' : undefined}
         title={isHome ? 'Home' : undefined}
-        className="group relative inline-flex items-center gap-2 whitespace-nowrap font-medium text-[15px] text-zinc-800 hover:text-[hsl(var(--nav-accent, 0 72% 51%))] transition-all px-3 py-2.5 rounded-lg shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--nav-accent, 0 72% 51%))]/30"
+        className="group relative inline-flex items-center gap-2 whitespace-nowrap font-medium text-[15px] text-zinc-800 hover:text-[hsl(var(--nav-accent, 0 72% 51%))] transition-all px-3 py-2.5 rounded-lg shrink-0 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--nav-accent, 0 72% 51%))]/30"
       >
         {isHome ? (
           <HomeIcon className="h-[18px] w-[18px]" />
@@ -194,9 +205,10 @@ export default function NavbarMenuClient({
           aria-haspopup="menu"
           aria-expanded={isOpen}
           onClick={() => setOpenItemHref((cur) => (cur === it.href ? null : it.href))}
-          className={`group relative inline-flex items-center gap-2 whitespace-nowrap font-medium text-[15px] transition-all px-3 py-2.5 rounded-lg shrink-0 ${
+          className={`group relative inline-flex items-center gap-2 whitespace-nowrap font-medium text-[15px] transition-all px-3 py-2.5 rounded-lg shrink-0 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--nav-accent, 0 72% 51%))]/30 ${
             isOpen ? 'text-[hsl(var(--nav-accent, 0 72% 51%))] bg-[hsl(var(--nav-accent, 0 72% 51%))]/5' : 'text-zinc-800 hover:text-[hsl(var(--nav-accent, 0 72% 51%))]'
           }`}
+          onMouseDown={(e) => { if (e.detail > 0) e.preventDefault() }}
         >
           {isHome ? (
             <HomeIcon className="h-[18px] w-[18px]" />
@@ -362,6 +374,11 @@ export default function NavbarMenuClient({
           scrollbar-width: none;
         }
         .nav-more-panel *:focus:not(:focus-visible) {
+          outline: none;
+          box-shadow: none;
+        }
+        .theme-style1 header a:focus:not(:focus-visible),
+        .theme-style1 header button:focus:not(:focus-visible) {
           outline: none;
           box-shadow: none;
         }
