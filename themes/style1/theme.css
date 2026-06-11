@@ -53,6 +53,40 @@
 .theme-style1 .group-hover\:text-red-600 { color: hsl(var(--primary, 0 72% 51%)) !important; }
 .theme-style1 .group:hover .group-hover\:text-red-600 { color: hsl(var(--primary, 0 72% 51%)) !important; }
 
+/* News card titles: always black — never tenant primary or accent blue on hover */
+.theme-style1 article h2,
+.theme-style1 article h3,
+.theme-style1 article h4,
+.theme-style1 article h5,
+.theme-style1 article h6,
+.theme-style1 .s1-news-title {
+  color: #111111 !important;
+  font-family: 'Noto Sans Telugu', var(--font-sans);
+  line-height: 1.55;
+}
+
+.theme-style1 article .group:hover h2,
+.theme-style1 article .group:hover h3,
+.theme-style1 article .group:hover h4,
+.theme-style1 article .group:hover h5,
+.theme-style1 article .group:hover h6,
+.theme-style1 .group:hover h2.group-hover\:text-red-600,
+.theme-style1 .group:hover h3.group-hover\:text-red-600,
+.theme-style1 .group:hover h4.group-hover\:text-red-600,
+.theme-style1 .group:hover h5.group-hover\:text-red-600,
+.theme-style1 .group:hover h6.group-hover\:text-red-600,
+.theme-style1 a.group:hover .s1-news-title,
+.theme-style1 .group:hover .s1-news-title {
+  color: #3f3f46 !important;
+}
+
+.theme-style1 article > a:hover,
+.theme-style1 article a.block:hover,
+.theme-style1 a.group.block:hover,
+.theme-style1 a.group.flex:hover {
+  color: inherit;
+}
+
 /* ── Navbar / Footer background from backend config ─────────────────────────
    ThemeColorVars (layout.tsx) sets --header-bg and --footer-bg on :root.
    These rules apply those backend-configured colors to the sticky nav and footer.
@@ -108,6 +142,7 @@
 .theme-style1 h1,
 .theme-style1 h2,
 .theme-style1 h3,
+.theme-style1 h4,
 .theme-style1 .article-title {
   font-family: var(--font-display);
   font-weight: 500;
@@ -120,7 +155,8 @@
 .theme-style1 .article-title a,
 .theme-style1 article h1,
 .theme-style1 article h2,
-.theme-style1 article h3 {
+.theme-style1 article h3,
+.theme-style1 article h4 {
   color: #111111 !important;
 }
 
@@ -260,9 +296,15 @@
   color: #111111;
 }
 
-/* Hover Effects */
-.theme-style1 a:hover { 
-  color: hsl(var(--accent)); 
+/* Hover Effects — nav/section links only; news cards keep black titles */
+.theme-style1 a:hover {
+  color: hsl(var(--accent));
+}
+
+.theme-style1 article a:hover,
+.theme-style1 a.group:hover,
+.theme-style1 a.s1-news-card:hover {
+  color: inherit;
 }
 
 .theme-style1 .gradient-title { 

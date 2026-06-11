@@ -540,7 +540,7 @@ function HeroLead({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
         </div>
         {/* Desktop: Title below image */}
         <div className="hidden sm:block p-4">
-          <h2 className="text-lg font-bold text-zinc-900 group-hover:text-red-600 transition-colors duration-200 line-clamp-3">
+          <h2 className="text-lg font-bold text-zinc-900 transition-colors duration-200 line-clamp-3 leading-snug">
             {a.title}
           </h2>
         </div>
@@ -578,7 +578,7 @@ function CardMedium({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
         <div className="p-3 sm:p-2.5">
-          <h3 className="text-base sm:text-sm font-bold text-zinc-900 group-hover:text-red-600 active:text-red-700 transition-colors duration-200 line-clamp-2 leading-snug">
+          <h3 className="text-base sm:text-sm font-bold text-zinc-900 transition-colors duration-200 line-clamp-2 leading-snug">
             {a.title}
           </h3>
         </div>
@@ -758,7 +758,7 @@ async function CategoryBlock({ tenantSlug, columnKey }: { tenantSlug: string; co
           >
             <a
               href={articleHref(tenantSlug, a.slug || a.id)}
-              className="line-clamp-2 text-sm font-semibold leading-tight hover:text-red-600"
+              className="s1-news-title line-clamp-2 text-sm font-semibold leading-tight text-zinc-900"
             >
               {a.title}
             </a>
@@ -811,7 +811,7 @@ function ListRow({ tenantSlug, a }: { tenantSlug: string; a: Article }) {
         </div>
         
         {/* Title - full width on mobile, left side on desktop */}
-        <h4 className="text-base sm:text-sm font-semibold text-zinc-800 group-hover:text-red-600 active:text-red-700 transition-colors duration-200 line-clamp-2 leading-snug">
+        <h4 className="text-base sm:text-sm font-semibold text-zinc-900 transition-colors duration-200 line-clamp-2 leading-relaxed">
           {a.title}
         </h4>
         
@@ -1292,6 +1292,17 @@ export async function ThemeHome({
     allLatest = fillWithFallback(latestData, 14)
   }
 
+  // Extract sections data from shaped homepage (before col-3/col-4 so topViewed/mustRead are available)
+  if (shapedHomepage?.sections) {
+    shapedHomepage.sections.forEach(section => {
+      sectionDataMap[section.key] = section.items.map(shapedToArticle)
+    })
+  } else if (shapedHomepage?.data) {
+    Object.entries(shapedHomepage.data).forEach(([key, items]) => {
+      sectionDataMap[key] = items.map(shapedToArticle)
+    })
+  }
+
   // Prevent home duplicates across major columns:
   // col-1/col-2 use allLatest(0..13), col-3/col-4 must prefer unseen ids.
   const heroAndLatestIds = new Set(allLatest.slice(0, 14).map((a) => a.id))
@@ -1308,20 +1319,15 @@ export async function ThemeHome({
   }
   const col3Base = sectionDataMap['mustRead'] || sectionDataMap['must-read'] || sectionDataMap['col-3'] || allLatest.slice(14, 28)
   const col3ArticlesUnique = uniqueExcluding(col3Base, heroAndLatestIds, 8)
-  const col4Base = mostReadData.length > 0 ? mostReadData : (sectionDataMap['topViewed'] || sectionDataMap['top-viewed'] || sectionDataMap['col-4'] || allLatest.slice(22, 36))
+  const col4Base = mostReadData.length > 0
+    ? mostReadData
+    : (sectionDataMap['topViewed'] || sectionDataMap['top-viewed'] || sectionDataMap['col-4'] || allLatest.slice(14, 22))
   const col4Exclude = new Set([...heroAndLatestIds, ...col3ArticlesUnique.map((a) => a.id)])
-  const col4ArticlesUnique = uniqueExcluding(col4Base, col4Exclude, 6)
-
-  // Extract sections data from shaped homepage
-  if (shapedHomepage?.sections) {
-    shapedHomepage.sections.forEach(section => {
-      sectionDataMap[section.key] = section.items.map(shapedToArticle)
-    })
-  } else if (shapedHomepage?.data) {
-    // Use data object if sections not available
-    Object.entries(shapedHomepage.data).forEach(([key, items]) => {
-      sectionDataMap[key] = items.map(shapedToArticle)
-    })
+  let col4ArticlesUnique = uniqueExcluding(col4Base, col4Exclude, 6)
+  if (col4ArticlesUnique.length < 3) {
+    const relaxedPool = fillWithFallback([...mostReadData, ...col4Base, ...allLatest.slice(6, 20)], 12)
+    const relaxed = uniqueExcluding(relaxedPool, heroAndLatestIds, 6)
+    if (relaxed.length > col4ArticlesUnique.length) col4ArticlesUnique = relaxed
   }
 
   // Smart categories: prefill sectionDataMap with backend-picked categories to avoid extra API calls.
@@ -1420,7 +1426,7 @@ export async function ThemeHome({
           }
           
           if (colKey === 'col-4') {
-            // Column 4: Top Articles — clean, no ad squished inside the content column
+            // Column 4: Top Articles + sticky sidebar ads (300×250) for AdSense revenue
             return (
               <div key={block.id} className="flex flex-col flex-1">
                 <section className="rounded-xl bg-white p-4 h-full">
@@ -1433,7 +1439,23 @@ export async function ThemeHome({
                       <ListRow key={a.id} tenantSlug={tenantSlugForLinks} a={a} />
                     ))}
                   </div>
+                  {adPolicy.home.showRightRail2 ? (
+                    <div className="mt-4 pt-3 border-t border-zinc-100">
+                      <p className="text-center text-[9px] font-medium text-zinc-400 uppercase tracking-[0.18em] mb-1">Advertisement</p>
+                      <div className="overflow-hidden rounded-lg" style={{ maxHeight: '280px' }}>
+                        <AdBanner variant="home_right_2" className="w-full" />
+                      </div>
+                    </div>
+                  ) : null}
                 </section>
+                {adPolicy.home.showRightRail1 && adPolicy.home.rightRailMax >= 1 ? (
+                  <div className="hidden lg:block mt-4">
+                    <p className="text-center text-[9px] font-medium text-zinc-400 uppercase tracking-[0.18em] mb-1">Advertisement</p>
+                    <div className="sticky top-24 overflow-hidden rounded-xl" style={{ maxHeight: '620px' }}>
+                      <AdBanner variant="home_right_1" className="w-full" />
+                    </div>
+                  </div>
+                ) : null}
               </div>
             )
           }
@@ -1529,13 +1551,28 @@ export async function ThemeHome({
       visibleCols.length === 2 ? 'lg:w-1/2' :
       'lg:w-full'
 
-    return (
-      <div key={section.id} className={`grid grid-cols-1 ${smGridClass} gap-4 lg:flex lg:items-start lg:gap-6`}>
+    const grid = (
+      <div className={`grid grid-cols-1 ${smGridClass} gap-4 lg:flex lg:items-start lg:gap-6`}>
         {visibleCols.map((c) => (
           <div key={c.key} id={c.key === 'col-1' ? 'left-col' : undefined} className={`${colClass(c.key)} ${lgWidthClass}`}>
             {(blocksByCol.get(c.key) || []).map((b) => renderBlock(b))}
           </div>
         ))}
+      </div>
+    )
+
+    // In-feed ad between hero grid and categories — high viewability on desktop + mobile
+    const midFeedAd = resolveProvider(getAdsSettings(settings ?? undefined), 'home_horizontal_1') !== 'none' ? (
+      <div className="my-4 overflow-hidden">
+        <p className="text-center text-[9px] font-medium text-zinc-400 uppercase tracking-[0.18em] mb-1">Advertisement</p>
+        <AdSlot slot="home_horizontal_1" settings={settings ?? undefined} className="w-full overflow-hidden" style={{ display: 'block', minHeight: '90px' }} />
+      </div>
+    ) : null
+
+    return (
+      <div key={section.id}>
+        {grid}
+        {midFeedAd}
       </div>
     )
   }
@@ -2616,7 +2653,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                           )}
                         </div>
                         <div className="p-4">
-                          <h3 className="text-base font-semibold leading-snug line-clamp-2 group-hover:text-red-600 transition-colors" style={{ lineHeight: '1.8' }}>
+                          <h3 className="s1-news-title text-base font-semibold leading-snug line-clamp-2 transition-colors" style={{ lineHeight: '1.8' }}>
                             {relatedArticle.title}
                           </h3>
                           {relatedArticle.viewCount && (
@@ -2656,7 +2693,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-zinc-500 mb-1">మునుపటి వార్త</p>
-                          <h4 className="text-sm font-semibold text-zinc-900 group-hover:text-red-600 line-clamp-2 transition-colors" style={{ lineHeight: '1.6' }}>
+                          <h4 className="s1-news-title text-sm font-semibold text-zinc-900 line-clamp-2 transition-colors" style={{ lineHeight: '1.6' }}>
                             {article.previousArticle.title}
                           </h4>
                         </div>
@@ -2693,7 +2730,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-zinc-500 mb-1">తరువాతి వార్త</p>
-                          <h4 className="text-sm font-semibold text-zinc-900 group-hover:text-red-600 line-clamp-2 transition-colors" style={{ lineHeight: '1.6' }}>
+                          <h4 className="s1-news-title text-sm font-semibold text-zinc-900 line-clamp-2 transition-colors" style={{ lineHeight: '1.6' }}>
                             {article.nextArticle.title}
                           </h4>
                         </div>
@@ -3380,7 +3417,7 @@ function SmartCategoryColumns({
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                 </div>
-                <h3 className="mt-2 line-clamp-2 text-sm font-bold leading-snug text-zinc-900 group-hover:text-red-600 transition-colors">
+                <h3 className="s1-news-title mt-2 line-clamp-2 text-sm font-bold leading-snug text-zinc-900 transition-colors">
                   {items[0].title}
                 </h3>
               </Link>
@@ -3392,7 +3429,7 @@ function SmartCategoryColumns({
                 href={toHref(articleHref(tenantSlug, a.slug || a.id))}
                 className="grid grid-cols-[1fr_auto] items-center gap-3 py-3 border-t border-zinc-100 group"
               >
-                <span className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-800 group-hover:text-red-600 transition-colors">
+                <span className="s1-news-title line-clamp-2 text-sm font-semibold leading-snug text-zinc-900 transition-colors">
                   {a.title}
                 </span>
                 <div className="h-14 w-20 overflow-hidden rounded-lg shrink-0 bg-zinc-100">
@@ -3606,7 +3643,7 @@ async function CategoryColumns({
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                 </div>
-                <h3 className="mt-2 line-clamp-2 text-sm font-bold leading-snug text-zinc-900 group-hover:text-red-600 transition-colors">
+                <h3 className="s1-news-title mt-2 line-clamp-2 text-sm font-bold leading-snug text-zinc-900 transition-colors">
                   {items[0].title}
                 </h3>
               </Link>
@@ -3618,7 +3655,7 @@ async function CategoryColumns({
                 href={toHref(articleHref(tenantSlug, a.slug || a.id))}
                 className="grid grid-cols-[1fr_auto] items-center gap-3 py-3 border-t border-zinc-100 group"
               >
-                <span className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-800 group-hover:text-red-600 transition-colors">
+                <span className="s1-news-title line-clamp-2 text-sm font-semibold leading-snug text-zinc-900 transition-colors">
                   {a.title}
                 </span>
                 <div className="h-14 w-20 overflow-hidden rounded-lg shrink-0 bg-zinc-100">
@@ -3683,7 +3720,7 @@ async function CategoryColumns({
                 <PlaceholderImg className="h-full w-full object-cover" />
               )}
             </div>
-            <a href={articleHref(tenantSlug, a.slug || a.id)} className="line-clamp-2 text-sm font-semibold leading-snug hover:text-red-600">
+            <a href={articleHref(tenantSlug, a.slug || a.id)} className="s1-news-title line-clamp-2 text-sm font-semibold leading-snug text-zinc-900">
               {a.title}
             </a>
           </div>
@@ -3811,7 +3848,7 @@ async function HGBlock({ tenantSlug }: { tenantSlug: string }) {
                           <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
                         )}
                       </div>
-                      <div className="mt-2 text-sm font-semibold leading-snug line-clamp-2 group-hover:text-red-600">{a.title}</div>
+                      <div className="s1-news-title mt-2 text-sm font-semibold leading-snug line-clamp-2 text-zinc-900">{a.title}</div>
                     </a>
                   ))}
                 </div>
@@ -3847,7 +3884,7 @@ async function HGBlock({ tenantSlug }: { tenantSlug: string }) {
                           <PlaceholderImg className="absolute inset-0 h-full w-full object-cover" />
                         )}
                       </div>
-                      <div className="mt-2 text-[13px] font-semibold leading-snug line-clamp-2 group-hover:text-red-600">{a.title}</div>
+                      <div className="s1-news-title mt-2 text-[13px] font-semibold leading-snug line-clamp-2 text-zinc-900">{a.title}</div>
                     </a>
                   ))}
                 </div>
