@@ -21,11 +21,14 @@ export async function Navbar({
   title,
   logoUrl,
   variant = 'default',
+  collapseOnScroll = true,
 }: {
   tenantSlug: string
   title: string
   logoUrl?: string
   variant?: 'default' | 'style2'
+  /** style2: disable on article pages to prevent header/title scroll flicker */
+  collapseOnScroll?: boolean
 }) {
   // 🎯 PRIMARY: Use /public/config API for branding
   const config = await getConfig()
@@ -146,10 +149,12 @@ export async function Navbar({
       <header
         id="top"
         data-collapsed="false"
-        className="group w-full border-b border-zinc-200 bg-white sticky top-0 z-50 transition-none"
-        style={{ willChange: 'contents' }}
+        className={`s2-site-header group w-full border-b border-zinc-200 bg-white sticky top-0 z-50 ${collapseOnScroll ? 'transition-none' : ''}`}
+        style={collapseOnScroll ? { willChange: 'contents' } : undefined}
       >
-        <HeaderCollapseOnScrollClient targetId="top" threshold={100} hysteresis={15} />
+        {collapseOnScroll ? (
+          <HeaderCollapseOnScrollClient targetId="top" threshold={100} hysteresis={15} />
+        ) : null}
 
         <div className="mx-auto max-w-7xl px-4">
           {/* Masthead (center logo) - smooth hide/show */}

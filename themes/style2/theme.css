@@ -110,6 +110,44 @@
   z-index: 100;
 }
 
+/* Article page: stable sticky header (no collapse flicker) */
+.theme-style2 .s2-site-header {
+  isolation: isolate;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.theme-style2 .s2-site-header a:focus:not(:focus-visible),
+.theme-style2 .s2-site-header button:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+.theme-style2 .s2-article-page-title {
+  position: relative;
+  z-index: 0;
+  scroll-margin-top: 6.5rem;
+}
+
+@media (min-width: 640px) {
+  .theme-style2 .s2-article-page-title {
+    scroll-margin-top: 8rem;
+  }
+}
+
+.theme-style2 #main-content {
+  position: relative;
+  z-index: 1;
+}
+
+.theme-style2 .s2-article-actions:focus,
+.theme-style2 .s2-article-actions:focus-within,
+.theme-style2 .s2-article-actions *:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
 .theme-style2 header nav {
   font-family: var(--font-telugu);
 }
