@@ -276,6 +276,11 @@ async function RootLayoutInner({
     adsConfig?.adsense ||
     ((adsConfig as Record<string, unknown>)?.adsenseClientId as string) ||
     null
+  const adsenseAccountId = adsenseClient
+    ? adsenseClient.startsWith('ca-')
+      ? adsenseClient
+      : `ca-${adsenseClient}`
+    : null
   const adsEnabled = Boolean(adsConfig?.enabled && adsenseClient)
   const googleClientId = config?.integrations?.auth?.googleClientId ?? null
 
@@ -295,6 +300,11 @@ async function RootLayoutInner({
         
         {/* 🔍 Site Verification for Google & Bing */}
         <SiteVerification />
+
+        {/* AdSense site ownership verification (required before ads approval) */}
+        {adsenseAccountId && (
+          <meta name="google-adsense-account" content={adsenseAccountId} />
+        )}
         
         {/* 🎯 Dynamic theme colors from backend config */}
         <ThemeColorVars />
