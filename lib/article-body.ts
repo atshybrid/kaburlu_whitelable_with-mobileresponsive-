@@ -44,6 +44,42 @@ function stripLeadingH1(html: string): string {
   return html.replace(/^\s*<h1\b[^>]*>[\s\S]*?<\/h1>\s*/i, '')
 }
 
+/** Kaburlu API blocks: { subhead?, paragraphs: string[] } */
+function blocksToArticleHtml(blocks: unknown): string | undefined {
+  if (!Array.isArray(blocks) || blocks.length === 0) return undefined
+
+  const out: string[] = []
+  for (const block of blocks) {
+    if (!block || typeof block !== 'object') continue
+    const b = block as Record<string, unknown>
+
+    const subhead = str(b.subhead)
+    if (subhead) out.push(`<h2>${escapeHtml(subhead)}</h2>`)
+
+    const paras = Array.isArray(b.paragraphs) ? b.paragraphs : []
+    for (const p of paras) {
+      if (typeof p !== 'string') continue
+      const t = p.trim()
+      if (t) out.push(`<p>${escapeHtml(t).replace(/\n/g, '<br />')}</p>`)
+    }
+
+    // Legacy simple block format
+    const type = String(b.type || b.kind || '').toLowerCase()
+    const text = str(b.text) || str(b.content) || str(b.value) || ''
+    if (text && paras.length === 0) {
+      if (type === 'heading' || type === 'h2') out.push(`<h2>${escapeHtml(text)}</h2>`)
+      else out.push(`<p>${escapeHtml(text).replace(/\n/g, '<br />')}</p>`)
+    }
+  }
+
+  return out.length > 0 ? out.join('') : undefined
+}
+
+function normalizePrimaryHtml(raw: string): string {
+  const html = looksLikeHtml(raw) ? raw : textToParagraphHtml(raw)
+  return stripLeadingH1(wrapLooseHtml(html)).trim()
+}
+
 /** Extract full article body from any supported backend shape */
 export function resolveArticleBodyHtml(
   article: Article,
@@ -68,7 +104,6 @@ export function resolveArticleBodyHtml(
     str(contentObj?.html) ||
     str(contentObj?.rendered) ||
     str(contentObj?.value) ||
-    str(contentObj?.plainText) ||
     str(obj(a.body)?.html) ||
     str(obj(a.body)?.rendered) ||
     str(article.plainText) ||
@@ -80,39 +115,41 @@ export function resolveArticleBodyHtml(
       : undefined)
 
   if (contentCandidate) {
-    const raw = looksLikeHtml(contentCandidate)
-      ? contentCandidate
-      : textToParagraphHtml(contentCandidate)
-    return stripLeadingH1(wrapLooseHtml(raw))
+    const primary = normalizePrimaryHtml(contentCandidate)
+    if (primary) return primary
   }
 
-  // Content blocks (structured CMS)
   const blocks = a.contentBlocks || contentObj?.blocks
-  if (Array.isArray(blocks) && blocks.length > 0) {
-    const html = blocks
-      .map((block) => {
-        if (!block || typeof block !== 'object') return ''
-        const b = block as Record<string, unknown>
-        const type = String(b.type || b.kind || '').toLowerCase()
-        const text = str(b.text) || str(b.content) || str(b.value) || ''
-        if (!text) return ''
-        if (type === 'heading' || type === 'h2') return `<h2>${escapeHtml(text)}</h2>`
-        return `<p>${escapeHtml(text).replace(/\n/g, '<br />')}</p>`
-      })
-      .filter(Boolean)
-      .join('')
-    if (html) return html
+  const blocksHtml = blocksToArticleHtml(blocks)
+  if (blocksHtml) {
+    const primary = stripLeadingH1(blocksHtml).trim()
+    if (primary) return primary
   }
 
-  // Fallback: highlights → paragraphs (skip if already shown in insights box)
+  const plainFromContent = str(contentObj?.plainText)
+  if (plainFromContent) {
+    const primary = normalizePrimaryHtml(plainFromContent)
+    if (primary) return primary
+  }
+
   const highlights = (article.highlights || []).filter(Boolean)
+  const excerpt = str(article.excerpt) || str(article.subtitle)
+  const plainText = str(article.plainText)
+
+  // Preferred fallbacks (respect skip flags when insights boxes already show these)
   if (!opts?.skipHighlightsFallback && highlights.length > 0) {
     return highlights.map((h) => `<p>${escapeHtml(h)}</p>`).join('')
   }
+  if (!opts?.skipExcerptFallback && excerpt) {
+    return `<p>${escapeHtml(excerpt)}</p>`
+  }
 
-  // Fallback: excerpt / summary (skip if already shown in summary box)
-  const excerpt = str(article.excerpt) || str(article.subtitle)
-  if (!opts?.skipExcerptFallback && excerpt) return `<p>${escapeHtml(excerpt)}</p>`
+  // Last resort: never leave article body empty when any text exists
+  if (highlights.length > 0) {
+    return highlights.map((h) => `<p>${escapeHtml(h)}</p>`).join('')
+  }
+  if (excerpt) return `<p>${escapeHtml(excerpt)}</p>`
+  if (plainText) return normalizePrimaryHtml(plainText)
 
   return ''
 }

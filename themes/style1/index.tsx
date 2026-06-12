@@ -2280,10 +2280,12 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
   
 
   // Robust article body extraction (handles all backend field shapes)
-  const articleBodyHtml = resolveArticleBodyHtml(article, {
-    skipExcerptFallback: Boolean(article.excerpt?.trim()),
-    skipHighlightsFallback: Boolean(article.highlights?.length),
-  })
+  const articleInsightsShown = Boolean(article.excerpt?.trim()) || Boolean(article.highlights?.length)
+  const articleBodyHtml =
+    resolveArticleBodyHtml(article, {
+      skipExcerptFallback: articleInsightsShown,
+      skipHighlightsFallback: articleInsightsShown,
+    }) || resolveArticleBodyHtml(article)
   
   // Use fetched data for sidebar/bottom sections
   const trending = trendingArticles

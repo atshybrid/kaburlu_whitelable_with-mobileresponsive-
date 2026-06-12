@@ -1906,10 +1906,12 @@ export async function ThemeArticle({
   // Sidebar latest (filter out current article)
   const sidebarLatest = latestArticles.filter((a) => a.id !== article.id).slice(0, 8)
 
-  const articleBodyHtml = resolveArticleBodyHtml(article, {
-    skipExcerptFallback: Boolean(article.excerpt?.trim()),
-    skipHighlightsFallback: Boolean(article.highlights?.length),
-  })
+  const articleInsightsShown = Boolean(article.excerpt?.trim()) || Boolean(article.highlights?.length)
+  const articleBodyHtml =
+    resolveArticleBodyHtml(article, {
+      skipExcerptFallback: articleInsightsShown,
+      skipHighlightsFallback: articleInsightsShown,
+    }) || resolveArticleBodyHtml(article)
 
   const skipSummaryFaq = Boolean(article.excerpt?.trim())
   const skipHighlightsFaq = Boolean(article.highlights?.length)
@@ -2025,8 +2027,9 @@ export async function ThemeArticle({
             </div>
 
             {/* Article Content with Inline Images and Must-Read Card */}
-            <Style2ArticleContent 
-              html={articleBodyHtml} 
+            <Style2ArticleContent
+              article={article}
+              html={articleBodyHtml}
               secondImage={article.media?.images && article.media.images.length > 0 ? article.media.images[0] : null}
               mustReadArticle={article.mustRead && (article.mustRead as Record<string, unknown>).title ? (article.mustRead as Record<string, unknown>) : (mustReadArticles && mustReadArticles.length > 0 ? mustReadArticles[0] as unknown as Record<string, unknown> : null)}
               tenantSlug={tenantSlug}
@@ -2201,41 +2204,52 @@ export async function ThemeArticle({
 
 // Style2 Article Content with inline image support
 function Style2ArticleContent({
+  article,
   html,
   secondImage,
   mustReadArticle,
   tenantSlug,
   settings,
 }: {
+  article: Article
   html: string
   secondImage?: { url?: string; alt?: string; caption?: string } | null
   mustReadArticle?: Record<string, unknown> | null
   tenantSlug?: string
   settings?: EffectiveSettings | null
 }) {
-  if (!html) {
+  const resolvedHtml = html?.trim() || resolveArticleBodyHtml(article)
+
+  if (!resolvedHtml) {
+    const fallbackText = article.plainText?.trim() || article.excerpt?.trim()
     return (
-      <div className="text-center py-8">
-        <p className="text-zinc-500">ఆర్టికల్ కంటెంట్ లోడ్ అవుతోంది...</p>
+      <div className="article-content prose prose-lg max-w-none py-4">
+        {fallbackText ? (
+          <p className="article-paragraph text-zinc-800 leading-relaxed">{fallbackText}</p>
+        ) : (
+          <p className="text-zinc-500 text-center py-6">ఈ వార్త కోసం విషయం త్వరలో అందుబాటులోకి వస్తుంది.</p>
+        )}
       </div>
     )
   }
 
-  const hasParagraphBlocks = /<\s*\/\s*p\s*>/i.test(html)
+  const bodyHtml = resolvedHtml
+
+  const hasParagraphBlocks = /<\s*\/\s*p\s*>/i.test(bodyHtml)
   if (!hasParagraphBlocks) {
-    const looksLikeHtml = /<\s*([a-z][\w:-]*)\b/i.test(html)
+    const looksLikeHtml = /<\s*([a-z][\w:-]*)\b/i.test(bodyHtml)
     return (
       <div className="article-content prose prose-lg max-w-none">
         {looksLikeHtml ? (
-          <div className="article-paragraph" dangerouslySetInnerHTML={{ __html: html }} />
+          <div className="article-paragraph" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
         ) : (
-          <p className="article-paragraph">{html}</p>
+          <p className="article-paragraph">{bodyHtml}</p>
         )}
       </div>
     )
   }
   
-  const parts = html.split(/<\/p>/i)
+  const parts = bodyHtml.split(/<\/p>/i)
   const nodes: React.ReactNode[] = []
   let paraCount = 0
   let imageInserted = false

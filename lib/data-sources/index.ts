@@ -196,9 +196,10 @@ class RemoteDataSource implements DataSource {
     const primaryPath = `/public/articles/${encodeURIComponent(slug)}`
     
     try {
-      const res = await fetchJSON<unknown>(primaryPath, { 
+      const res = await fetchJSON<unknown>(primaryPath, {
         tenantDomain: domain,
-        revalidateSeconds: cacheTTL,
+        cache: 'no-store',
+        revalidateSeconds: 0,
       })
       
       // New API returns { status: "ok", article: {...}, publisher: {...}, related_articles: [...] }
@@ -1213,6 +1214,11 @@ function normalizeItem(u: unknown): Article {
   const previousArticle = o.previousArticle && typeof o.previousArticle === 'object' ? o.previousArticle as Article['previousArticle'] : null
   const nextArticle = o.nextArticle && typeof o.nextArticle === 'object' ? o.nextArticle as Article['nextArticle'] : null
   
+  const contentData = asObj(o.contentData) || (typeof o.content === 'object' && o.content !== null && !Array.isArray(o.content) ? asObj(o.content) : undefined)
+  const contentBlocks = Array.isArray(o.contentBlocks)
+    ? o.contentBlocks
+    : (Array.isArray(contentData?.blocks) ? contentData.blocks : undefined)
+
   return {
     id,
     slug,
@@ -1223,6 +1229,8 @@ function normalizeItem(u: unknown): Article {
     content: content ?? null,
     contentHtml: contentHtml ?? null,
     plainText: plainText ?? null,
+    contentData,
+    contentBlocks,
     coverImage: normalizedCoverUrl ? {
       url: normalizedCoverUrl,
       alt: coverAlt ?? null,
