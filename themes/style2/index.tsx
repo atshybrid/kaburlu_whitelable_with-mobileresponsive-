@@ -27,6 +27,66 @@ import { getDomainStats } from '@/lib/domain-stats'
 
 /* ==================== UTILITY FUNCTIONS ==================== */
 
+function formatViewCount(count?: number): string | null {
+  if (typeof count !== 'number' || count <= 0) return null
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`
+  return count.toLocaleString('te-IN')
+}
+
+function formatPostDate(iso?: string | null, variant: 'full' | 'short' = 'short'): string | null {
+  if (!iso) return null
+  try {
+    return new Date(String(iso)).toLocaleDateString(
+      'te-IN',
+      variant === 'full'
+        ? { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
+        : { month: 'short', day: 'numeric', year: 'numeric' },
+    )
+  } catch {
+    return null
+  }
+}
+
+function ArticleMetaLine({
+  publishedAt,
+  viewCount,
+  className = '',
+  size = 'xs',
+}: {
+  publishedAt?: string | null
+  viewCount?: number
+  className?: string
+  size?: 'xs' | 'sm'
+}) {
+  const date = formatPostDate(publishedAt)
+  const views = formatViewCount(viewCount)
+  if (!date && !views) return null
+  const sizeClass = size === 'sm' ? 'text-sm' : 'text-xs'
+
+  return (
+    <div className={`s2-article-meta flex flex-wrap items-center gap-x-3 gap-y-1 ${sizeClass} text-zinc-500 ${className}`}>
+      {date ? (
+        <time dateTime={publishedAt ?? undefined} className="inline-flex items-center gap-1">
+          <svg className="w-3 h-3 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          {date}
+        </time>
+      ) : null}
+      {views ? (
+        <span className="inline-flex items-center gap-1">
+          <svg className="w-3 h-3 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          {views} వీక్షణలు
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
 function style2ItemToArticle(item: Style2HomepageItem): Article {
   const raw = item as Record<string, unknown>
   const slug = getCanonicalArticleSlug(raw)
@@ -516,9 +576,12 @@ function TitleList({ tenantSlug, items }: { tenantSlug: string; items: Article[]
           className="title-list-item group"
         >
           <span className="number">{idx + 1}</span>
-          <span className="text-sm font-medium leading-snug text-black group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-2">
-            {a.title}
-          </span>
+          <div className="min-w-0 flex-1">
+            <span className="text-sm font-medium leading-snug text-black group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-2 block">
+              {a.title}
+            </span>
+            <ArticleMetaLine publishedAt={a.publishedAt} viewCount={a.viewCount} className="mt-1" />
+          </div>
         </Link>
       ))}
     </div>
@@ -1757,17 +1820,23 @@ function ReporterSection({ article }: { article: Article }) {
             </div>
           ) : null}
           {(totalArticles || totalViews) ? (
-            <div className="flex items-center gap-4 mt-2">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
               {totalArticles ? (
-                <span className="text-xs text-zinc-500">
-                  <span className="font-semibold text-zinc-700">{totalArticles.toLocaleString('te-IN')}</span> వార్తలు
+                <span className="text-xs text-zinc-500" title="రిపోర్టర్ రాసిన మొత్తం వార్తలు">
+                  <span className="font-semibold text-zinc-700">{totalArticles.toLocaleString('te-IN')}</span> మొత్తం వార్తలు
                 </span>
               ) : null}
               {totalViews ? (
-                <span className="text-xs text-zinc-500">
-                  <span className="font-semibold text-zinc-700">{totalViews >= 1000 ? `${(totalViews / 1000).toFixed(1)}K` : totalViews.toLocaleString('te-IN')}</span> వీక్షణలు
+                <span className="text-xs text-zinc-500" title="రిపోర్టర్ అన్ని వార్తల మొత్తం వీక్షణలు — ఈ వార్త కాదు">
+                  <span className="font-semibold text-zinc-700">{formatViewCount(totalViews)}</span> మొత్తం రీచ్
                 </span>
               ) : null}
+            </div>
+          ) : null}
+          {(article.publishedAt || (article.viewCount && article.viewCount > 0)) ? (
+            <div className="mt-3 pt-3 border-t border-zinc-100">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-1">ఈ వార్త</p>
+              <ArticleMetaLine publishedAt={article.publishedAt} viewCount={article.viewCount} />
             </div>
           ) : null}
         </div>
@@ -1899,21 +1968,17 @@ export async function ThemeArticle({
                 {article.title}
               </h1>
               
-              <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-500">
-                {article.publishedAt ? (
-                  <time className="flex items-center gap-1.5">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    {new Date(String(article.publishedAt)).toLocaleDateString('te-IN', { 
-                      weekday: 'long',
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </time>
-                ) : null}
-              </div>
+              <ArticleMetaLine
+                publishedAt={article.publishedAt}
+                viewCount={article.viewCount}
+                size="sm"
+                className="gap-4"
+              />
+              {article.publishedAt ? (
+                <time dateTime={String(article.publishedAt)} className="sr-only">
+                  {formatPostDate(article.publishedAt, 'full')}
+                </time>
+              ) : null}
             </header>
 
             {(article.excerpt || article.highlights?.length) ? (
@@ -2028,6 +2093,11 @@ export async function ThemeArticle({
                           <h3 className="text-sm font-semibold line-clamp-2 group-hover:text-[hsl(var(--primary))] transition-colors" style={{ lineHeight: '1.6' }}>
                             {relatedArticle.title}
                           </h3>
+                          <ArticleMetaLine
+                            publishedAt={relatedArticle.publishedAt}
+                            viewCount={relatedArticle.viewCount}
+                            className="mt-2"
+                          />
                         </div>
                       </Link>
                     )
@@ -2072,9 +2142,12 @@ export async function ThemeArticle({
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                           </div>
                         )}
-                        <h4 className="flex-1 text-sm font-medium text-zinc-800 group-hover:text-amber-700 line-clamp-2 transition-colors" style={{ lineHeight: '1.5' }}>
-                          {item.title}
-                        </h4>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-zinc-800 group-hover:text-amber-700 line-clamp-2 transition-colors" style={{ lineHeight: '1.5' }}>
+                            {item.title}
+                          </h4>
+                          <ArticleMetaLine publishedAt={item.publishedAt} viewCount={item.viewCount} className="mt-1" />
+                        </div>
                       </Link>
                     )
                   })}

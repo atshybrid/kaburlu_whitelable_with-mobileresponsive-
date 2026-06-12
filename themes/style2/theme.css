@@ -374,6 +374,17 @@
   color: hsl(var(--primary));
 }
 
+.theme-style2 .title-list-item:hover .s2-article-meta,
+.theme-style2 .title-list-item:hover .s2-article-meta span {
+  color: #71717a !important;
+}
+
+.theme-style2 .s2-article-meta span {
+  font-size: inherit;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
 /* -------------------- BULLET LIST -------------------- */
 .theme-style2 .bullet-item {
   display: flex;
