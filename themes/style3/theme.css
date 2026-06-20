@@ -40,6 +40,111 @@
   letter-spacing: 0.04em;
 }
 
+.theme-style3 .s3-badge--sm {
+  font-size: 9px;
+  padding: 0.15rem 0.5rem;
+}
+
+.theme-style3 .s3-badge--outline {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(4px);
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+/* Breaking strip */
+.theme-style3 .s3-breaking-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  background: #fff;
+  color: #dc2626;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 0.25rem;
+  animation: s3-pulse 2s ease-in-out infinite;
+}
+
+@keyframes s3-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+
+/* Rank pills */
+.theme-style3 .s3-rank-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background: hsl(var(--primary));
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 900;
+}
+
+.theme-style3 .s3-rank-pill--lg {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.75rem;
+}
+
+/* Horizontal scroll helpers */
+.theme-style3 .scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.theme-style3 .scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.theme-style3 .s3-secondary-scroll > .s3-secondary-card {
+  flex: 0 0 auto;
+}
+
+@media (min-width: 640px) {
+  .theme-style3 .s3-secondary-scroll > .s3-secondary-card {
+    flex: unset;
+  }
+}
+
+/* Category hub */
+.theme-style3 .s3-category-hub {
+  transition: box-shadow 0.2s ease;
+}
+
+.theme-style3 .s3-category-hub:hover {
+  box-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.12);
+}
+
+.theme-style3 .s3-category-hub-head {
+  background: linear-gradient(to right, hsl(var(--primary) / 0.08), transparent);
+}
+
+/* Must-read highlight */
+.theme-style3 .s3-must-read {
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-style3 .s3-must-read::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8rem;
+  height: 8rem;
+  background: hsl(var(--primary) / 0.06);
+  border-radius: 9999px;
+  transform: translate(30%, -30%);
+  pointer-events: none;
+}
+
 /* Headlines — black default, amber on hover only */
 .theme-style3 .s3-headline,
 .theme-style3 .s3-card-title,
