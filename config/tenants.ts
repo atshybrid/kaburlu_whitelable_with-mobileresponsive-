@@ -10,6 +10,6 @@ export type ThemeKey = 'style1' | 'style2' | 'style3' | 'toi'
 export const THEMES: Record<ThemeKey, { name: string } > = {
   style1: { name: 'TV Magazine' },
   style2: { name: 'Modern Grid' },
-  style3: { name: 'Classic Newspaper' },
+  style3: { name: 'Premium Magazine Grid' },
   toi: { name: 'Times of India Style' },
 }
