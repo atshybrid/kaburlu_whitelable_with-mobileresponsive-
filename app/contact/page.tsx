@@ -7,6 +7,7 @@ import { Metadata } from 'next'
 import { Navbar } from '@/components/shared/Navbar'
 import { Footer } from '@/components/shared/Footer'
 import { getContactData, type BackendContactResponse } from '@/lib/contact'
+import { enhanceContactUsHtml } from '@/lib/contact-page-content'
 import { resolveTenant } from '@/lib/tenant'
 import { getTenantDomain } from '@/lib/domain-utils'
 
@@ -95,7 +96,7 @@ export default async function ContactPage() {
               ` }} />
               <div 
                 className="contact-content"
-                dangerouslySetInnerHTML={{ __html: contactData.contentHtml }}
+                dangerouslySetInnerHTML={{ __html: enhanceContactUsHtml(contactData.contentHtml) }}
               />
             </div>
           </div>

@@ -3,6 +3,7 @@ import { Navbar } from '@/components/shared/Navbar'
 import type { EffectiveSettings } from '@/lib/remote'
 import type { LegalPageKey } from '@/lib/legal-pages'
 import { LEGAL_PAGE_META, fetchLegalPage } from '@/lib/legal-pages'
+import { enhanceContactUsHtml } from '@/lib/contact-page-content'
 
 function firstNonEmpty(...vals: Array<string | undefined | null>) {
   for (const v of vals) {
@@ -42,6 +43,9 @@ export async function LegalPage({
 
   // If API content is available, render it directly
   if (apiContent?.contentHtml) {
+    const contentHtml =
+      pageKey === 'contact-us' ? enhanceContactUsHtml(apiContent.contentHtml) : apiContent.contentHtml
+
     return (
       <div>
         <Navbar tenantSlug={tenantSlug} title={siteTitle} logoUrl={settings?.branding?.logoUrl} variant={isStyle2 ? 'style2' : 'default'} />
@@ -50,7 +54,7 @@ export async function LegalPage({
           <h1 className="mb-4 text-3xl font-extrabold leading-tight">{apiContent.title || meta.title}</h1>
           <div 
             className="prose max-w-none" 
-            dangerouslySetInnerHTML={{ __html: apiContent.contentHtml }}
+            dangerouslySetInnerHTML={{ __html: contentHtml }}
           />
         </main>
 
@@ -109,17 +113,26 @@ export async function LegalPage({
                 {contactEmail ? (
                   <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
                 ) : (
-                  <em>Not configured</em>
+                  <a href="mailto:contact@kaburlutoday.com">contact@kaburlutoday.com</a>
                 )}
               </p>
-              {contactPhone ? (
-                <>
-                  <h2>Phone</h2>
-                  <p>
-                    <a href={`tel:${contactPhone}`}>{contactPhone}</a>
-                  </p>
-                </>
-              ) : null}
+              <h2>Phone</h2>
+              <p>
+                {contactPhone ? (
+                  <a href={`tel:${contactPhone}`}>{contactPhone}</a>
+                ) : (
+                  <a href="tel:+919118191991">+91 9118191991</a>
+                )}
+              </p>
+              <h2>Editorial Team</h2>
+              <p>If you would like to contact our newsroom, please send your messages to:</p>
+              <p>
+                <strong>Phone:</strong>{' '}
+                <a href="tel:+919118191991">+91 9118191991</a>
+                <br />
+                <strong>Email:</strong>{' '}
+                <a href="mailto:contact@kaburlutoday.com">contact@kaburlutoday.com</a>
+              </p>
               {(addressCity || addressRegion || addressCountry) ? (
                 <>
                   <h2>Office location</h2>
