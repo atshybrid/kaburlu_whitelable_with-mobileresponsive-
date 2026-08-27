@@ -18,6 +18,7 @@ import { notFound } from 'next/navigation'
 import type { Article } from '@/lib/data-sources'
 import type { ReactElement } from 'react'
 import type { Metadata } from 'next'
+import { discoverOgImages, discoverRobots } from '@/lib/metadata'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -132,6 +133,7 @@ export async function generateMetadata({
     title,
     description,
     authors: authorName ? [{ name: authorName }] : [],
+    robots: discoverRobots,
     openGraph: {
       title,
       description,
@@ -142,7 +144,7 @@ export async function generateMetadata({
       modifiedTime: updatedAt,
       ...(categoryName ? { section: categoryName } : {}),
       ...(authorName ? { authors: [authorName] } : {}),
-      images: image ? [{ url: image, width: 1200, height: 675, alt: title }] : [],
+      images: discoverOgImages(image, title),
     },
     twitter: {
       card: 'summary_large_image',

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from 'next/script';
 import { getEffectiveSettings } from "@/lib/settings";
 import { getConfig, getDefaultLanguage, getDefaultLanguageDirection, type TenantConfig } from "@/lib/config";
+import { discoverRobots } from "@/lib/metadata";
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -190,10 +191,7 @@ export async function generateMetadata(): Promise<Metadata> {
           shortcut: config.branding.favicon ? [{ url: config.branding.favicon }] : undefined,
           apple: config.branding.appleTouchIcon || config.branding.logo ? [{ url: config.branding.appleTouchIcon || config.branding.logo }] : undefined,
         },
-        robots: {
-          index: true,
-          follow: true,
-        },
+        robots: discoverRobots,
       }
     }
 

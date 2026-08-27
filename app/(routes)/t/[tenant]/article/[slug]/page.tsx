@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation'
 import type { Article } from '@/lib/data-sources'
 import type { ReactElement } from 'react'
 import type { Metadata } from 'next'
+import { discoverOgImages, discoverRobots } from '@/lib/metadata'
 
 // Helper functions for metadata extraction
 function pickString(v: unknown) {
@@ -92,6 +93,7 @@ export async function generateMetadata({
   return {
     title,
     description,
+    robots: discoverRobots,
     openGraph: {
       title,
       description,
@@ -100,16 +102,7 @@ export async function generateMetadata({
       type: 'article',
       publishedTime: createdAt,
       modifiedTime: updatedAt,
-      images: image
-        ? [
-            {
-              url: image,
-              width: 1200,
-              height: 675,
-              alt: title,
-            },
-          ]
-        : [],
+      images: discoverOgImages(image, title),
     },
     twitter: {
       card: 'summary_large_image',
