@@ -1,31 +1,30 @@
 /**
  * 🎯 Config-based Theme & Script Loader
- * 
+ *
  * Loads theme colors, analytics, ads, and other integrations
  * based on /public/config API response
  */
 
-import { getConfig, getThemeCssVars } from '@/lib/config'
+import { getConfig, getGa4MeasurementId, getGoogleTagManagerId, getThemeCssVars } from '@/lib/config'
 import Script from 'next/script'
 
 export async function ConfigBasedScripts() {
   const config = await getConfig()
-  
+
   if (!config) {
     return null
   }
 
-  const gaId = config.integrations.analytics.googleAnalytics
-  const gtmId = config.integrations.analytics.googleTagManager
+  const measurementId = getGa4MeasurementId(config)
+  const gtmId = getGoogleTagManagerId(config)
   const adsenseId = config.integrations.ads.adsense
 
   return (
     <>
-      {/* Google Analytics */}
-      {gaId && (
+      {measurementId && (
         <>
           <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+            src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
             strategy="afterInteractive"
           />
           <Script id="google-analytics" strategy="afterInteractive">
@@ -33,13 +32,12 @@ export async function ConfigBasedScripts() {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', '${gaId}');
+              gtag('config', '${measurementId}');
             `}
           </Script>
         </>
       )}
 
-      {/* Google Tag Manager */}
       {gtmId && (
         <>
           <Script id="google-tag-manager" strategy="afterInteractive">
@@ -62,7 +60,6 @@ export async function ConfigBasedScripts() {
         </>
       )}
 
-      {/* Google AdSense */}
       {adsenseId && (
         <Script
           async
@@ -77,7 +74,7 @@ export async function ConfigBasedScripts() {
 
 export async function ThemeColorVars() {
   const config = await getConfig()
-  
+
   if (!config) {
     return null
   }

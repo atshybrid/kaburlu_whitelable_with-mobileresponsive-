@@ -162,3 +162,24 @@ export function pushToDataLayer(data: Record<string, unknown>) {
     window.dataLayer.push(data)
   }
 }
+
+/**
+ * Track ePaper page engagement in GA4 (supplements backend heartbeat).
+ */
+export function trackEpaperPageView(issueId: string, pageNumber: number) {
+  trackEvent('epaper_page_view', {
+    issue_id: issueId,
+    page_number: pageNumber,
+  })
+}
+
+/**
+ * Track ePaper read time slice in GA4.
+ */
+export function trackEpaperHeartbeat(issueId: string, pageNumber: number, seconds: number) {
+  trackEvent('epaper_read_time', {
+    issue_id: issueId,
+    page_number: pageNumber,
+    engagement_time_sec: seconds,
+  })
+}

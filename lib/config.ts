@@ -125,6 +125,11 @@ export interface TenantConfig {
   
   integrations: {
     analytics: {
+      /** New: explicit provider — `ga4` loads measurementId directly (no GTM). */
+      provider?: 'ga4' | 'gtm' | string | null
+      /** New: GA4 measurement ID (preferred when provider is ga4). */
+      measurementId?: string | null
+      /** Legacy flat measurement ID (still supported). */
       googleAnalytics: string | null
       googleTagManager: string | null
       enabled: boolean
@@ -483,10 +488,53 @@ export function getThemeCssVars(config: TenantConfig | null): Record<string, str
 }
 
 /**
+ * Resolve GA4 measurement ID from config (domain-specific via /public/config).
+ * Supports new `provider` + `measurementId` and legacy `googleAnalytics` fields.
+ */
+export function getGa4MeasurementId(config: TenantConfig | null): string | null {
+  const analytics = config?.integrations?.analytics
+  if (!analytics?.enabled) return null
+
+  if (analytics.provider === 'ga4' && analytics.measurementId) {
+    return analytics.measurementId
+  }
+
+  if (analytics.googleAnalytics) {
+    return analytics.googleAnalytics
+  }
+
+  if (analytics.measurementId) {
+    return analytics.measurementId
+  }
+
+  const nested = analytics as Record<string, unknown>
+  const googleAnalyticsObj = nested.googleAnalytics
+  if (
+    googleAnalyticsObj &&
+    typeof googleAnalyticsObj === 'object' &&
+    'measurementId' in googleAnalyticsObj
+  ) {
+    const id = (googleAnalyticsObj as { measurementId?: string }).measurementId
+    if (id) return id
+  }
+
+  return null
+}
+
+/**
+ * Load GTM only when explicitly configured and not using direct GA4.
+ */
+export function getGoogleTagManagerId(config: TenantConfig | null): string | null {
+  const analytics = config?.integrations?.analytics
+  if (!analytics?.enabled || analytics.provider === 'ga4') return null
+  return analytics.googleTagManager ?? null
+}
+
+/**
  * Check if analytics should be loaded
  */
 export function shouldLoadAnalytics(config: TenantConfig | null): boolean {
-  return !!(config?.integrations.analytics.googleAnalytics || config?.integrations.analytics.googleTagManager)
+  return !!(getGa4MeasurementId(config) || getGoogleTagManagerId(config))
 }
 
 /**
