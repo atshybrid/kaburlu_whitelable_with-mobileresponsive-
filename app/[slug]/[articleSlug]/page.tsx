@@ -22,7 +22,7 @@ import { notFound } from 'next/navigation'
 import type { Article } from '@/lib/data-sources'
 import type { ReactElement } from 'react'
 import type { Metadata } from 'next'
-import { discoverOgImages, discoverRobots } from '@/lib/metadata'
+import { buildArticlePageMetadata } from '@/lib/article-metadata'
 
 // Force dynamic rendering for domain-based multitenancy
 export const dynamic = 'force-dynamic'
@@ -46,27 +46,10 @@ const RESERVED_SLUGS = [
   'static',
 ]
 
-// Helper functions for metadata extraction
+// Helper for settings extraction in generateMetadata
 function pickString(v: unknown) {
   const s = String(v ?? '').trim()
   return s || undefined
-}
-
-function pickFrom(obj: unknown, path: string[]): unknown {
-  let cur: unknown = obj
-  for (const key of path) {
-    if (!cur || typeof cur !== 'object') return undefined
-    cur = (cur as Record<string, unknown>)[key]
-  }
-  return cur
-}
-
-function pickFirstString(...vals: unknown[]) {
-  for (const v of vals) {
-    const s = pickString(v)
-    if (s) return s
-  }
-  return undefined
 }
 
 export async function generateMetadata({
@@ -91,9 +74,7 @@ export async function generateMetadata({
       title: 'Article Not Found',
     }
   }
-  
-  const a = article as Record<string, unknown>
-  
+
   // Get settings for publisher info
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const settings = await getEffectiveSettingsForDomain(domain).catch(() => ({})) as any
@@ -108,76 +89,14 @@ export async function generateMetadata({
     pickString(settings?.settings?.branding?.siteName) ||
     tenant.name ||
     'Kaburlu News'
-  
-  // Prefer explicit SEO fields from backend if present
-  const seoTitle = pickString(pickFrom(a, ['meta', 'seoTitle']))
-  const seoDescription = pickString(pickFrom(a, ['meta', 'metaDescription']))
-  
-  const title = String(seoTitle || article.title || '')
-  const description = pickFirstString(
-    seoDescription,
-    a.excerpt,
-    a.summary,
-    a.description,
-    typeof a.plainText === 'string' ? a.plainText.slice(0, 220) : undefined,
-  ) || ''
-  
-  // Priority: coverImageUrl (new API), then coverImage.url (legacy), then other fields
-  const image = pickFirstString(
-    a.coverImageUrl,
-    pickFrom(a, ['coverImage', 'url']),
-    a.imageUrl,
-    a.featuredImage,
-    a.image
-  )
-  
-  // SEO-friendly canonical URL: /{categorySlug}/{articleSlug}
-  const url = `${canonicalBase}/${encodeURIComponent(categorySlug)}/${encodeURIComponent(articleSlug)}`
-  
-  const createdAt = pickString(a.publishedAt) || pickString(a.createdAt)
-  const updatedAt = pickString(a.updatedAt) || createdAt
-  
-  // Extract category for article:section
-  const categoryName = pickFirstString(
-    pickFrom(a, ['category', 'name']),
-    pickFrom(a, ['category', 'title']),
-    a.categoryName
-  )
-  
-  // Extract author info
-  const authorName = pickFirstString(
-    pickFrom(a, ['author', 'name']),
-    pickFrom(a, ['author', 'displayName']),
-    a.authorName
-  )
-  
-  return {
-    title,
-    description,
-    authors: authorName ? [{ name: authorName }] : [],
-    robots: discoverRobots,
-    openGraph: {
-      title,
-      description,
-      url,
-      siteName: publisherName,
-      type: 'article',
-      publishedTime: createdAt,
-      modifiedTime: updatedAt,
-      ...(categoryName ? { section: categoryName } : {}),
-      ...(authorName ? { authors: [authorName] } : {}),
-      images: discoverOgImages(image, title),
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: image ? [image] : [],
-    },
-    alternates: {
-      canonical: url,
-    },
-  }
+
+  return buildArticlePageMetadata({
+    article,
+    categorySlug,
+    articleSlug,
+    canonicalBase,
+    publisherName,
+  })
 }
 
 async function getThemeArticle(themeKey: string) {

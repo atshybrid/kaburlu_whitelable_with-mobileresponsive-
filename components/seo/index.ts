@@ -5,6 +5,7 @@
  */
 
 export { Analytics } from './Analytics'
+export { SubscribeWithGoogle } from './SubscribeWithGoogle'
 export { SiteVerification } from './SiteVerification'
 export { StructuredData } from './StructuredData'
 export { WebPushManager } from './WebPushManager'

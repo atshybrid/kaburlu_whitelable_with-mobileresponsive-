@@ -1,4 +1,5 @@
 import type { Article } from '@/lib/data-sources'
+import { getArticleSeoFields } from '@/lib/article-metadata'
 
 export interface ArticleSeoContext {
   canonicalUrl: string
@@ -72,7 +73,8 @@ export function buildArticleSeoContext(opts: {
 
   const articleSlug = article.slug || article.id
   const pathPrefix = tenantSlug ? `/t/${tenantSlug}` : ''
-  const canonicalUrl = `${canonicalBase}${pathPrefix}/${encodeURIComponent(categorySlug)}/${encodeURIComponent(articleSlug)}`
+  const fallbackUrl = `${canonicalBase}${pathPrefix}/${encodeURIComponent(categorySlug)}/${encodeURIComponent(articleSlug)}`
+  const { canonicalUrl } = getArticleSeoFields(article, fallbackUrl)
 
   return {
     canonicalUrl,

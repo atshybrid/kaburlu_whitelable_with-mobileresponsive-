@@ -32,6 +32,13 @@ export interface Article {
     seoTitle?: string
     metaDescription?: string
   }
+  seo?: {
+    metaTitle?: string
+    metaDescription?: string
+    canonicalUrl?: string
+    ogImage?: string
+    jsonLd?: Record<string, unknown>
+  }
   jsonLd?: {
     '@context'?: string
     '@type'?: string
@@ -915,12 +922,43 @@ function normalizeNewArticleResponse(response: Record<string, unknown>): Article
     
     // SEO from new API
     meta: {
-      seoTitle: (article.seo as Record<string, unknown>)?.title,
-      metaDescription: (article.seo as Record<string, unknown>)?.description,
+      seoTitle:
+        str((article.seo as Record<string, unknown>)?.metaTitle) ||
+        str((article.seo as Record<string, unknown>)?.title) ||
+        str((article.meta as Record<string, unknown>)?.seoTitle),
+      metaDescription:
+        str((article.seo as Record<string, unknown>)?.metaDescription) ||
+        str((article.seo as Record<string, unknown>)?.description) ||
+        str((article.meta as Record<string, unknown>)?.metaDescription),
     },
-    
-    // JSON-LD
-    jsonLd: article.jsonLd,
+    seo: article.seo && typeof article.seo === 'object'
+      ? {
+          metaTitle:
+            str((article.seo as Record<string, unknown>).metaTitle) ||
+            str((article.seo as Record<string, unknown>).title),
+          metaDescription:
+            str((article.seo as Record<string, unknown>).metaDescription) ||
+            str((article.seo as Record<string, unknown>).description),
+          canonicalUrl: str((article.seo as Record<string, unknown>).canonicalUrl),
+          ogImage: str((article.seo as Record<string, unknown>).ogImage),
+          jsonLd:
+            (article.seo as Record<string, unknown>).jsonLd &&
+            typeof (article.seo as Record<string, unknown>).jsonLd === 'object'
+              ? (article.seo as Record<string, unknown>).jsonLd as Record<string, unknown>
+              : undefined,
+        }
+      : undefined,
+
+    // JSON-LD (top-level or nested under seo)
+    jsonLd:
+      article.jsonLd && typeof article.jsonLd === 'object'
+        ? article.jsonLd
+        : (article.seo &&
+            typeof article.seo === 'object' &&
+            (article.seo as Record<string, unknown>).jsonLd &&
+            typeof (article.seo as Record<string, unknown>).jsonLd === 'object'
+            ? (article.seo as Record<string, unknown>).jsonLd
+            : undefined),
     
     // Counts
     viewCount: article.viewCount,
@@ -1170,9 +1208,23 @@ function normalizeItem(u: unknown): Article {
   
   // SEO meta
   const meta = o.meta && typeof o.meta === 'object' ? o.meta as Article['meta'] : undefined
-  
+
+  const seoRaw = o.seo && typeof o.seo === 'object' ? o.seo as Record<string, unknown> : undefined
+  const seo: Article['seo'] | undefined = seoRaw
+    ? {
+        metaTitle: typeof seoRaw.metaTitle === 'string' ? seoRaw.metaTitle : (typeof seoRaw.title === 'string' ? seoRaw.title : undefined),
+        metaDescription: typeof seoRaw.metaDescription === 'string' ? seoRaw.metaDescription : (typeof seoRaw.description === 'string' ? seoRaw.description : undefined),
+        canonicalUrl: typeof seoRaw.canonicalUrl === 'string' ? seoRaw.canonicalUrl : undefined,
+        ogImage: typeof seoRaw.ogImage === 'string' ? seoRaw.ogImage : undefined,
+        jsonLd: seoRaw.jsonLd && typeof seoRaw.jsonLd === 'object' ? seoRaw.jsonLd as Record<string, unknown> : undefined,
+      }
+    : undefined
+
   // JSON-LD
-  const jsonLd = o.jsonLd && typeof o.jsonLd === 'object' ? o.jsonLd as Article['jsonLd'] : undefined
+  const jsonLd =
+    o.jsonLd && typeof o.jsonLd === 'object'
+      ? o.jsonLd as Article['jsonLd']
+      : (seo?.jsonLd as Article['jsonLd'] | undefined)
   
   // Media (images and videos)
   const media = o.media && typeof o.media === 'object' ? o.media as Article['media'] : undefined
@@ -1243,6 +1295,7 @@ function normalizeItem(u: unknown): Article {
     tags: tags ?? null,
     readingTimeMin,
     meta,
+    seo,
     jsonLd,
     media,
     isBreaking,

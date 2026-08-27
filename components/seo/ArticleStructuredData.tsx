@@ -1,4 +1,5 @@
 import { buildArticleAeoGraph, type AeoArticleContext } from '@/lib/aeo'
+import { getConfig, getGooglePublisher } from '@/lib/config'
 import type { Article } from '@/lib/data-sources'
 
 export interface ArticleStructuredDataProps {
@@ -16,7 +17,7 @@ export interface ArticleStructuredDataProps {
  * Injects AEO/GEO JSON-LD schemas for article pages:
  * NewsArticle (with Speakable + E-E-A-T author), BreadcrumbList, FAQPage, Entity markup
  */
-export function ArticleStructuredData(props: ArticleStructuredDataProps) {
+export async function ArticleStructuredData(props: ArticleStructuredDataProps) {
   const ctx: AeoArticleContext = {
     article: props.article,
     canonicalUrl: props.canonicalUrl,
@@ -28,7 +29,12 @@ export function ArticleStructuredData(props: ArticleStructuredDataProps) {
     categorySlug: props.categorySlug,
   }
 
-  const { schemas } = buildArticleAeoGraph(ctx)
+  const config = await getConfig()
+  const pub = getGooglePublisher(config)
+
+  const { schemas } = buildArticleAeoGraph(ctx, {
+    subscribeWithGoogleProductId: pub?.subscribeWithGoogleProductId,
+  })
 
   return (
     <>

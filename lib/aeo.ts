@@ -236,11 +236,53 @@ export function buildEntitySchema(ctx: AeoArticleContext) {
   return entities
 }
 
+/** Build isPartOf block for Subscribe with Google / Publisher Center */
+export function buildIsPartOfSchema(productId: string) {
+  return {
+    '@type': ['Product'],
+    productID: productId,
+  }
+}
+
+/** Merge API jsonLd with generated NewsArticle + optional isPartOf */
+export function mergeNewsArticleJsonLd(
+  generated: Record<string, unknown>,
+  apiJsonLd?: Record<string, unknown> | Article['jsonLd'] | null,
+  subscribeWithGoogleProductId?: string | null,
+): Record<string, unknown> {
+  const base = { ...generated }
+
+  if (apiJsonLd && typeof apiJsonLd === 'object') {
+    Object.assign(base, apiJsonLd)
+    if (!base['@context']) base['@context'] = 'https://schema.org'
+    if (!base['@type']) base['@type'] = 'NewsArticle'
+  }
+
+  if (subscribeWithGoogleProductId) {
+    base.isPartOf = buildIsPartOfSchema(subscribeWithGoogleProductId)
+  }
+
+  return base
+}
+
 /** Combine all article JSON-LD graphs */
-export function buildArticleAeoGraph(ctx: AeoArticleContext) {
+export function buildArticleAeoGraph(
+  ctx: AeoArticleContext,
+  opts?: { subscribeWithGoogleProductId?: string | null },
+) {
   const faqItems = buildFaqFromArticle(ctx.article, ctx.lang)
-  const schemas: Record<string, unknown>[] = [
+  const apiJsonLd =
+    ctx.article.seo?.jsonLd ||
+    (ctx.article.jsonLd as Record<string, unknown> | undefined)
+
+  const newsArticle = mergeNewsArticleJsonLd(
     buildEnhancedNewsArticleSchema(ctx),
+    apiJsonLd,
+    opts?.subscribeWithGoogleProductId,
+  )
+
+  const schemas: Record<string, unknown>[] = [
+    newsArticle,
     buildBreadcrumbSchema(ctx),
   ]
 

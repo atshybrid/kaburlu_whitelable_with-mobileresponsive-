@@ -18,7 +18,7 @@ function adsenseAccountIdFromConfig(config: TenantConfig | null): string | null 
 }
 import { getSEOHomepage, generateJSONLD } from "@/lib/seo";
 import { ThemeColorVars } from "@/components/ConfigLoader";
-import { Analytics, SiteVerification, StructuredData, WebPushManager } from "@/components/seo";
+import { Analytics, SiteVerification, StructuredData, WebPushManager, SubscribeWithGoogle } from "@/components/seo";
 import "./globals.css";
 import "@/components/seo/aeo.css";
 import { OfflineDetector } from "@/components/shared/OfflineDetector";
@@ -341,6 +341,9 @@ async function RootLayoutInner({
         
         {/* 📈 Analytics & Tag Manager */}
         <Analytics />
+
+        {/* Google Publisher Center — Subscribe with Google */}
+        <SubscribeWithGoogle />
 
         {/* 💰 AdSense Auto Ads — Google places ads automatically across the page */}
         {adsEnabled && adsenseClient && (

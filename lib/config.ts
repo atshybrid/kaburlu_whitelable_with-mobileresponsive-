@@ -159,6 +159,14 @@ export interface TenantConfig {
       facebookAppId: string | null
       twitterHandle: string | null
     }
+    /** Google Publisher Center / Subscribe with Google (per domain). */
+    googlePublisher?: {
+      enabled: boolean
+      publicationId?: string | null
+      subscribeWithGoogleProductId?: string | null
+      swgTheme?: string | null
+      swgLang?: string | null
+    }
   }
   
   features: {
@@ -528,6 +536,13 @@ export function getGoogleTagManagerId(config: TenantConfig | null): string | nul
   const analytics = config?.integrations?.analytics
   if (!analytics?.enabled || analytics.provider === 'ga4') return null
   return analytics.googleTagManager ?? null
+}
+
+/** Google Publisher Center / Subscribe with Google settings from /public/config. */
+export function getGooglePublisher(config: TenantConfig | null) {
+  const pub = config?.integrations?.googlePublisher
+  if (!pub?.enabled || !pub.subscribeWithGoogleProductId) return null
+  return pub
 }
 
 /**
