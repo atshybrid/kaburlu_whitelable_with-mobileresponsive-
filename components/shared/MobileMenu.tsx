@@ -1,6 +1,8 @@
 "use client"
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { PushSubscribeButton } from './PushSubscribeButton'
 
 interface MenuItem {
@@ -26,6 +28,18 @@ export function MobileMenu({
 }) {
   const [open, setOpen] = useState(false)
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+  const pathname = usePathname()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Close menu on route change
+  useEffect(() => {
+    setOpen(false)
+    setExpandedItem(null)
+  }, [pathname])
 
   // Prevent body scroll when menu is open
   useEffect(() => {
@@ -50,9 +64,113 @@ export function MobileMenu({
     }
   }, [open])
 
+  const overlay = open && mounted ? (
+    <div className="fixed inset-0 z-[200] lg:hidden">
+      <div
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={() => setOpen(false)}
+        aria-hidden="true"
+      />
+
+      <div className="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-2xl overflow-y-auto">
+        <div className="sticky top-0 z-10 bg-white border-b border-zinc-200 px-4 py-4 flex justify-between items-center shadow-sm">
+          <h2 className="text-lg font-bold text-zinc-900">Menu</h2>
+          <button
+            onClick={() => setOpen(false)}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Close menu"
+          >
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {pushEnabled && vapidPublicKey ? (
+          <div className="border-b border-zinc-100 px-4 py-4">
+            <PushSubscribeButton
+              enabled={pushEnabled}
+              vapidPublicKey={vapidPublicKey}
+              fcmSenderId={fcmSenderId}
+              lang={lang}
+              variant="card"
+            />
+          </div>
+        ) : null}
+
+        <nav className="px-2 py-4" role="navigation" aria-label="Mobile navigation">
+          {homeHref && (
+            <Link
+              href={homeHref}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              onClick={() => setOpen(false)}
+            >
+              <svg className="h-5 w-5 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span>Home</span>
+            </Link>
+          )}
+
+          {items.map((item, index) => (
+            <div key={index} className="my-1">
+              {item.children && item.children.length > 0 ? (
+                <div>
+                  <button
+                    onClick={() => setExpandedItem(expandedItem === item.label ? null : item.label)}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="font-medium text-zinc-900">{item.label}</span>
+                    <svg
+                      className={`h-5 w-5 text-zinc-600 transition-transform ${
+                        expandedItem === item.label ? 'rotate-180' : ''
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {expandedItem === item.label && (
+                    <div className="ml-4 mt-1 space-y-1">
+                      {item.children.map((child, childIndex) => (
+                        <Link
+                          key={childIndex}
+                          href={child.href}
+                          className="block px-4 py-2 rounded-lg text-sm text-zinc-700 hover:bg-gray-50 hover:text-zinc-900 transition-colors"
+                          onClick={() => setOpen(false)}
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href={item.href}
+                  className="block px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium text-zinc-900"
+                  onClick={() => setOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              )}
+            </div>
+          ))}
+        </nav>
+
+        <div className="sticky bottom-0 border-t border-zinc-200 bg-white px-4 py-4">
+          <div className="text-xs text-center text-zinc-500">
+            © {new Date().getFullYear()} All rights reserved
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null
+
   return (
     <>
-      {/* Hamburger Button */}
       <button
         onClick={() => setOpen(true)}
         className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -64,120 +182,7 @@ export function MobileMenu({
         </svg>
       </button>
 
-      {/* Mobile Menu Overlay */}
-      {open && (
-        <div className="fixed inset-0 z-[110] lg:hidden">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
-            aria-hidden="true"
-          />
-
-          {/* Menu Panel */}
-          <div className="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-2xl overflow-y-auto">
-            {/* Header */}
-            <div className="sticky top-0 z-10 bg-white border-b border-zinc-200 px-4 py-4 flex justify-between items-center shadow-sm">
-              <h2 className="text-lg font-bold text-zinc-900">Menu</h2>
-              <button
-                onClick={() => setOpen(false)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label="Close menu"
-              >
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {pushEnabled && vapidPublicKey ? (
-              <div className="border-b border-zinc-100 px-4 py-4">
-                <PushSubscribeButton
-                  enabled={pushEnabled}
-                  vapidPublicKey={vapidPublicKey}
-                  fcmSenderId={fcmSenderId}
-                  lang={lang}
-                  variant="card"
-                />
-              </div>
-            ) : null}
-
-            {/* Navigation */}
-            <nav className="px-2 py-4" role="navigation" aria-label="Mobile navigation">
-              {/* Home Link */}
-              {homeHref && (
-                <Link
-                  href={homeHref}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-                  onClick={() => setOpen(false)}
-                >
-                  <svg className="h-5 w-5 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
-                  <span>Home</span>
-                </Link>
-              )}
-
-              {/* Menu Items */}
-              {items.map((item, index) => (
-                <div key={index} className="my-1">
-                  {item.children && item.children.length > 0 ? (
-                    // Item with submenu
-                    <div>
-                      <button
-                        onClick={() => setExpandedItem(expandedItem === item.label ? null : item.label)}
-                        className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <span className="font-medium text-zinc-900">{item.label}</span>
-                        <svg
-                          className={`h-5 w-5 text-zinc-600 transition-transform ${
-                            expandedItem === item.label ? 'rotate-180' : ''
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                      {expandedItem === item.label && (
-                        <div className="ml-4 mt-1 space-y-1">
-                          {item.children.map((child, childIndex) => (
-                            <Link
-                              key={childIndex}
-                              href={child.href}
-                              className="block px-4 py-2 rounded-lg text-sm text-zinc-700 hover:bg-gray-50 hover:text-zinc-900 transition-colors"
-                              onClick={() => setOpen(false)}
-                            >
-                              {child.label}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    // Simple item
-                    <Link
-                      href={item.href}
-                      className="block px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium text-zinc-900"
-                      onClick={() => setOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                  )}
-                </div>
-              ))}
-            </nav>
-
-            {/* Footer */}
-            <div className="sticky bottom-0 border-t border-zinc-200 bg-white px-4 py-4">
-              <div className="text-xs text-center text-zinc-500">
-                © {new Date().getFullYear()} All rights reserved
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {mounted && overlay ? createPortal(overlay, document.body) : null}
     </>
   )
 }

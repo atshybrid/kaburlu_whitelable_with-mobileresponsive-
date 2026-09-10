@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { usePathname } from 'next/navigation'
 
 interface MenuItem {
   href: string
@@ -11,37 +13,37 @@ interface MenuItem {
 export function TOINavbarClient({ items }: { items: MenuItem[] }) {
   const [isOpen, setIsOpen] = useState(false)
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null)
+  const [mounted, setMounted] = useState(false)
+  const pathname = usePathname()
 
-  return (
-    <>
-      {/* Mobile Menu Button */}
-      <button
-        className="toi-menu-btn lg:hidden"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Toggle menu"
-      >
-        {isOpen ? (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        ) : (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        )}
-      </button>
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
-      {/* Mobile Menu Overlay */}
-      {isOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          {/* Backdrop */}
+  useEffect(() => {
+    setIsOpen(false)
+    setExpandedIdx(null)
+  }, [pathname])
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isOpen])
+
+  const overlay = isOpen && mounted ? (
+        <div className="fixed inset-0 z-[200] lg:hidden">
           <div 
-            className="absolute inset-0 bg-black/50" 
+            className="fixed inset-0 bg-black/50" 
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Slide-out Menu */}
-          <div className="absolute top-0 right-0 h-full w-80 max-w-[90vw] bg-white shadow-xl overflow-y-auto animate-slide-in">
+          <div className="fixed top-0 right-0 h-full w-80 max-w-[90vw] bg-white shadow-xl overflow-y-auto animate-slide-in">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
               <span className="font-bold text-lg">Menu</span>
@@ -136,7 +138,22 @@ export function TOINavbarClient({ items }: { items: MenuItem[] }) {
             </div>
           </div>
         </div>
-      )}
+  ) : null
+
+  return (
+    <>
+      <button
+        className="toi-menu-btn lg:hidden"
+        onClick={() => setIsOpen(true)}
+        aria-label="Open menu"
+        aria-expanded={isOpen}
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      {mounted && overlay ? createPortal(overlay, document.body) : null}
 
       <style jsx>{`
         @keyframes slide-in {

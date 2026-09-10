@@ -346,8 +346,17 @@ class RemoteDataSource implements DataSource {
         ? paginationObj.has_prev
         : (typeof paginationObj?.hasPrev === 'boolean' ? paginationObj.hasPrev : page > 1)
 
+      const enriched = await enrichCategoryArticlesWithExcerpts(
+        normalized,
+        categorySlug,
+        page,
+        limit,
+        await currentDomain(),
+        cacheTTL,
+      )
+
       return {
-        articles: normalized,
+        articles: enriched,
         pagination: {
           page,
           limit,
@@ -1078,7 +1087,11 @@ function normalizeItem(u: unknown): Article {
   const slug = typeof o.slug === 'string' ? o.slug : undefined
   
   // Excerpt/Summary
-  const excerpt = typeof o.excerpt === 'string' ? o.excerpt : (typeof o.summary === 'string' ? o.summary : (typeof o.subtitle === 'string' ? o.subtitle : undefined))
+  const excerpt =
+    typeof o.excerpt === 'string' ? o.excerpt :
+    (typeof o.summary === 'string' ? o.summary :
+    (typeof o.description === 'string' ? o.description :
+    (typeof o.subtitle === 'string' ? o.subtitle : undefined)))
   
   // Subtitle
   const subtitle = typeof o.subtitle === 'string' ? o.subtitle : undefined
@@ -1187,7 +1200,10 @@ function normalizeItem(u: unknown): Article {
   const normalizedCoverUrl = normalizeMediaUrl(coverUrl)
   
   // Published date
-  const publishedAt = typeof o.publishedAt === 'string' ? o.publishedAt : (typeof o.createdAt === 'string' ? o.createdAt : undefined)
+  const publishedAt =
+    typeof o.publishedAt === 'string' ? o.publishedAt :
+    (typeof o.published_at === 'string' ? o.published_at :
+    (typeof o.createdAt === 'string' ? o.createdAt : undefined))
   
   // Updated date
   const updatedAt = o.audit && typeof o.audit === 'object' && typeof (o.audit as Record<string, unknown>).updatedAt === 'string'
@@ -1310,6 +1326,45 @@ function normalizeItem(u: unknown): Article {
     related,
     previousArticle,
     nextArticle,
+  }
+}
+
+/** Category list API omits excerpt — merge from /public/articles when missing. */
+async function enrichCategoryArticlesWithExcerpts(
+  articles: Article[],
+  categorySlug: string,
+  page: number,
+  limit: number,
+  tenantDomain: string,
+  cacheTTL: number,
+): Promise<Article[]> {
+  if (articles.length === 0) return articles
+  if (articles.every((a) => Boolean(a.excerpt?.trim()))) return articles
+
+  try {
+    const res = await fetchJSON<unknown>(
+      `/public/articles?category=${encodeURIComponent(categorySlug)}&page=${page}&pageSize=${limit}`,
+      { tenantDomain, revalidateSeconds: cacheTTL },
+    )
+    const rich = normalizeList(res)
+    const byKey = new Map(
+      rich.map((a) => [String(a.slug || a.id), a]),
+    )
+
+    return articles.map((article) => {
+      const key = String(article.slug || article.id)
+      const match = byKey.get(key)
+      if (!match) return article
+      return {
+        ...article,
+        excerpt: article.excerpt || match.excerpt || null,
+        coverImage: article.coverImage?.url
+          ? article.coverImage
+          : match.coverImage,
+      }
+    })
+  } catch {
+    return articles
   }
 }
 

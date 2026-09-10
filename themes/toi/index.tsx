@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import type { UrlObject } from 'url'
 import { PlaceholderImg } from '@/components/shared/PlaceholderImg'
-import { articleHref, categoryHref, homeHref } from '@/lib/url'
+import { articleHref, categoryHref, homeHref, getCategorySlugFromArticle } from '@/lib/url'
 import { getCategoriesForNav, type Category } from '@/lib/categories'
 import { getArticlesByCategory, getHomeFeed } from '@/lib/data'
 import { getEffectiveSettings } from '@/lib/settings'
@@ -52,24 +52,34 @@ function HeroFeatureMain({ tenantSlug, article, category }: { tenantSlug: string
 // Secondary Card
 // ============================================
 function SecondaryCard({ tenantSlug, article }: { tenantSlug: string; article: Article }) {
+  const categorySlug = getCategorySlugFromArticle(article)
+  const excerpt =
+    article.excerpt ||
+    article.seo?.metaDescription ||
+    article.meta?.metaDescription ||
+    null
+  const imageUrl =
+    article.coverImage?.url ||
+    (article as Record<string, unknown>).coverImageUrl as string | undefined
+
   return (
     <Link 
-      href={toHref(articleHref(tenantSlug, article.slug || article.id))} 
+      href={toHref(articleHref(tenantSlug, article.slug || article.id, categorySlug))} 
       className="toi-card group block"
     >
       <div className="toi-card-img">
-        {article.coverImage?.url ? (
+        {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={article.coverImage.url} alt={article.title} loading="lazy" />
+          <img src={imageUrl} alt={article.title} loading="lazy" />
         ) : (
           <PlaceholderImg className="w-full h-full object-cover" />
         )}
       </div>
       <div className="toi-card-body">
         <h3 className="toi-card-title toi-headline">{article.title}</h3>
-        {article.excerpt && (
-          <p className="toi-card-excerpt">{article.excerpt}</p>
-        )}
+        {excerpt ? (
+          <p className="toi-card-excerpt">{excerpt}</p>
+        ) : null}
       </div>
     </Link>
   )
