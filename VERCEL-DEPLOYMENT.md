@@ -16,6 +16,24 @@ Each domain gets its own:
 
 ---
 
+## Auto-deploy not starting after `git push`?
+
+1. **Vercel Dashboard** → project `kaburlu_webnews_tenants` → **Settings → Git**
+   - Connected repository must be `atshybrid/kaburlu_whitelable_with-mobileresponsive-` (note trailing `-`)
+   - **Production Branch** = `main`
+   - If wrong repo or disconnected, click **Connect Git Repository** and reconnect.
+2. **GitHub** → **Settings → Applications → Vercel** → ensure this repo has access.
+3. **GitHub Actions backup** (`.github/workflows/vercel-production.yml`): add repo secret **`VERCEL_TOKEN`**  
+   Create token: [vercel.com/account/tokens](https://vercel.com/account/tokens) (full account scope).  
+   Future pushes to `main` deploy even if the Vercel webhook fails.
+4. **Manual production deploy** (linked project):
+   ```bash
+   vercel login
+   vercel deploy --prod
+   ```
+
+---
+
 ## Vercel Deployment Steps
 
 ### 1. Create Vercel Project

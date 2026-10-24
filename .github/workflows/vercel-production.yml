@@ -1,0 +1,26 @@
+# Backup deploy when Vercel Git webhooks miss a push (reconnect Git in Vercel Settings if this runs often).
+name: Vercel Production Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: team_73CVpEmO6dr2UaetJJJ4X2j0
+          vercel-project-id: prj_fX4CRuwbMdz9yuJ5hDdCvwwyND3o
+          vercel-args: '--prod'
+          github-comment: false
