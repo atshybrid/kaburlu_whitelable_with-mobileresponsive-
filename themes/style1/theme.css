@@ -220,11 +220,11 @@
   color: #18181b;
 }
 
-/* Drop Cap Styling - First Letter Enhancement for Telugu */
-.theme-style1 .drop-cap p:first-child::first-letter,
-.theme-style1 .first-paragraph p:first-child::first-letter {
+/* Drop cap — Latin/English only (::first-letter splits Telugu/Hindi clusters) */
+html[lang="en"] .theme-style1 .drop-cap p:first-child::first-letter,
+html[lang="en"] .theme-style1 .first-paragraph p:first-child::first-letter {
   float: left;
-  font-family: 'Noto Serif Telugu', var(--font-telugu-serif);
+  font-family: var(--font-display);
   font-size: 4.5rem;
   line-height: 0.85;
   font-weight: 700;
@@ -233,10 +233,9 @@
   text-shadow: 2px 2px 4px rgba(220, 38, 38, 0.1);
 }
 
-/* Responsive drop cap */
 @media (max-width: 640px) {
-  .theme-style1 .drop-cap p:first-child::first-letter,
-  .theme-style1 .first-paragraph p:first-child::first-letter {
+  html[lang="en"] .theme-style1 .drop-cap p:first-child::first-letter,
+  html[lang="en"] .theme-style1 .first-paragraph p:first-child::first-letter {
     font-size: 3.5rem;
   }
 }
@@ -398,7 +397,15 @@
   word-wrap: break-word;
 }
 
-.theme-style1 .article-content p:first-letter {
+.theme-style1 .article-content-enhanced,
+.theme-style1 .article-paragraph,
+.theme-style1 .article-paragraph p {
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: manual;
+}
+
+html[lang="en"] .theme-style1 .article-content p:first-letter {
   font-size: 3.5rem;
   line-height: 1;
   font-weight: 700;
@@ -755,8 +762,8 @@
   font-size: 0.9375rem;
   line-height: 1.75;
   color: #1f2937;
-  word-break: break-word;
-  overflow-wrap: anywhere;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 @media (min-width: 640px) {
@@ -773,8 +780,8 @@
   line-height: 1.75;
   color: #1f2937;
   font-weight: 500;
-  word-break: break-word;
-  overflow-wrap: anywhere;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 @media (min-width: 640px) {
@@ -831,8 +838,8 @@
   font-size: 0.875rem;
   line-height: 1.7;
   color: #374151;
-  word-break: break-word;
-  overflow-wrap: anywhere;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 /* FAQ accordion */
@@ -918,8 +925,8 @@
     margin-bottom: 1.25rem;
   }
 
-  .theme-style1 .drop-cap p:first-child::first-letter,
-  .theme-style1 .first-paragraph p:first-child::first-letter {
+  html[lang="en"] .theme-style1 .drop-cap p:first-child::first-letter,
+  html[lang="en"] .theme-style1 .first-paragraph p:first-child::first-letter {
     font-size: 3rem;
     margin-right: 0.1em;
   }

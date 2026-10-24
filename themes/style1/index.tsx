@@ -37,6 +37,7 @@ import { FontSizeControl, ScrollToTopButton, StickyShareBar } from '@/components
 import { CongratulationsWrapper } from '@/components/shared/CongratulationsWrapper'
 import { getDomainStats } from '@/lib/domain-stats'
 import { themeCssVarsFromSettings } from '@/lib/theme-vars'
+import { supportsDropCap } from '@/lib/typography'
 import { AeoContentBlocks } from '@/components/seo'
 import { buildFaqFromArticle } from '@/lib/aeo'
 import { resolveArticleBodyHtml } from '@/lib/article-body'
@@ -2088,6 +2089,7 @@ function ArticleContentWithMustRead({
   adEveryN,
   inlineMax,
   forceEarlyInline,
+  locale,
 }: { 
   html: string; 
   tenantSlug: string;
@@ -2096,7 +2098,9 @@ function ArticleContentWithMustRead({
   adEveryN?: number;
   inlineMax?: number;
   forceEarlyInline?: boolean;
+  locale?: string;
 }) {
+  const dropCap = supportsDropCap(locale)
   if (!html) {
     return null
   }
@@ -2135,10 +2139,11 @@ function ArticleContentWithMustRead({
     // Check if this is the first real paragraph (has substantial text content)
     const isFirstPara = actualParagraphCount === 0 && chunk.length > 50
     
-    // Add drop cap styling to first paragraph
-    const paragraphClass = isFirstPara 
-      ? "article-paragraph first-paragraph drop-cap" 
-      : "article-paragraph"
+    const paragraphClass = isFirstPara
+      ? dropCap
+        ? 'article-paragraph first-paragraph drop-cap'
+        : 'article-paragraph first-paragraph'
+      : 'article-paragraph'
     
     nodes.push(
       <div 
@@ -2532,6 +2537,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
               <ArticleContentWithMustRead 
                 html={articleBodyHtml} 
                 tenantSlug={tenantSlug}
+                locale={locale}
                 secondImage={article.media?.images && article.media.images.length > 0 ? article.media.images[0] : null}
                 settings={settings}
                 adEveryN={adPolicy.article.inlineEveryN}
@@ -2894,7 +2900,8 @@ function HorizontalInlineAd() {
 
 // Enhanced Article Content with Drop Caps and Better Typography for Telugu
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function EnhancedArticleContent({ html }: { html: string }) {
+function EnhancedArticleContent({ html, locale }: { html: string; locale?: string }) {
+  const dropCap = supportsDropCap(locale)
   if (!html) {
     return (
       <div className="text-center py-12">
@@ -2918,10 +2925,11 @@ function EnhancedArticleContent({ html }: { html: string }) {
     // Check if this is the first real paragraph (has substantial text content)
     const isFirstPara = actualParagraphCount === 0 && chunk.length > 50
     
-    // Add drop cap styling to first paragraph
-    const paragraphClass = isFirstPara 
-      ? "article-paragraph first-paragraph drop-cap" 
-      : "article-paragraph"
+    const paragraphClass = isFirstPara
+      ? dropCap
+        ? 'article-paragraph first-paragraph drop-cap'
+        : 'article-paragraph first-paragraph'
+      : 'article-paragraph'
     
     nodes.push(
       <div 
