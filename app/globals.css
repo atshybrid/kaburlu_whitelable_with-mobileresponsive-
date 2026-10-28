@@ -170,6 +170,18 @@ html[data-lang='telugu'] .deck {
   line-height: 1.5;
 }
 
+html[data-lang='te'] .s1-highlight-text,
+html[data-lang='te'] .s1-summary-text,
+html[data-lang='te'] .article-paragraph,
+html[data-lang='te'] .article-content-enhanced,
+html[data-lang='telugu'] .s1-highlight-text,
+html[data-lang='telugu'] .s1-summary-text,
+html[data-lang='telugu'] .article-paragraph,
+html[data-lang='telugu'] .article-content-enhanced {
+  font-family: var(--font-telugu-sans), 'Nirmala UI', 'Lohit Telugu', sans-serif;
+  letter-spacing: 0;
+}
+
 /* Telugu Highlights/Key Points */
 html[data-lang='te'] .highlight,
 html[data-lang='te'] .key-point,

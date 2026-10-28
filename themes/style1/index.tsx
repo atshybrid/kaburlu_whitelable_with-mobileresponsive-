@@ -2406,7 +2406,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 {/* Article Title */}
                 <h1 
                   className="s1-article-page-title mb-3 sm:mb-4 text-2xl sm:text-3xl lg:text-5xl font-black leading-snug sm:leading-[1.15] text-zinc-900"
-                  style={{ fontFamily: 'Noto Serif Telugu, serif', lineHeight: '1.45' }}
+                  style={{ fontFamily: 'var(--font-telugu-serif), var(--font-telugu-sans), Nirmala UI, serif', lineHeight: '1.45' }}
                 >
                   {article.title}
                 </h1>
@@ -2415,7 +2415,7 @@ export async function ThemeArticle({ tenantSlug, title, article, tenantDomain }:
                 {article.subtitle && (
                   <h2 
                     className="mb-4 sm:mb-6 text-lg sm:text-2xl font-medium text-zinc-700 leading-relaxed"
-                    style={{ fontFamily: 'Noto Sans Telugu, sans-serif', lineHeight: '1.75' }}
+                    style={{ fontFamily: 'var(--font-telugu-sans), Nirmala UI, sans-serif', lineHeight: '1.75' }}
                   >
                     {article.subtitle}
                   </h2>

@@ -1,8 +1,7 @@
 /* Import Google Fonts - Industry Standard Readable Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
-/* Import Telugu Fonts for better readability */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Telugu:wght@400;500;600;700;800;900&family=Noto+Sans+Telugu:wght@300;400;500;600;700;800;900&display=swap');
+/* Telugu faces come from next/font in app/layout.tsx — do not @import (mobile CDN failures break matras). */
 
 /* Theme Variables */
 .theme-style1 { 
@@ -17,8 +16,9 @@
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   --font-serif: 'Merriweather', Georgia, 'Times New Roman', Times, serif;
   --font-display: 'Playfair Display', Georgia, serif;
-  --font-telugu-serif: 'Noto Serif Telugu', 'Noto Sans Telugu', serif;
-  --font-telugu-sans: 'Noto Sans Telugu', sans-serif;
+  /* Stacks use layout --font-telugu-* (self-hosted); never fall back to Merriweather for Telugu body */
+  --telugu-body: var(--font-telugu-sans), 'Nirmala UI', 'Lohit Telugu', sans-serif;
+  --telugu-head: var(--font-telugu-serif), var(--font-telugu-sans), 'Nirmala UI', serif;
 }
 
 /* Keep links neutral by default inside style1 (avoid browser blue/purple links). */
@@ -61,7 +61,7 @@
 .theme-style1 article h6,
 .theme-style1 .s1-news-title {
   color: #111111 !important;
-  font-family: 'Noto Sans Telugu', var(--font-sans);
+  font-family: var(--telugu-body);
   line-height: 1.55;
 }
 
@@ -164,7 +164,7 @@
 .theme-style1 h1,
 .theme-style1 h2,
 .theme-style1 h3 {
-  font-family: 'Noto Serif Telugu', var(--font-display);
+  font-family: var(--telugu-head);
   line-height: 1.4;
 }
 
@@ -177,7 +177,7 @@
 
 /* Enhanced Article Content - Telugu optimized */
 .theme-style1 .article-content-enhanced {
-  font-family: 'Noto Sans Telugu', var(--font-serif);
+  font-family: var(--telugu-body);
   font-size: 1.125rem;
   line-height: 2.0;
   color: #18181b;
@@ -215,7 +215,7 @@
 .theme-style1 .article-paragraph p {
   margin-bottom: 1.75rem;
   line-height: 2.0;
-  font-family: 'Noto Sans Telugu', var(--font-serif);
+  font-family: var(--telugu-body);
   font-size: 1.125rem;
   color: #18181b;
 }
@@ -400,6 +400,7 @@ html[lang="en"] .theme-style1 .first-paragraph p:first-child::first-letter {
 .theme-style1 .article-content-enhanced,
 .theme-style1 .article-paragraph,
 .theme-style1 .article-paragraph p {
+  font-family: var(--telugu-body);
   overflow-wrap: break-word;
   word-break: normal;
   hyphens: manual;
@@ -758,7 +759,7 @@ html[lang="en"] .theme-style1 .article-content p:first-letter {
 .theme-style1 .s1-highlight-text {
   flex: 1;
   min-width: 0;
-  font-family: 'Noto Sans Telugu', var(--font-serif);
+  font-family: var(--telugu-body);
   font-size: 0.9375rem;
   line-height: 1.75;
   color: #1f2937;
@@ -775,7 +776,7 @@ html[lang="en"] .theme-style1 .article-content p:first-letter {
 
 .theme-style1 .s1-summary-text {
   margin: 0;
-  font-family: 'Noto Sans Telugu', var(--font-serif);
+  font-family: var(--telugu-body);
   font-size: 0.9375rem;
   line-height: 1.75;
   color: #1f2937;
@@ -834,7 +835,7 @@ html[lang="en"] .theme-style1 .article-content p:first-letter {
 }
 
 .theme-style1 .s1-article-insights--faq .aeo-faq-answer {
-  font-family: 'Noto Sans Telugu', var(--font-serif);
+  font-family: var(--telugu-body);
   font-size: 0.875rem;
   line-height: 1.7;
   color: #374151;

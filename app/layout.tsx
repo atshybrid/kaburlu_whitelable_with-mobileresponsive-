@@ -75,6 +75,8 @@ const notoSansTelugu = Noto_Sans_Telugu({
   subsets: ['telugu'],
   variable: '--font-telugu-sans',
   display: 'swap',
+  preload: true,
+  adjustFontFallback: true,
 });
 
 // Telugu - Serif for headlines
@@ -83,6 +85,8 @@ const notoSerifTelugu = Noto_Serif_Telugu({
   subsets: ['telugu'],
   variable: '--font-telugu-serif',
   display: 'swap',
+  preload: true,
+  adjustFontFallback: true,
 });
 
 // Hindi/Devanagari (also for Marathi)
